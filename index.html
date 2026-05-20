@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PO Management</title>
+<title>PO ERP — Management</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
 <style>
@@ -497,6 +497,54 @@ tr.row-cancel .td-po{color:var(--red-text)!important}
 .setting-desc{font-size:12px;color:var(--text3);margin-top:2px}
 .setting-val{font-size:13px;color:var(--text2);font-family:'IBM Plex Mono',monospace;padding:4px 10px;background:var(--surface2);border-radius:7px}
 
+/* ── TRANSFER PAGE ── */
+.transfer-toolbar{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center}
+.transfer-search-wrap{flex:1;min-width:200px;position:relative}
+.transfer-search-wrap input{
+  width:100%;padding:10px 16px 10px 40px;
+  border:1px solid var(--border);border-radius:12px;
+  font-size:13.5px;background:var(--surface);
+  color:var(--text);transition:all .18s ease;font-family:'Sarabun',sans-serif;
+}
+.transfer-search-wrap input:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px rgba(26,101,181,.1)}
+.transfer-search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:14px;pointer-events:none}
+.btn-primary{background:var(--acc);color:#fff;border-color:var(--acc);padding:9px 18px;font-size:13px;font-weight:700;border-radius:var(--radius-sm);border:none;cursor:pointer;font-family:'Sarabun',sans-serif;transition:.15s;display:inline-flex;align-items:center;gap:6px}
+.btn-primary:hover{opacity:.88}
+.transfer-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:1.25rem}
+.tsm-card{background:var(--surface);border-radius:14px;border:1px solid var(--border);box-shadow:var(--shadow);padding:1rem 1.2rem}
+.tsm-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);font-weight:700;margin-bottom:4px}
+.tsm-val{font-size:26px;font-weight:700;font-family:'IBM Plex Mono',monospace;letter-spacing:-.03em}
+
+/* Modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:600;backdrop-filter:blur(4px);align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.2);width:100%;max-width:540px;padding:0;overflow:hidden}
+.modal-head{padding:1.2rem 1.4rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:16px;font-weight:700}
+.modal-close{width:30px;height:30px;border-radius:8px;border:none;background:var(--surface2);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;color:var(--text2)}
+.modal-close:hover{background:var(--surface3)}
+.modal-body{padding:1.4rem}
+.modal-footer{padding:1rem 1.4rem;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+.form-group{margin-bottom:1rem}
+.form-label{display:block;font-size:12.5px;font-weight:700;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em}
+.form-input,.form-select,.form-textarea{
+  width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:10px;
+  font-size:13.5px;background:var(--surface);color:var(--text);
+  font-family:'Sarabun',sans-serif;transition:.18s;
+}
+.form-input:focus,.form-select:focus,.form-textarea:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px rgba(26,101,181,.1)}
+.form-textarea{resize:vertical;min-height:72px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tr-actions{display:flex;gap:5px}
+.tr-btn{padding:4px 10px;border-radius:7px;border:1px solid var(--border);background:var(--surface);cursor:pointer;font-size:12px;font-weight:600;font-family:'Sarabun',sans-serif;transition:.15s;color:var(--text2)}
+.tr-btn:hover{background:var(--surface2)}
+.tr-btn-edit{border-color:var(--blue-light);color:var(--blue-text);background:var(--blue-bg)}
+.tr-btn-edit:hover{background:var(--blue-light)}
+.tr-btn-del{border-color:var(--red-light);color:var(--red-text);background:var(--red-bg)}
+.tr-btn-del:hover{background:var(--red-light)}
+.td-transfer-no{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;color:var(--acc-text)}
+.td-amt-tr{font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:600;text-align:right;color:var(--green-text)}
+
 /* store color themes */
 .store-theme-0{--acc:#1A65B5;--acc-bg:#E8F2FC;--acc-light:#C5DCF5;--acc-text:#0D3D72;--nav-bg:#171614}
 .store-theme-1{--acc:#0A6B60;--acc-bg:#E2F5F2;--acc-light:#A0DDD5;--acc-text:#063D38;--nav-bg:#09312C}
@@ -598,13 +646,13 @@ tr.row-cancel .td-po{color:var(--red-text)!important}
   <div class="sidebar-brand">
     <div class="brand-icon">📊</div>
     <div>
-      <div class="brand-name">PO</div>
+      <div class="brand-name">PO ERP</div>
       <div class="brand-sub">Management System</div>
     </div>
   </div>
 
   <div class="sidebar-stores">
-    <div class="sidebar-stores-label">บริษัท</div>
+    <div class="sidebar-stores-label">สาขา</div>
     <div class="store-pill-list" id="storePills"></div>
   </div>
 
@@ -622,6 +670,9 @@ tr.row-cancel .td-po{color:var(--red-text)!important}
     <button class="nav-item" data-page="reports" onclick="openPage('reports')">
       <span class="nav-icon">📑</span><span>Reports</span>
     </button>
+    <button class="nav-item" data-page="transfers" onclick="openPage('transfers')">
+      <span class="nav-icon">🔄</span><span>รายการโอน</span>
+    </button>
     <button class="nav-item" data-page="settings" onclick="openPage('settings')">
       <span class="nav-icon">⚙️</span><span>Settings</span>
     </button>
@@ -636,7 +687,7 @@ tr.row-cancel .td-po{color:var(--red-text)!important}
 <div class="main-wrap">
   <div class="topbar">
     <span class="topbar-title" id="topbarTitle">PO Dashboard</span>
-    <span class="topbar-breadcrumb" id="topbarBreadcrumb">— เลือกบริษัทด้านซ้าย</span>
+    <span class="topbar-breadcrumb" id="topbarBreadcrumb">— เลือกสาขาด้านซ้าย</span>
     <div class="topbar-right">
       <span class="topbar-time" id="topbarTime">—</span>
       <button class="btn-topbar" id="resetBtn" onclick="resetAll()">⟳ เปลี่ยนไฟล์</button>
@@ -655,7 +706,7 @@ tr.row-cancel .td-po{color:var(--red-text)!important}
       <div class="upload-zone" id="uploadZone">
         <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" multiple style="display:none">
         <div class="upload-icon">📂</div>
-        <div class="store-label" id="storeLbl">📍 เลือกบริษัท</div>
+        <div class="store-label" id="storeLbl">📍 เลือกสาขา</div>
         <div class="upload-title">ลากไฟล์ Excel มาวางที่นี่ หรือคลิกเพื่อเลือก</div>
         <div class="upload-sub">Export จาก AX แล้ววางได้เลย — ระบบจะ<strong>จับ column อัตโนมัติ</strong><br>รองรับหลายไฟล์พร้อมกัน และ 3,000+ rows ไม่มีปัญหา</div>
         <div class="upload-tags">
@@ -743,6 +794,113 @@ tr.row-cancel .td-po{color:var(--red-text)!important}
       </div>
     </div>
 
+    <!-- ── TRANSFERS PAGE ── -->
+    <div class="page" id="page-transfers">
+      <div class="page-head">
+        <div class="page-head-title">รายการโอน</div>
+        <div class="page-head-sub">จัดการรายการโอนเงิน — เพิ่ม แก้ไข ลบ</div>
+      </div>
+
+      <!-- Summary cards -->
+      <div class="transfer-summary" id="transferSummary">
+        <div class="tsm-card">
+          <div class="tsm-label">รายการทั้งหมด</div>
+          <div class="tsm-val" id="tsm-total">0</div>
+        </div>
+        <div class="tsm-card">
+          <div class="tsm-label">ยอดโอนรวม (บาท)</div>
+          <div class="tsm-val" id="tsm-amount" style="color:var(--green)">฿0</div>
+        </div>
+        <div class="tsm-card">
+          <div class="tsm-label">จำนวนร้านค้า</div>
+          <div class="tsm-val" id="tsm-shops">0</div>
+        </div>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="transfer-toolbar">
+        <div class="transfer-search-wrap">
+          <span class="transfer-search-icon">🔍</span>
+          <input type="text" id="transferSearch" placeholder="ค้นหา ใบโอน, PO, JOB, ร้านค้า..." oninput="renderTransferTable()">
+        </div>
+        <button class="btn-primary" onclick="openTransferModal()">＋ เพิ่มรายการโอน</button>
+      </div>
+
+      <!-- Table -->
+      <div class="table-card">
+        <div class="table-header">
+          <span class="table-header-title">รายการโอน</span>
+          <span class="table-count" id="transferTableCount">0 รายการ</span>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>วันที่</th>
+                <th>ใบโอน</th>
+                <th>PO</th>
+                <th>JOB</th>
+                <th>ยอดเงิน</th>
+                <th>ร้านค้า</th>
+                <th>รายละเอียด</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="transferTbody"></tbody>
+          </table>
+          <div class="no-data" id="transferNodata" style="display:none">
+            <div class="no-data-icon">🔄</div>ไม่พบรายการโอน
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TRANSFER MODAL ── -->
+    <div class="modal-overlay" id="transferModal">
+      <div class="modal">
+        <div class="modal-head">
+          <span class="modal-title" id="transferModalTitle">เพิ่มรายการโอน</span>
+          <button class="modal-close" onclick="closeTransferModal()">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">วันที่</label>
+              <input type="date" class="form-input" id="tf-date">
+            </div>
+            <div class="form-group">
+              <label class="form-label">ใบโอน</label>
+              <input type="text" class="form-input" id="tf-no" placeholder="เช่น TR-2024-001">
+            </div>
+            <div class="form-group">
+              <label class="form-label">PO</label>
+              <input type="text" class="form-input" id="tf-po" placeholder="เลขที่ PO">
+            </div>
+            <div class="form-group">
+              <label class="form-label">JOB</label>
+              <input type="text" class="form-input" id="tf-job" placeholder="รหัส Job">
+            </div>
+            <div class="form-group">
+              <label class="form-label">ยอดเงิน (บาท)</label>
+              <input type="number" class="form-input" id="tf-amount" placeholder="0.00" step="0.01">
+            </div>
+            <div class="form-group">
+              <label class="form-label">ร้านค้า</label>
+              <input type="text" class="form-input" id="tf-shop" placeholder="ชื่อร้านค้า">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">รายละเอียด</label>
+            <textarea class="form-textarea" id="tf-detail" placeholder="รายละเอียดเพิ่มเติม..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn" onclick="closeTransferModal()">ยกเลิก</button>
+          <button class="btn-primary" onclick="saveTransfer()">💾 บันทึก</button>
+        </div>
+      </div>
+    </div>
+
     <!-- ── SETTINGS PAGE ── -->
     <div class="page" id="page-settings">
       <div class="page-head">
@@ -752,7 +910,7 @@ tr.row-cancel .td-po{color:var(--red-text)!important}
       <div class="settings-layout">
         <div class="settings-nav" id="settingsNav">
           <button class="settings-nav-item active" onclick="openSettingsTab('general',this)">ทั่วไป</button>
-          <button class="settings-nav-item" onclick="openSettingsTab('stores',this)">บริษัท</button>
+          <button class="settings-nav-item" onclick="openSettingsTab('stores',this)">สาขา</button>
           <button class="settings-nav-item" onclick="openSettingsTab('columns',this)">Columns</button>
           <button class="settings-nav-item" onclick="openSettingsTab('data',this)">ข้อมูล</button>
         </div>
@@ -877,6 +1035,7 @@ function switchStore(idx){
   else document.getElementById('topbarTime').textContent='—';
   // refresh active page
   if(currentPage!=='dashboard') refreshPageContent(currentPage);
+  if(currentPage==='transfers') renderTransferPage();
 }
 
 /* ─── PAGE NAVIGATION ─── */
@@ -891,7 +1050,7 @@ function openPage(page){
   if(nav) nav.classList.add('active');
   document.getElementById('topbarBreadcrumb').textContent='/ '+{
     dashboard:'Dashboard',analytics:'Analytics',
-    vendors:'Vendors',reports:'Reports',settings:'Settings'
+    vendors:'Vendors',reports:'Reports',settings:'Settings',transfers:'รายการโอน'
   }[page]||page;
   refreshPageContent(page);
 }
@@ -902,6 +1061,7 @@ function refreshPageContent(page){
   if(page==='vendors')   renderVendors();
   if(page==='reports')   renderReports();
   if(page==='settings')  renderSettings(currentSettingsTab);
+  if(page==='transfers') renderTransferPage();
 }
 
 /* ─── COLUMN GUESS ─── */
@@ -1308,9 +1468,9 @@ function renderSettings(tab){
   const panels={
     general:`
       <div class="settings-section">
-        <div class="settings-section-title">บริษัทปัจจุบัน</div>
+        <div class="settings-section-title">สาขาปัจจุบัน</div>
         <div class="setting-row">
-          <div><div class="setting-label">ชื่อบริษัท</div></div>
+          <div><div class="setting-label">ชื่อสาขา</div></div>
           <span class="setting-val">${t.name}</span>
         </div>
         <div class="setting-row">
@@ -1325,14 +1485,14 @@ function renderSettings(tab){
       <div class="settings-section">
         <div class="settings-section-title">Version</div>
         <div class="setting-row">
-          <div><div class="setting-label">PO Dashboard</div><div class="setting-desc">รองรับ .xlsx / .xls / .csv</div></div>
+          <div><div class="setting-label">PO ERP Dashboard</div><div class="setting-desc">รองรับ .xlsx / .xls / .csv</div></div>
           <span class="setting-val">v2.0</span>
         </div>
       </div>
     `,
     stores:`
       <div class="settings-section">
-        <div class="settings-section-title">บริษัททั้งหมด</div>
+        <div class="settings-section-title">สาขาทั้งหมด</div>
         ${STORES.map((st,i)=>{
           const cnt=state[i].rows.length;
           return `<div class="setting-row">
@@ -1369,7 +1529,7 @@ function renderSettings(tab){
       <div class="settings-section">
         <div class="settings-section-title">จัดการข้อมูล</div>
         <div class="setting-row">
-          <div><div class="setting-label">ล้างข้อมูลบริษัทนี้</div><div class="setting-desc">ลบ ${s.rows.length.toLocaleString()} PO ของ ${t.name}</div></div>
+          <div><div class="setting-label">ล้างข้อมูลสาขานี้</div><div class="setting-desc">ลบ ${s.rows.length.toLocaleString()} PO ของ ${t.name}</div></div>
           <button class="btn btn-sm btn-danger" onclick="clearAll()">🗑 ล้างข้อมูล</button>
         </div>
         <div class="setting-row">
@@ -1378,10 +1538,10 @@ function renderSettings(tab){
         </div>
       </div>
       <div class="settings-section">
-        <div class="settings-section-title">ล้างทุกบริษัท</div>
+        <div class="settings-section-title">ล้างทุกสาขา</div>
         <div class="setting-row">
-          <div><div class="setting-label">ล้างข้อมูลทั้งหมด</div><div class="setting-desc">ลบข้อมูลทุกบริษัทออกจาก Local Storage</div></div>
-          <button class="btn btn-sm btn-danger" onclick="if(confirm('ยืนยันลบทุกบริษัท?')){STORES.forEach((_,i)=>{curStore=i;wipeStore();state[i].rows=[]});curStore=0;applyTheme();document.getElementById('mainSection').style.display='none';document.getElementById('uploadZone').style.display='block';renderSettings('data')}">🗑 ล้างทั้งหมด</button>
+          <div><div class="setting-label">ล้างข้อมูลทั้งหมด</div><div class="setting-desc">ลบข้อมูลทุกสาขาออกจาก Local Storage</div></div>
+          <button class="btn btn-sm btn-danger" onclick="if(confirm('ยืนยันลบทุกสาขา?')){STORES.forEach((_,i)=>{curStore=i;wipeStore();state[i].rows=[]});curStore=0;applyTheme();document.getElementById('mainSection').style.display='none';document.getElementById('uploadZone').style.display='block';renderSettings('data')}">🗑 ล้างทั้งหมด</button>
         </div>
       </div>
     `
@@ -1482,6 +1642,120 @@ function clearAll(){
   document.getElementById('topbarTime').textContent='—';
 }
 
+/* ─── TRANSFERS ─── */
+let transferEditId = null;
+
+function getTransferKey(){ return 'transfers_'+ST().id; }
+
+function loadTransfers(){
+  try{ return JSON.parse(localStorage.getItem(getTransferKey())||'[]'); }catch(e){ return []; }
+}
+function saveTransfers(arr){
+  try{ localStorage.setItem(getTransferKey(),JSON.stringify(arr)); }catch(e){}
+}
+
+function openTransferModal(id){
+  transferEditId = id||null;
+  const modal = document.getElementById('transferModal');
+  document.getElementById('transferModalTitle').textContent = id ? '✏️ แก้ไขรายการโอน' : '＋ เพิ่มรายการโอน';
+  if(id){
+    const arr = loadTransfers();
+    const t = arr.find(x=>x.id===id);
+    if(t){
+      document.getElementById('tf-date').value = t.date||'';
+      document.getElementById('tf-no').value = t.no||'';
+      document.getElementById('tf-po').value = t.po||'';
+      document.getElementById('tf-job').value = t.job||'';
+      document.getElementById('tf-amount').value = t.amount||'';
+      document.getElementById('tf-shop').value = t.shop||'';
+      document.getElementById('tf-detail').value = t.detail||'';
+    }
+  } else {
+    ['tf-date','tf-no','tf-po','tf-job','tf-amount','tf-shop','tf-detail'].forEach(id=>{ document.getElementById(id).value=''; });
+    document.getElementById('tf-date').value = new Date().toISOString().slice(0,10);
+  }
+  modal.classList.add('open');
+}
+function closeTransferModal(){
+  document.getElementById('transferModal').classList.remove('open');
+  transferEditId = null;
+}
+
+function saveTransfer(){
+  const date = document.getElementById('tf-date').value;
+  const no   = document.getElementById('tf-no').value.trim();
+  const po   = document.getElementById('tf-po').value.trim();
+  const job  = document.getElementById('tf-job').value.trim();
+  const amount = parseFloat(document.getElementById('tf-amount').value)||0;
+  const shop = document.getElementById('tf-shop').value.trim();
+  const detail = document.getElementById('tf-detail').value.trim();
+  if(!date||!no){ alert('กรุณากรอกวันที่และเลขใบโอน'); return; }
+  const arr = loadTransfers();
+  if(transferEditId){
+    const idx = arr.findIndex(x=>x.id===transferEditId);
+    if(idx>-1) arr[idx] = {...arr[idx],date,no,po,job,amount,shop,detail};
+  } else {
+    arr.unshift({id:'tr_'+Date.now(),date,no,po,job,amount,shop,detail,_ts:Date.now()});
+  }
+  saveTransfers(arr);
+  closeTransferModal();
+  renderTransferPage();
+}
+
+function deleteTransfer(id){
+  if(!confirm('ยืนยันลบรายการโอนนี้?')) return;
+  const arr = loadTransfers().filter(x=>x.id!==id);
+  saveTransfers(arr);
+  renderTransferPage();
+}
+
+function renderTransferPage(){
+  renderTransferSummary();
+  renderTransferTable();
+}
+
+function renderTransferSummary(){
+  const arr = loadTransfers();
+  const total = arr.length;
+  const amount = arr.reduce((s,t)=>s+(parseFloat(t.amount)||0),0);
+  const shops = new Set(arr.map(t=>t.shop).filter(Boolean)).size;
+  document.getElementById('tsm-total').textContent = total.toLocaleString();
+  document.getElementById('tsm-amount').textContent = '฿'+amount.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('tsm-shops').textContent = shops;
+}
+
+function renderTransferTable(){
+  const arr = loadTransfers();
+  const q = (document.getElementById('transferSearch')||{}).value||'';
+  const filtered = q ? arr.filter(t=>
+    [t.date,t.no,t.po,t.job,t.shop,t.detail].some(v=>String(v||'').toLowerCase().includes(q.toLowerCase()))
+  ) : arr;
+  const tbody = document.getElementById('transferTbody');
+  const nodata = document.getElementById('transferNodata');
+  document.getElementById('transferTableCount').textContent = filtered.length.toLocaleString()+' รายการ';
+  if(!filtered.length){ tbody.innerHTML=''; nodata.style.display='block'; return; }
+  nodata.style.display='none';
+  tbody.innerHTML = filtered.map(t=>{
+    const dateStr = t.date ? new Date(t.date).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'}) : '—';
+    const amt = (parseFloat(t.amount)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+    return `<tr>
+      <td class="td-date">${dateStr}</td>
+      <td class="td-transfer-no">${esc(t.no||'—')}</td>
+      <td class="td-po">${esc(t.po||'—')}</td>
+      <td class="td-muted">${esc(t.job||'—')}</td>
+      <td class="td-amt-tr">฿${amt}</td>
+      <td class="td-vendor">${esc(t.shop||'—')}</td>
+      <td class="td-muted" style="max-width:180px;overflow:hidden;text-overflow:ellipsis;font-size:12px">${esc(t.detail||'—')}</td>
+      <td>
+        <div class="tr-actions">
+          <button class="tr-btn tr-btn-edit" onclick="openTransferModal('${t.id}')">✏️ แก้ไข</button>
+          <button class="tr-btn tr-btn-del" onclick="deleteTransfer('${t.id}')">🗑</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
 /* ─── INIT ─── */
 window.addEventListener('load',()=>{
   buildStorePills();
@@ -1509,7 +1783,10 @@ document.getElementById('search').addEventListener('input',function(){
   renderTable();
 });
 
-/* ── BOTTOM NAV JS ── */
+document.getElementById('transferModal').addEventListener('click',function(e){
+  if(e.target===this) closeTransferModal();
+});
+
 function syncBottomNav(page){
   document.querySelectorAll('#bottomNav .bnav-item[data-page]').forEach(b=>{
     b.classList.toggle('active', b.dataset.page===page);
@@ -1550,7 +1827,7 @@ function closeStoreSheet(){
 <!-- ── STORE BOTTOM SHEET ── -->
 <div class="store-sheet" id="storeSheet">
   <div class="store-sheet-handle"></div>
-  <div class="store-sheet-title">เลือกบริษัท</div>
+  <div class="store-sheet-title">เลือกสาขา</div>
   <div id="storeSheetPills"></div>
 </div>
 
@@ -1568,13 +1845,17 @@ function closeStoreSheet(){
     <span style="font-size:18px;line-height:1;display:block!important">🏢</span>
     <span style="font-size:10px;font-weight:700;display:block!important;visibility:visible!important;opacity:1!important">Vendors</span>
   </button>
+  <button class="bnav-item" data-page="transfers" onclick="openPage('transfers')">
+    <span style="font-size:18px;line-height:1;display:block!important">🔄</span>
+    <span style="font-size:10px;font-weight:700;display:block!important;visibility:visible!important;opacity:1!important">โอน</span>
+  </button>
   <button class="bnav-item" data-page="reports" onclick="openPage('reports')">
     <span style="font-size:18px;line-height:1;display:block!important">📑</span>
     <span style="font-size:10px;font-weight:700;display:block!important;visibility:visible!important;opacity:1!important">Reports</span>
   </button>
   <button class="bnav-item" id="bnavStore" onclick="toggleStoreSheet()">
     <span style="font-size:18px;line-height:1;display:block!important">🏪</span>
-    <span style="font-size:10px;font-weight:700;display:block!important;visibility:visible!important;opacity:1!important">บริษัท</span>
+    <span style="font-size:10px;font-weight:700;display:block!important;visibility:visible!important;opacity:1!important">สาขา</span>
   </button>
 </nav>
 
