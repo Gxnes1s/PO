@@ -674,7 +674,7 @@ tr.row-cancel .td-po{color:var(--red-text)!important}
   </div>
 
   <div class="sidebar-stores">
-    <div class="sidebar-stores-label">สาขา</div>
+    <div class="sidebar-stores-label">บริษัท</div>
     <div class="store-pill-list" id="storePills"></div>
   </div>
 
@@ -706,7 +706,7 @@ tr.row-cancel .td-po{color:var(--red-text)!important}
 <div class="main-wrap">
   <div class="topbar">
     <span class="topbar-title" id="topbarTitle">PO Dashboard</span>
-    <span class="topbar-breadcrumb" id="topbarBreadcrumb">— เลือกสาขาด้านซ้าย</span>
+    <span class="topbar-breadcrumb" id="topbarBreadcrumb">— เลือกบริษัทด้านซ้าย</span>
     <div class="topbar-right">
       <span id="globalFbStatus" style="font-size:11px;padding:3px 10px;border-radius:99px;background:var(--surface2);color:var(--text3);font-weight:600;display:inline-flex;align-items:center;gap:5px;transition:background .3s,color .3s">⏳ กำลังเชื่อมต่อ...</span>
       <span class="topbar-time" id="topbarTime">—</span>
@@ -726,7 +726,7 @@ tr.row-cancel .td-po{color:var(--red-text)!important}
       <div class="upload-zone" id="uploadZone">
         <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" multiple style="display:none">
         <div class="upload-icon">📂</div>
-        <div class="store-label" id="storeLbl">📍 เลือกสาขา</div>
+        <div class="store-label" id="storeLbl">📍 เลือกบริษัท</div>
         <div class="upload-title">ลากไฟล์ Excel มาวางที่นี่ หรือคลิกเพื่อเลือก</div>
         <div class="upload-sub">Export จาก AX แล้ววางได้เลย — ระบบจะ<strong>จับ column อัตโนมัติ</strong><br>รองรับหลายไฟล์พร้อมกัน และ 3,000+ rows ไม่มีปัญหา</div>
         <div class="upload-tags">
@@ -930,7 +930,7 @@ tr.row-cancel .td-po{color:var(--red-text)!important}
       <div class="settings-layout">
         <div class="settings-nav" id="settingsNav">
           <button class="settings-nav-item active" onclick="openSettingsTab('general',this)">ทั่วไป</button>
-          <button class="settings-nav-item" onclick="openSettingsTab('stores',this)">สาขา</button>
+          <button class="settings-nav-item" onclick="openSettingsTab('stores',this)">บริษัท</button>
           <button class="settings-nav-item" onclick="openSettingsTab('columns',this)">Columns</button>
           <button class="settings-nav-item" onclick="openSettingsTab('data',this)">ข้อมูล</button>
         </div>
@@ -1605,9 +1605,9 @@ function renderSettings(tab){
   const panels={
     general:`
       <div class="settings-section">
-        <div class="settings-section-title">สาขาปัจจุบัน</div>
+        <div class="settings-section-title">บริษัทปัจจุบัน</div>
         <div class="setting-row">
-          <div><div class="setting-label">ชื่อสาขา</div></div>
+          <div><div class="setting-label">ชื่อบริษัท</div></div>
           <span class="setting-val">${t.name}</span>
         </div>
         <div class="setting-row">
@@ -1629,7 +1629,7 @@ function renderSettings(tab){
     `,
     stores:`
       <div class="settings-section">
-        <div class="settings-section-title">สาขาทั้งหมด</div>
+        <div class="settings-section-title">บริษัททั้งหมด</div>
         ${STORES.map((st,i)=>{
           const cnt=state[i].rows.length;
           return `<div class="setting-row">
@@ -1666,7 +1666,7 @@ function renderSettings(tab){
       <div class="settings-section">
         <div class="settings-section-title">จัดการข้อมูล</div>
         <div class="setting-row">
-          <div><div class="setting-label">ล้างข้อมูลสาขานี้</div><div class="setting-desc">ลบ ${s.rows.length.toLocaleString()} PO ของ ${t.name}</div></div>
+          <div><div class="setting-label">ล้างข้อมูลบริษัทนี้</div><div class="setting-desc">ลบ ${s.rows.length.toLocaleString()} PO ของ ${t.name}</div></div>
           <button class="btn btn-sm btn-danger" onclick="clearAll()">🗑 ล้างข้อมูล</button>
         </div>
         <div class="setting-row">
@@ -1675,10 +1675,10 @@ function renderSettings(tab){
         </div>
       </div>
       <div class="settings-section">
-        <div class="settings-section-title">ล้างทุกสาขา</div>
+        <div class="settings-section-title">ล้างทุกบริษัท</div>
         <div class="setting-row">
-          <div><div class="setting-label">ล้างข้อมูลทั้งหมด</div><div class="setting-desc">ลบข้อมูลทุกสาขาออกจาก Local Storage</div></div>
-          <button class="btn btn-sm btn-danger" onclick="if(confirm('ยืนยันลบทุกสาขา?')){STORES.forEach((_,i)=>{curStore=i;wipeStore();state[i].rows=[]});curStore=0;applyTheme();document.getElementById('mainSection').style.display='none';document.getElementById('uploadZone').style.display='block';renderSettings('data')}">🗑 ล้างทั้งหมด</button>
+          <div><div class="setting-label">ล้างข้อมูลทั้งหมด</div><div class="setting-desc">ลบข้อมูลทุกบริษัทออกจาก Local Storage</div></div>
+          <button class="btn btn-sm btn-danger" onclick="if(confirm('ยืนยันลบทุกบริษัท?')){STORES.forEach((_,i)=>{curStore=i;wipeStore();state[i].rows=[]});curStore=0;applyTheme();document.getElementById('mainSection').style.display='none';document.getElementById('uploadZone').style.display='block';renderSettings('data')}">🗑 ล้างทั้งหมด</button>
         </div>
       </div>
     `
@@ -2040,7 +2040,7 @@ function closeStoreSheet(){
 <!-- ── STORE BOTTOM SHEET ── -->
 <div class="store-sheet" id="storeSheet">
   <div class="store-sheet-handle"></div>
-  <div class="store-sheet-title">เลือกสาขา</div>
+  <div class="store-sheet-title">เลือกบริษัท</div>
   <div id="storeSheetPills"></div>
 </div>
 
@@ -2064,7 +2064,7 @@ function closeStoreSheet(){
   </button>
   <button class="bnav-item" id="bnavStore" onclick="toggleStoreSheet()">
     <span style="font-size:18px;line-height:1;display:block!important">🏪</span>
-    <span style="font-size:10px;font-weight:700;display:block!important;visibility:visible!important;opacity:1!important">สาขา</span>
+    <span style="font-size:10px;font-weight:700;display:block!important;visibility:visible!important;opacity:1!important">บริษัท</span>
   </button>
 </nav>
 
