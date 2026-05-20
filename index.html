@@ -864,7 +864,7 @@ function buildStorePills(){
 function switchStore(idx){
   if(idx===curStore) return;
   S().sv=document.getElementById('search').value;
-  curStore=idx; applyTheme(); buildStorePills();
+  curStore=idx; applyTheme(); buildStorePills(); updateBnavStore();
   document.getElementById('search').value=S().sv;
   const has=S().rows.length>0;
   document.getElementById('uploadZone').style.display=has?'none':'block';
@@ -884,7 +884,7 @@ function openPage(page){
   const el=document.getElementById('page-'+page);
   if(el) el.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  const nav=document.querySelector(`[data-page="${page}"]`);
+  const nav=document.querySelector(`.sidebar [data-page="${page}"]`);
   if(nav) nav.classList.add('active');
   document.getElementById('topbarBreadcrumb').textContent='/ '+{
     dashboard:'Dashboard',analytics:'Analytics',
@@ -1508,7 +1508,7 @@ document.getElementById('search').addEventListener('input',function(){
 
 /* ── BOTTOM NAV JS ── */
 function syncBottomNav(page){
-  document.querySelectorAll('.bnav-item[data-page]').forEach(b=>{
+  document.querySelectorAll('#bottomNav .bnav-item[data-page]').forEach(b=>{
     b.classList.toggle('active', b.dataset.page===page);
   });
 }
@@ -1528,6 +1528,12 @@ function toggleStoreSheet(){
   const overlay=document.getElementById('storeSheetOverlay');
   if(sheet.classList.contains('open')){ closeStoreSheet(); }
   else{ buildStoreSheet(); sheet.classList.add('open'); overlay.classList.add('open'); }
+}
+function updateBnavStore(){
+  const btn=document.getElementById('bnavStore');
+  if(!btn) return;
+  const st=STORES[curStore];
+  btn.innerHTML=`<span class="bnav-icon" style="width:8px;height:8px;border-radius:50%;background:${st.dot};display:inline-block;margin-bottom:2px"></span><span class="bnav-label" style="color:${st.dot};font-size:9px;max-width:58px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${st.name}</span>`;
 }
 function closeStoreSheet(){
   document.getElementById('storeSheet').classList.remove('open');
