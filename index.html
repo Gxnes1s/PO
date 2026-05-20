@@ -7,7 +7,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, setDoc, doc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBJBGc4uMq2gYOxHdRJRNGDkeBHf-r8pzQ",
@@ -23,7 +23,7 @@ const db = getFirestore(app);
 
 // ── expose to global scope ──
 window._db = db;
-window._fsLib = { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy, onSnapshot };
+window._fsLib = { collection, getDocs, addDoc, updateDoc, deleteDoc, setDoc, doc, query, orderBy, onSnapshot };
 window._firebaseReady = true;
 window.dispatchEvent(new Event('firebase-ready'));
 </script>
@@ -984,31 +984,106 @@ let workbooks = [];
 function S(){ return state[curStore]; }
 function ST(){ return STORES[curStore]; }
 
-/* ─── STORAGE ─── */
-function saveStore(){
-  const s=S(),t=ST();
+/* ─── STORAGE (Firestore shared + localStorage fallback) ─── */
+
+// Firestore document per store: collection "po_stores", doc = store.id
+// doc structure: { rows: [...], hdrs: [...], colMap: {...}, at: ISO string }
+
+let _storeUnsubscribers = {}; // idx -> unsubscribe fn
+
+function _fsStoreCol(){ return window._fsLib.collection(window._db, 'po_stores'); }
+function _fsStoreDoc(idx){ return window._fsLib.doc(window._db, 'po_stores', STORES[idx].id); }
+
+async function saveStore(){
+  const s=S(),t=ST(),idx=curStore;
+  const payload = {
+    rows: s.rows,
+    hdrs: s.hdrs,
+    colMap: s.colMap,
+    at: new Date().toISOString(),
+    _storeId: t.id
+  };
+  // always mirror to localStorage as fast cache
   try{
-    localStorage.setItem(t.sk,JSON.stringify(s.rows));
-    localStorage.setItem(t.sm,JSON.stringify({hdrs:s.hdrs,colMap:s.colMap,at:new Date().toISOString()}));
+    localStorage.setItem(t.sk, JSON.stringify(s.rows));
+    localStorage.setItem(t.sm, JSON.stringify({hdrs:s.hdrs,colMap:s.colMap,at:payload.at}));
   }catch(e){}
+  // save to Firestore (shared)
+  try{
+    if(!window._firebaseReady) throw new Error('not ready');
+    const { setDoc } = window._fsLib;
+    await setDoc(_fsStoreDoc(idx), payload);
+  }catch(err){
+    console.warn('Firestore saveStore failed, localStorage only:', err);
+  }
 }
+
 function loadStore(idx){
+  // Load from localStorage immediately (fast)
   const t=STORES[idx],s=state[idx];
   try{
     const r=localStorage.getItem(t.sk),m=localStorage.getItem(t.sm);
-    if(!r||!m) return false;
-    s.rows=JSON.parse(r);
-    const j=JSON.parse(m); s.hdrs=j.hdrs||[]; s.colMap={...s.colMap,...(j.colMap||{})};
-    const poCol=s.colMap.po||'';
-    if(poCol) s.rows.sort((a,b)=>{
-      const na=parseInt(String(a[poCol]||'').replace(/\D/g,'').slice(-4)||'0',10);
-      const nb=parseInt(String(b[poCol]||'').replace(/\D/g,'').slice(-4)||'0',10);
-      return nb-na;
-    });
-    return s.rows.length>0;
-  }catch(e){ return false; }
+    if(r&&m){
+      s.rows=JSON.parse(r);
+      const j=JSON.parse(m); s.hdrs=j.hdrs||[]; s.colMap={...s.colMap,...(j.colMap||{})};
+      _sortRows(s);
+    }
+  }catch(e){}
+  // Subscribe to Firestore for real-time shared updates
+  _subscribeStore(idx);
+  return s.rows.length>0;
 }
-function wipeStore(){ const t=ST(); localStorage.removeItem(t.sk); localStorage.removeItem(t.sm); }
+
+function _sortRows(s){
+  const poCol=s.colMap.po||'';
+  if(poCol) s.rows.sort((a,b)=>{
+    const na=parseInt(String(a[poCol]||'').replace(/\D/g,'').slice(-4)||'0',10);
+    const nb=parseInt(String(b[poCol]||'').replace(/\D/g,'').slice(-4)||'0',10);
+    return nb-na;
+  });
+}
+
+function _subscribeStore(idx){
+  if(!window._firebaseReady){
+    window.addEventListener('firebase-ready', ()=>_subscribeStore(idx), {once:true});
+    return;
+  }
+  if(_storeUnsubscribers[idx]) _storeUnsubscribers[idx]();
+  const { onSnapshot } = window._fsLib;
+  _storeUnsubscribers[idx] = onSnapshot(_fsStoreDoc(idx), snap => {
+    if(!snap.exists()) return;
+    const d = snap.data();
+    const s = state[idx];
+    s.rows = d.rows || [];
+    s.hdrs = d.hdrs || [];
+    s.colMap = {...s.colMap, ...(d.colMap||{})};
+    _sortRows(s);
+    // mirror to localStorage
+    try{
+      const t=STORES[idx];
+      localStorage.setItem(t.sk, JSON.stringify(s.rows));
+      localStorage.setItem(t.sm, JSON.stringify({hdrs:s.hdrs,colMap:s.colMap,at:d.at||''}));
+    }catch(e){}
+    // if this store is currently active, refresh UI
+    if(idx===curStore){
+      const has=s.rows.length>0;
+      document.getElementById('uploadZone').style.display=has?'none':'block';
+      document.getElementById('mainSection').style.display=has?'block':'none';
+      document.getElementById('resetBtn').classList.toggle('show',has);
+      if(has){ showInfoLoaded(); renderAll(); }
+    }
+  }, err=>{ console.warn('Firestore store['+idx+'] listen error:', err); });
+}
+
+async function wipeStore(){
+  const t=ST(),idx=curStore;
+  localStorage.removeItem(t.sk); localStorage.removeItem(t.sm);
+  try{
+    if(!window._firebaseReady) throw new Error('not ready');
+    const { deleteDoc } = window._fsLib;
+    await deleteDoc(_fsStoreDoc(idx));
+  }catch(err){ console.warn('Firestore wipeStore failed:', err); }
+}
 
 /* ─── THEME ─── */
 function applyTheme(){
@@ -1634,7 +1709,7 @@ function processFiles(files){
     reader.readAsArrayBuffer(file);
   });
 }
-function afterLoad(){
+async function afterLoad(){
   const pr=document.getElementById('processingBadge');
   document.getElementById('processingText').textContent='กำลังวิเคราะห์...';
   const s=S();
@@ -1644,7 +1719,8 @@ function afterLoad(){
   s.hdrs=Object.keys(sample[0]); guessColumns(s.hdrs);
   const inc=workbooks.flatMap(({wb})=>wb.SheetNames.flatMap(sn=>XLSX.utils.sheet_to_json(wb.Sheets[sn],{defval:'',raw:false})));
   mergeData(inc.map(r=>({...r,_status:r[s.colMap.status]||'',_ts:Date.now()})));
-  saveStore();
+  document.getElementById('processingText').textContent='กำลังบันทึกข้อมูลกลาง...';
+  await saveStore();
   pr.classList.remove('show');
   document.getElementById('uploadZone').style.display='none';
   document.getElementById('resetBtn').classList.add('show');
@@ -1653,9 +1729,9 @@ function afterLoad(){
 }
 
 /* ─── RESET / CLEAR ─── */
-function resetAll(){
+async function resetAll(){
   const choice=confirm('ล้างข้อมูลร้านนี้ด้วยไหม?\n\nOK = ล้างหมด  |  Cancel = แค่เปลี่ยนไฟล์');
-  if(choice){ wipeStore(); S().rows=[]; }
+  if(choice){ await wipeStore(); S().rows=[]; }
   workbooks=[]; Object.assign(S(),{af:'all',sv:''});
   document.getElementById('search').value='';
   document.getElementById('uploadZone').style.display='block';
@@ -1665,9 +1741,9 @@ function resetAll(){
   document.getElementById('fileInput').value='';
   if(S().rows.length){ document.getElementById('mainSection').style.display='block'; renderAll(); }
 }
-function clearAll(){
+async function clearAll(){
   if(!confirm('ยืนยันลบข้อมูล PO ของร้านนี้ทั้งหมด?')) return;
-  wipeStore(); S().rows=[];
+  await wipeStore(); S().rows=[];
   document.getElementById('mainSection').style.display='none';
   document.getElementById('uploadZone').style.display='block';
   document.getElementById('resetBtn').classList.remove('show');
