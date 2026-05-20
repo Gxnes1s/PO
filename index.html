@@ -1685,24 +1685,63 @@ function editPO(idx){
 async function savePO(){
   const s = S();
 
-  const newRow = {};
-  newRow[s.colMap.po || 'PO'] = document.getElementById('po-po').value;
-  newRow[s.colMap.vendor || 'Vendor'] = document.getElementById('po-vendor').value;
-  newRow[s.colMap.date || 'Date'] = document.getElementById('po-date').value;
-  newRow[s.colMap.amount || 'Amount'] = document.getElementById('po-amount').value;
-  newRow[s.colMap.job || 'JOB'] = document.getElementById('po-job').value;
-  newRow._status = document.getElementById('po-status').value;
-  newRow._ts = Date.now();
+  const row = {};
 
-  if(editingPOIndex >= 0){
-    s.rows[editingPOIndex] = newRow;
-  } else {
-    s.rows.unshift(newRow);
+  // ใส่ข้อมูลให้ตรงกับ column เดิมของตาราง
+  s.hdrs.forEach(h=>{
+    const hl = h.toLowerCase();
+
+    if(h === s.colMap.po || hl.includes('po')){
+      row[h] = document.getElementById('po-po').value;
+    }
+    else if(h === s.colMap.vendor || hl.includes('vendor') || hl.includes('supplier')){
+      row[h] = document.getElementById('po-vendor').value;
+    }
+    else if(h === s.colMap.date || hl.includes('date') || hl.includes('วันที่')){
+      row[h] = document.getElementById('po-date').value;
+    }
+    else if(h === s.colMap.amount || hl.includes('amount') || hl.includes('total') || hl.includes('ราคา')){
+      row[h] = Number(document.getElementById('po-amount').value || 0);
+    }
+    else if(h === s.colMap.job || hl.includes('job')){
+      row[h] = document.getElementById('po-job').value;
+    }
+    else if(h === s.colMap.status || hl.includes('status') || hl.includes('สถานะ')){
+      row[h] = document.getElementById('po-status').value;
+    }
+    else{
+      row[h] = '';
+    }
+  });
+
+  // fallback ถ้ายังไม่มี header
+  if(!s.hdrs.length){
+    row['PO'] = document.getElementById('po-po').value;
+    row['Vendor'] = document.getElementById('po-vendor').value;
+    row['Date'] = document.getElementById('po-date').value;
+    row['Amount'] = Number(document.getElementById('po-amount').value || 0);
+    row['JOB'] = document.getElementById('po-job').value;
+    row['Status'] = document.getElementById('po-status').value;
+
+    s.hdrs = ['PO','Vendor','Date','Amount','JOB','Status'];
+    s.colMap = {
+      po:'PO',
+      vendor:'Vendor',
+      date:'Date',
+      amount:'Amount',
+      job:'JOB',
+      status:'Status'
+    };
   }
 
-  Object.keys(newRow).forEach(k=>{
-    if(!s.hdrs.includes(k) && !k.startsWith('_')) s.hdrs.push(k);
-  });
+  row._status = document.getElementById('po-status').value;
+  row._ts = Date.now();
+
+  if(editingPOIndex >= 0){
+    s.rows[editingPOIndex] = row;
+  } else {
+    s.rows.unshift(row);
+  }
 
   await saveStore();
   renderAll();
