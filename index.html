@@ -833,6 +833,80 @@ tr.row-cancel .td-po{color:var(--red-text)!important}
   </div>
 </div>
 <script>
+
+
+async function loadCloudExcel(){
+  const urlInput = document.getElementById('cloudExcelUrl');
+  let url = (urlInput.value || '').trim();
+
+  if(!url){
+    alert('กรุณาวางลิงก์ไฟล์ Excel');
+    return;
+  }
+
+  try{
+    showProcessing('กำลังโหลดไฟล์จาก Cloud...');
+
+    // Google Sheets -> CSV export
+    if(url.includes('docs.google.com/spreadsheets')){
+      const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
+      if(match){
+        url = `https://docs.google.com/spreadsheets/d/${match[1]}/export?format=xlsx`;
+      }
+    }
+
+    // OneDrive share link
+    if(url.includes('1drv.ms') || url.includes('onedrive.live.com')){
+      url = 'https://corsproxy.io/?' + encodeURIComponent(url);
+    }
+
+    const res = await fetch(url);
+
+    if(!res.ok){
+      throw new Error('ไม่สามารถโหลดไฟล์ได้');
+    }
+
+    const buffer = await res.arrayBuffer();
+
+    const wb = XLSX.read(buffer,{type:'array'});
+    workbooks = [wb];
+
+    let rows = [];
+    let headers = [];
+
+    wb.SheetNames.forEach(sn=>{
+      const ws = wb.Sheets[sn];
+      const json = XLSX.utils.sheet_to_json(ws,{defval:''});
+
+      if(json.length){
+        rows.push(...json);
+
+        Object.keys(json[0]).forEach(h=>{
+          if(!headers.includes(h)) headers.push(h);
+        });
+      }
+    });
+
+    const s = S();
+    s.rows = rows;
+    s.hdrs = headers;
+
+    detectColumns();
+    await saveStore();
+
+    renderAll();
+    hideProcessing();
+
+    alert('โหลดข้อมูลจาก Cloud สำเร็จ');
+
+  }catch(err){
+    console.error(err);
+    hideProcessing();
+    alert('โหลดไฟล์ Cloud ไม่สำเร็จ');
+  }
+}
+
+
 function togglePw(btn){
   const inp=document.getElementById('loginPassword');
   if(inp.type==='password'){inp.type='text';btn.textContent='🙈';}
@@ -914,6 +988,23 @@ function togglePw(btn){
         </div>
         <div class="upload-note">⚡ ไม่ต้องตั้งค่า — โหลดแล้วแสดงผลเลย</div>
         <div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+        <div style="margin-top:14px;padding-top:14px;border-top:1px dashed rgba(0,0,0,.1)">
+          <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">
+            ☁️ โหลดจาก Excel Cloud / Google Sheets
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+            <input type="text" id="cloudExcelUrl"
+              placeholder="วางลิงก์ .xlsx หรือ Google Sheet"
+              style="width:min(480px,100%);padding:10px 12px;border:1px solid var(--border);border-radius:10px;font-size:13px">
+            <button class="btn-primary" type="button" onclick="loadCloudExcel()">
+              ☁️ โหลด Cloud
+            </button>
+          </div>
+          <div style="font-size:11px;color:var(--text3);margin-top:8px">
+            รองรับ OneDrive, Google Sheets, Dropbox และลิงก์ไฟล์ .xlsx ตรง
+          </div>
+        </div>
+
       </div>
 
       <div class="processing-badge" id="processingBadge">
