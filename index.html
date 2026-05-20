@@ -708,6 +708,7 @@ tr.row-cancel .td-po{color:var(--red-text)!important}
     <span class="topbar-title" id="topbarTitle">PO Dashboard</span>
     <span class="topbar-breadcrumb" id="topbarBreadcrumb">— เลือกสาขาด้านซ้าย</span>
     <div class="topbar-right">
+      <span id="globalFbStatus" style="font-size:11px;padding:3px 10px;border-radius:99px;background:var(--surface2);color:var(--text3);font-weight:600;display:inline-flex;align-items:center;gap:5px;transition:background .3s,color .3s">⏳ กำลังเชื่อมต่อ...</span>
       <span class="topbar-time" id="topbarTime">—</span>
       <button class="btn-topbar" id="resetBtn" onclick="resetAll()">⟳ เปลี่ยนไฟล์</button>
     </div>
@@ -1043,14 +1044,32 @@ function _sortRows(s){
   });
 }
 
+/* ─── GLOBAL FB STATUS BADGE ─── */
+function setFbStatus(state){
+  const el = document.getElementById('globalFbStatus');
+  if(!el) return;
+  if(state==='connecting'){
+    el.textContent='⏳ กำลังเชื่อมต่อ...';
+    el.style.background='var(--amber-bg)'; el.style.color='var(--amber-text)';
+  } else if(state==='online'){
+    el.innerHTML='<span style="width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;flex-shrink:0"></span> เชื่อมต่อแล้ว — ข้อมูล Realtime';
+    el.style.background='var(--green-bg)'; el.style.color='var(--green-text)';
+  } else if(state==='offline'){
+    el.innerHTML='<span style="width:7px;height:7px;border-radius:50%;background:var(--red);display:inline-block;flex-shrink:0"></span> ออฟไลน์ — ข้อมูลเครื่องนี้';
+    el.style.background='var(--red-bg)'; el.style.color='var(--red-text)';
+  }
+}
+
 function _subscribeStore(idx){
   if(!window._firebaseReady){
     window.addEventListener('firebase-ready', ()=>_subscribeStore(idx), {once:true});
     return;
   }
   if(_storeUnsubscribers[idx]) _storeUnsubscribers[idx]();
+  setFbStatus('connecting');
   const { onSnapshot } = window._fsLib;
   _storeUnsubscribers[idx] = onSnapshot(_fsStoreDoc(idx), snap => {
+    setFbStatus('online');
     if(!snap.exists()) return;
     const d = snap.data();
     const s = state[idx];
@@ -1072,7 +1091,7 @@ function _subscribeStore(idx){
       document.getElementById('resetBtn').classList.toggle('show',has);
       if(has){ showInfoLoaded(); renderAll(); }
     }
-  }, err=>{ console.warn('Firestore store['+idx+'] listen error:', err); });
+  }, err=>{ console.warn('Firestore store['+idx+'] listen error:', err); setFbStatus('offline'); });
 }
 
 async function wipeStore(){
@@ -1200,8 +1219,10 @@ function amtOf(row){ const s=S(); return s.colMap.amount?parseFloat(String(row[s
 function vendorOf(row){ const s=S(); return s.colMap.vendor?String(row[s.colMap.vendor]||'').trim():''; }
 
 /* ─── MERGE ─── */
+// Returns list of {poKey, oldStatus, newStatus} for rows that had status changed
 function mergeData(inc){
   const s=S(); s.nR=0; s.uR=0; s.xR=0;
+  s._statusUpdates = []; // track which POs had status changed
   const map=new Map();
   s.rows.forEach(r=>map.set(String(r[s.colMap.po]||'').trim(),r));
   inc.forEach(r=>{
@@ -1212,8 +1233,17 @@ function mergeData(inc){
       if(os===ns){ s.xR++; }
       else{
         const or=STATUS_RANK[os]||0,nr=STATUS_RANK[ns]||0;
-        if(nr>=or||ns==='cancelled'){ map.set(key,{...r,_status:r[s.colMap.status]||'',_ts:Date.now()}); s.uR++; }
-        else s.xR++;
+        if(nr>=or||ns==='cancelled'){
+          // Update ONLY the status field, keep all other existing data intact
+          const updated = {...ex, _status: r[s.colMap.status]||ns, _ts: Date.now()};
+          // also update the raw status column if it exists
+          if(s.colMap.status && r[s.colMap.status] !== undefined){
+            updated[s.colMap.status] = r[s.colMap.status];
+          }
+          map.set(key, updated);
+          s._statusUpdates.push({poKey:key, oldStatus:os, newStatus:ns});
+          s.uR++;
+        } else s.xR++;
       }
     }else{ map.set(key,{...r,_status:r[s.colMap.status]||'',_ts:Date.now()}); s.nR++; }
   });
@@ -1659,11 +1689,25 @@ function renderSettings(tab){
 /* ─── INFO ─── */
 function showInfoMerge(){
   const s=S(),now=new Date();
+  const statusLabel={confirm:'Confirm',received:'Received',invoiced:'Invoiced',cancelled:'Cancel'};
+  const statusColor={confirm:'var(--green-text)',received:'var(--amber-text)',invoiced:'var(--blue-text)',cancelled:'var(--red-text)'};
+  let updatesDetail='';
+  if(s._statusUpdates&&s._statusUpdates.length){
+    const shown=s._statusUpdates.slice(0,5);
+    updatesDetail=`<div style="margin-top:8px;padding:8px 12px;background:var(--amber-bg);border:1px solid var(--amber-light);border-radius:9px;font-size:12.5px;line-height:1.9">`+
+      `<b style="color:var(--amber-text)">🔄 PO ที่เปลี่ยนสถานะ (${s._statusUpdates.length} รายการ):</b><br>`+
+      shown.map(u=>`<span style="font-family:'IBM Plex Mono',monospace;font-weight:700">${esc(u.poKey)}</span>`+
+        ` <span style="color:var(--text3)">${statusLabel[u.oldStatus]||u.oldStatus}</span>`+
+        ` → <span style="color:${statusColor[u.newStatus]||'var(--text)'};font-weight:700">${statusLabel[u.newStatus]||u.newStatus}</span>`).join('<br>')+
+      (s._statusUpdates.length>5?`<br><span style="color:var(--text3)">และอีก ${s._statusUpdates.length-5} รายการ...</span>`:'')+
+      `</div>`;
+  }
   document.getElementById('infoText').innerHTML=
     `บันทึกแล้ว — <b style="color:var(--green-text)">+${s.nR} ใหม่</b> &nbsp;|&nbsp; `+
-    `<b style="color:var(--amber-text)">${s.uR} อัปเดต</b> &nbsp;|&nbsp; `+
-    `<span style="color:var(--text3)">${s.xR} ซ้ำ</span> &nbsp;|&nbsp; `+
-    `รวม <b>${s.rows.length.toLocaleString()} PO</b>${s.colMap.job?' · Job: '+s.colMap.job:''} · ${now.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})} น.`;
+    `<b style="color:var(--amber-text)">${s.uR} อัปเดตสถานะ</b> &nbsp;|&nbsp; `+
+    `<span style="color:var(--text3)">${s.xR} ซ้ำ (ไม่เปลี่ยน)</span> &nbsp;|&nbsp; `+
+    `รวม <b>${s.rows.length.toLocaleString()} PO</b>${s.colMap.job?' · Job: '+s.colMap.job:''} · ${now.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})} น.`+
+    updatesDetail;
   const ts=now.toLocaleDateString('th-TH',{day:'numeric',month:'short'})+' '+now.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
   document.getElementById('topbarTime').textContent=ts;
   document.getElementById('lastUpdateSide').textContent='อัปเดต: '+ts;
@@ -1763,20 +1807,19 @@ function _fsCol(){ return window._fsLib.collection(window._db, 'transfers'); }
 function subscribeTransfers(){
   if(!window._firebaseReady){ window.addEventListener('firebase-ready', subscribeTransfers, {once:true}); return; }
   if(_transferUnsubscribe) _transferUnsubscribe();
-  const fbStatus = document.getElementById('fbStatus');
-  if(fbStatus){ fbStatus.textContent='⏳ กำลังเชื่อมต่อ...'; fbStatus.style.background='var(--amber-bg)'; fbStatus.style.color='var(--amber-text)'; }
+  setFbStatus('connecting');
   const { onSnapshot, query, orderBy } = window._fsLib;
   const q = query(_fsCol(), orderBy('_ts','desc'));
   _transferUnsubscribe = onSnapshot(q, snap => {
     _transfersCache = snap.docs.map(d => ({...d.data(), _fid: d.id}));
-    if(fbStatus){ fbStatus.textContent='🟢 เชื่อมต่อแล้ว — ข้อมูล Realtime'; fbStatus.style.background='var(--green-bg)'; fbStatus.style.color='var(--green-text)'; }
+    setFbStatus('online');
     if(document.getElementById('page-transfers').classList.contains('active')){
       renderTransferSummary();
       renderTransferTable();
     }
   }, err => {
     console.warn('Firestore error:', err);
-    if(fbStatus){ fbStatus.textContent='🔴 ออฟไลน์ — ใช้ข้อมูลเครื่องนี้'; fbStatus.style.background='var(--red-bg)'; fbStatus.style.color='var(--red-text)'; }
+    setFbStatus('offline');
     try{ _transfersCache = JSON.parse(localStorage.getItem(getTransferKey())||'[]'); }catch(e){}
     renderTransferSummary(); renderTransferTable();
   });
