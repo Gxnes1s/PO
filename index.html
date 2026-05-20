@@ -941,6 +941,7 @@ function togglePw(btn){
             <input type="text" id="search" placeholder="ค้นหา PO, Vendor, Invoice...">
           </div>
           <div class="filter-btns" id="filters"></div>
+<button class="btn-primary" onclick="openPOModal()">＋ เพิ่ม PO</button>
         </div>
         <div id="jobRow"></div>
 
@@ -1099,6 +1100,55 @@ function togglePw(btn){
         </div>
       </div>
     </div>
+
+    
+    <!-- ── PO MODAL ── -->
+    <div class="modal-overlay" id="poModal">
+      <div class="modal">
+        <div class="modal-head">
+          <span class="modal-title" id="poModalTitle">เพิ่ม PO</span>
+          <button class="modal-close" onclick="closePOModal()">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">PO</label>
+              <input type="text" class="form-input" id="po-po" placeholder="เลขที่ PO">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Vendor</label>
+              <input type="text" class="form-input" id="po-vendor" placeholder="ชื่อ Vendor">
+            </div>
+            <div class="form-group">
+              <label class="form-label">วันที่</label>
+              <input type="date" class="form-input" id="po-date">
+            </div>
+            <div class="form-group">
+              <label class="form-label">จำนวนเงิน</label>
+              <input type="number" class="form-input" id="po-amount" placeholder="0.00">
+            </div>
+            <div class="form-group">
+              <label class="form-label">JOB</label>
+              <input type="text" class="form-input" id="po-job" placeholder="JOB">
+            </div>
+            <div class="form-group">
+              <label class="form-label">สถานะ</label>
+              <select class="form-select" id="po-status">
+                <option value="confirm">Confirm</option>
+                <option value="received">Received</option>
+                <option value="invoiced">Invoiced</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn" onclick="closePOModal()">ยกเลิก</button>
+          <button class="btn-primary" onclick="savePO()">💾 บันทึก</button>
+        </div>
+      </div>
+    </div>
+
 
     <!-- ── SETTINGS PAGE ── -->
     <div class="page" id="page-settings">
@@ -1582,7 +1632,7 @@ function renderTable(){
   const rest=s.hdrs.filter(h=>!skip.has(h)&&!hideCols.includes(h));
   const cols=[...pCols,...rest].slice(0,10);
   document.getElementById('thead').innerHTML=
-    cols.map(h=>`<th>${esc(h)}</th>`).join('')+'<th style="text-align:center">สถานะ</th>';
+    cols.map(h=>`<th>${esc(h)}</th>`).join('')+'<th style="text-align:center">สถานะ</th><th style="text-align:center">จัดการ</th>';
   const LIMIT=1000;
   tbody.innerHTML=data.slice(0,LIMIT).map(row=>{
     const st=statusOf(row),isC=st==='cancelled';
@@ -1595,11 +1645,77 @@ function renderTable(){
       if(h===s.colMap.date)   return `<td class="td-date">${esc(v)}</td>`;
       return `<td class="td-muted">${esc(v)}</td>`;
     }).join('');
-    return `<tr class="${isC?'row-cancel':''}">${cells}<td style="text-align:center">${badgeHTML(st)}</td></tr>`;
+    return `<tr class="${isC?'row-cancel':''}">${cells}<td style="text-align:center">${badgeHTML(st)}</td><td style="text-align:center"><div class="tr-actions"><button class="tr-btn tr-btn-edit" onclick="editPO(${s.rows.indexOf(row)})">✏️ แก้ไข</button><button class="tr-btn tr-btn-del" onclick="deletePO(${s.rows.indexOf(row)})">🗑 ลบ</button></div></td></tr>`;
   }).join('');
   if(data.length>LIMIT)
-    tbody.innerHTML+=`<tr><td colspan="${cols.length+1}" style="text-align:center;color:var(--text3);font-size:12px;padding:12px;border-top:1px solid var(--border)">แสดง ${LIMIT.toLocaleString()} แถวแรก จากทั้งหมด ${data.length.toLocaleString()} — กรองเพื่อจำกัดผล</td></tr>`;
+    tbody.innerHTML+=`<tr><td colspan="${cols.length+2}" style="text-align:center;color:var(--text3);font-size:12px;padding:12px;border-top:1px solid var(--border)">แสดง ${LIMIT.toLocaleString()} แถวแรก จากทั้งหมด ${data.length.toLocaleString()} — กรองเพื่อจำกัดผล</td></tr>`;
 }
+
+
+let editingPOIndex = -1;
+
+function openPOModal(){
+  editingPOIndex = -1;
+  document.getElementById('poModalTitle').textContent = 'เพิ่ม PO';
+  ['po-po','po-vendor','po-date','po-amount','po-job'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('po-status').value='confirm';
+  document.getElementById('poModal').classList.add('open');
+}
+
+function closePOModal(){
+  document.getElementById('poModal').classList.remove('open');
+}
+
+function editPO(idx){
+  const s = S();
+  const row = s.rows[idx];
+  editingPOIndex = idx;
+
+  document.getElementById('poModalTitle').textContent = 'แก้ไข PO';
+  document.getElementById('po-po').value = row[s.colMap.po] || '';
+  document.getElementById('po-vendor').value = row[s.colMap.vendor] || '';
+  document.getElementById('po-date').value = row[s.colMap.date] || '';
+  document.getElementById('po-amount').value = row[s.colMap.amount] || '';
+  document.getElementById('po-job').value = row[s.colMap.job] || '';
+  document.getElementById('po-status').value = row._status || 'confirm';
+
+  document.getElementById('poModal').classList.add('open');
+}
+
+async function savePO(){
+  const s = S();
+
+  const newRow = {};
+  newRow[s.colMap.po || 'PO'] = document.getElementById('po-po').value;
+  newRow[s.colMap.vendor || 'Vendor'] = document.getElementById('po-vendor').value;
+  newRow[s.colMap.date || 'Date'] = document.getElementById('po-date').value;
+  newRow[s.colMap.amount || 'Amount'] = document.getElementById('po-amount').value;
+  newRow[s.colMap.job || 'JOB'] = document.getElementById('po-job').value;
+  newRow._status = document.getElementById('po-status').value;
+  newRow._ts = Date.now();
+
+  if(editingPOIndex >= 0){
+    s.rows[editingPOIndex] = newRow;
+  } else {
+    s.rows.unshift(newRow);
+  }
+
+  Object.keys(newRow).forEach(k=>{
+    if(!s.hdrs.includes(k) && !k.startsWith('_')) s.hdrs.push(k);
+  });
+
+  await saveStore();
+  renderAll();
+  closePOModal();
+}
+
+async function deletePO(idx){
+  if(!confirm('ยืนยันลบ PO นี้?')) return;
+  S().rows.splice(idx,1);
+  await saveStore();
+  renderAll();
+}
+
 
 function renderAll(){
   renderMetrics(); renderFilters(); renderTable();
