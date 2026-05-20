@@ -1505,6 +1505,34 @@ document.getElementById('search').addEventListener('input',function(){
   S().sv=this.value;
   renderTable();
 });
+
+/* ── BOTTOM NAV JS ── */
+function syncBottomNav(page){
+  document.querySelectorAll('.bnav-item[data-page]').forEach(b=>{
+    b.classList.toggle('active', b.dataset.page===page);
+  });
+}
+function buildStoreSheet(){
+  const el=document.getElementById('storeSheetPills');
+  if(!el) return;
+  el.innerHTML=STORES.map((st,i)=>`
+    <button class="store-sheet-pill${i===curStore?' on':''}"
+      onclick="switchStore(${i});closeStoreSheet()">
+      <span class="store-sheet-dot" style="background:${st.dot}"></span>
+      <span>${st.name}</span>
+    </button>
+  `).join('');
+}
+function toggleStoreSheet(){
+  const sheet=document.getElementById('storeSheet');
+  const overlay=document.getElementById('storeSheetOverlay');
+  if(sheet.classList.contains('open')){ closeStoreSheet(); }
+  else{ buildStoreSheet(); sheet.classList.add('open'); overlay.classList.add('open'); }
+}
+function closeStoreSheet(){
+  document.getElementById('storeSheet').classList.remove('open');
+  document.getElementById('storeSheetOverlay').classList.remove('open');
+}
 </script>
 
 <!-- ── STORE SHEET OVERLAY ── -->
