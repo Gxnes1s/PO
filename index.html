@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PO ERP — Management</title>
+<title>PO ERP — Executive Management</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -23,7 +23,6 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// ── expose to global scope ──
 window._db = db;
 window._auth = auth;
 window._authLib = { signInWithEmailAndPassword, signOut, onAuthStateChanged };
@@ -31,47 +30,28 @@ window._fsLib = { collection, getDocs, addDoc, updateDoc, deleteDoc, setDoc, doc
 window._firebaseReady = true;
 window.dispatchEvent(new Event('firebase-ready'));
 </script>
-<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg:#F0EEE9;
+  --bg:#F4F3EF;
   --surface:#fff;
-  --surface2:#E8E6E0;
-  --surface3:#F7F5F0;
-  --border:rgba(0,0,0,.07);
-  --border-strong:rgba(0,0,0,.13);
-  --text:#1C1B18;
-  --text2:#5C5B55;
-  --text3:#9C9B93;
-  --blue:#1A65B5;
-  --blue-bg:#E8F2FC;
-  --blue-light:#C5DCF5;
-  --blue-text:#0D3D72;
-  --green:#2E6A0A;
-  --green-bg:#E6F3D9;
-  --green-light:#C2E29A;
-  --green-text:#1C430A;
-  --amber:#7A4A08;
-  --amber-bg:#FBF0D8;
-  --amber-light:#F5D68A;
-  --amber-text:#4E2E04;
-  --red:#9C2B2B;
-  --red-bg:#FAEAEA;
-  --red-light:#F5BABA;
-  --red-text:#6B1C1C;
-  --gray-bg:#EDECEA;
-  --gray-text:#5A5956;
-  --radius:14px;
-  --radius-sm:9px;
-  --radius-xs:5px;
-  --shadow:0 1px 4px rgba(0,0,0,.07),0 0 0 1px rgba(0,0,0,.05);
-  --shadow-md:0 6px 24px rgba(0,0,0,.11),0 0 0 1px rgba(0,0,0,.05);
-  --acc:#1A65B5;
-  --acc-bg:#E8F2FC;
-  --acc-light:#C5DCF5;
-  --acc-text:#0D3D72;
-  --nav-bg:#171614;
-  --sidebar-w:240px;
+  --surface2:#EBE9E2;
+  --surface3:#FAF9F5;
+  --border:rgba(0,0,0,.06);
+  --border-strong:rgba(0,0,0,.12);
+  --text:#1A1A18;
+  --text2:#5A5954;
+  --text3:#9A9992;
+  --blue:#1E40AF;
+  --blue-bg:#EFF6FF;
+  --blue-light:#DBEAFE;
+  --blue-text:#1E3A8A;
+  --red:#991B1B;
+  --red-bg:#FEF2F2;
+  --red-light:#FEE2E2;
+  --red-text:#7F1D1D;
+  --acc:#111111;
+  --sidebar-w:250px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{
@@ -83,376 +63,367 @@ body{
   display:flex;
 }
 
-/* ── LOGIN PAGE (เรียบหรู สวยงาม) ── */
+/* ── LOGIN SCREEN: LUXURY DARK CINEMATIC ── */
 .login-screen {
   position: fixed;
   inset: 0;
-  background: linear-gradient(135deg, #F4F2EC 0%, #E3DFD5 100%);
+  background: #090A0F;
   z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
+  overflow: hidden;
+}
+/* แสงไฟ Ambient ด้านหลังแบบหรูหรา */
+.login-screen::before {
+  content: '';
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(99,102,241,0.15) 0%, rgba(168,85,247,0.05) 50%, transparent 100%);
+  top: -10%;
+  left: -10%;
+  animation: pulseGlow 8s infinite alternate;
+}
+.login-screen::after {
+  content: '';
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(20,184,166,0.12) 0%, rgba(59,130,246,0.05) 60%, transparent 100%);
+  bottom: -15%;
+  right: -10%;
+  animation: pulseGlow 12s infinite alternate-reverse;
+}
+@keyframes pulseGlow {
+  0% { transform: translate(0, 0) scale(1); opacity: 0.8; }
+  100% { transform: translate(30px, 40px) scale(1.1); opacity: 1; }
+}
+
+.login-container {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 440px;
+  perspective: 1000px;
 }
 .login-card {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  width: 100%;
-  max-width: 420px;
-  padding: 2.5rem 2.2rem;
-  border-radius: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  box-shadow: 0 20px 50px rgba(28, 27, 24, 0.08), 0 0 0 1px rgba(0,0,0,0.02);
+  background: rgba(17, 19, 28, 0.45);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  padding: 3rem 2.5rem;
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.1);
   text-align: center;
+  animation: cardEntry 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.login-logo {
-  font-family: 'Instrument Serif', serif;
-  font-size: 38px;
-  font-style: italic;
-  font-weight: 400;
-  color: #171614;
-  margin-bottom: 4px;
-  letter-spacing: -0.02em;
+@keyframes cardEntry {
+  from { opacity: 0; transform: translateY(30px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
-.login-subtitle {
-  font-size: 13.5px;
-  color: var(--text2);
-  margin-bottom: 2rem;
-}
-.login-field {
-  text-align: left;
-  margin-bottom: 1.25rem;
-}
-.login-field label {
-  display: block;
+
+/* หัวข้อระยิบระยับแบบพรีเมียม */
+.login-brand-tag {
+  display: inline-block;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text2);
-  margin-bottom: 6px;
-  padding-left: 4px;
+  letter-spacing: 0.2em;
+  color: #38BDF8;
+  background: rgba(56, 189, 248, 0.1);
+  padding: 6px 14px;
+  border-radius: 99px;
+  margin-bottom: 1.2rem;
 }
-.login-input {
+.login-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 32px;
+  font-weight: 600;
+  color: #FFFFFF;
+  letter-spacing: -0.03em;
+  margin-bottom: 8px;
+}
+.login-desc {
+  font-size: 13.5px;
+  color: #94A3B8;
+  line-height: 1.5;
+  margin-bottom: 2.5rem;
+}
+
+/* กล่องกรอกข้อมูลหรูหรา */
+.login-group {
+  text-align: left;
+  margin-bottom: 1.5rem;
+}
+.login-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: #94A3B8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+  padding-left: 2px;
+}
+.login-input-wrapper {
+  position: relative;
+}
+.login-input-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748B;
+  font-size: 15px;
+  transition: color 0.2s;
+}
+.login-ctrl {
   width: 100%;
-  padding: 12px 16px;
-  border-radius: 12px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  background: rgba(255, 255, 255, 0.7);
+  padding: 14px 16px 14px 46px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
   font-family: 'Sarabun', sans-serif;
-  font-size: 14px;
-  color: var(--text);
-  transition: all 0.2s ease;
+  font-size: 14.5px;
+  color: #FFFFFF;
+  transition: all 0.25s ease;
 }
-.login-input:focus {
+.login-ctrl::placeholder {
+  color: #475569;
+}
+.login-ctrl:focus {
   outline: none;
-  border-color: #171614;
-  background: #fff;
-  box-shadow: 0 0 0 3px rgba(23, 22, 20, 0.06);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: #38BDF8;
+  box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.15);
 }
-.btn-login {
+.login-group:focus-within .login-input-icon {
+  color: #38BDF8;
+}
+
+/* ปุ่มกดไล่สีมีมิติ */
+.btn-submit-premium {
   width: 100%;
-  padding: 12px;
-  background: #171614;
-  color: #fff;
+  padding: 14px;
+  background: linear-gradient(135deg, #38BDF8 0%, #0284C7 100%);
+  color: #FFFFFF;
   border: none;
-  border-radius: 12px;
-  font-size: 14px;
+  border-radius: 14px;
+  font-family: 'Plus Jakarta Sans', 'Sarabun', sans-serif;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  margin-top: 0.8rem;
-  transition: background 0.2s;
-  font-family: 'Sarabun', sans-serif;
+  margin-top: 1rem;
+  box-shadow: 0 4px 20px rgba(56, 189, 248, 0.3);
+  transition: all 0.2s ease;
 }
-.btn-login:hover {
-  background: #33312C;
+.btn-submit-premium:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(56, 189, 248, 0.45);
 }
-.login-error {
-  color: var(--red);
-  font-size: 12.5px;
-  margin-top: 10px;
+.btn-submit-premium:active {
+  transform: translateY(1px);
+}
+.login-fail-msg {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #FCA5A5;
+  font-size: 13px;
+  padding: 10px;
+  border-radius: 10px;
+  margin-top: 15px;
   display: none;
 }
 
-/* ── SIDEBAR ── */
+/* ── SIDEBAR WORKSPACE ── */
 .sidebar{
   width:var(--sidebar-w);
-  background:var(--nav-bg);
+  background:#111112;
   color:#fff;
   position:fixed;
   left:0;top:0;bottom:0;
   z-index:300;
   display:flex;
   flex-direction:column;
-  border-right:1px solid rgba(255,255,255,.04);
-  transition:background .35s ease;
 }
 .sidebar-brand{
-  padding:20px 18px 16px;
-  border-bottom:1px solid rgba(255,255,255,.06);
-  display:flex;
-  align-items:center;
-  gap:11px;
+  padding:24px 20px;
+  border-bottom:1px solid rgba(255,255,255,.05);
 }
-.brand-icon{
-  width:40px;height:40px;
-  border-radius:12px;
-  background:rgba(255,255,255,.1);
-  display:flex;align-items:center;justify-content:center;
-  font-size:18px;flex-shrink:0;
-}
-.brand-name{font-size:14px;font-weight:700;letter-spacing:-.01em}
-.brand-sub{font-size:11px;opacity:.45;margin-top:1px}
+.brand-name{font-family:'Plus Jakarta Sans',sans-serif; font-size:15px;font-weight:700;letter-spacing:1px;color:#fff}
+.brand-sub{font-size:11px;color:var(--text3);margin-top:2px}
 
-/* store pills in sidebar */
-.sidebar-stores{
-  padding:14px 14px 10px;
-  border-bottom:1px solid rgba(255,255,255,.06);
-}
-.sidebar-stores-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;opacity:.4;margin-bottom:8px;padding:0 4px;font-weight:700}
-.store-pill-list{display:flex;flex-direction:column;gap:3px}
+.sidebar-stores{padding:16px;}
+.sidebar-stores-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:8px;font-weight:700}
+.store-pill-list{display:flex;flex-direction:column;gap:4px}
 .store-pill{
-  width:100%;border:none;
-  background:rgba(255,255,255,.05);
-  color:rgba(255,255,255,.65);
-  padding:9px 13px;
-  border-radius:10px;
-  display:flex;align-items:center;gap:9px;
-  cursor:pointer;
-  transition:.17s ease;
-  font-size:13px;font-weight:600;
-  font-family:'Sarabun',sans-serif;
-  text-align:left;
+  width:100%;border:none; background:rgba(255,255,255,.03); color:#A1A1AA;
+  padding:10px 14px; border-radius:10px; display:flex; align-items:center; gap:10px;
+  cursor:pointer; transition:.2s; font-size:13.5px; font-weight:500; font-family:'Sarabun',sans-serif; text-align:left;
 }
-.store-pill:hover{background:rgba(255,255,255,.09);color:#fff}
-.store-pill.on{
-  background:var(--acc);
-  color:#fff;
-  box-shadow:0 4px 14px rgba(0,0,0,.25);
-}
-.store-dot{
-  width:8px;height:8px;border-radius:50%;
-  background:rgba(255,255,255,.3);flex-shrink:0;
-}
-.store-pill.on .store-dot{background:rgba(255,255,255,.8)}
+.store-pill:hover{background:rgba(255,255,255,.07);color:#fff}
+.store-pill.on{ background:#fff; color:#000; font-weight:600; }
+.store-dot{ width:7px; height:7px; border-radius:50%; background:#4B5563; }
+.store-pill.on .store-dot{ background:#10B981; }
 
-/* nav */
-.sidebar-nav{flex:1;padding:14px 14px 10px;display:flex;flex-direction:column;gap:3px}
-.sidebar-nav-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;opacity:.4;margin-bottom:6px;padding:0 4px;font-weight:700}
+.sidebar-nav{flex:1; padding:16px; display:flex; flex-direction:column; gap:4px}
 .nav-item{
-  width:100%;border:none;
-  background:transparent;
-  color:rgba(255,255,255,.55);
-  padding:11px 13px;
-  border-radius:10px;
-  display:flex;align-items:center;gap:11px;
-  cursor:pointer;
-  transition:.17s ease;
-  font-size:13.5px;font-weight:600;
-  font-family:'Sarabun',sans-serif;
-  text-align:left;
+  width:100%; border:none; background:transparent; color:#A1A1AA;
+  padding:12px; border-radius:10px; display:flex; align-items:center; gap:12px;
+  cursor:pointer; transition:.2s; font-size:14px; font-weight:500; font-family:'Sarabun',sans-serif; text-align:left;
 }
-.nav-item .nav-icon{font-size:16px;width:20px;text-align:center;flex-shrink:0}
-.nav-item:hover{background:rgba(255,255,255,.07);color:rgba(255,255,255,.9)}
-.nav-item.active{
-  background:rgba(255,255,255,.12);
-  color:#fff;
-}
-.nav-item{position:relative}
+.nav-item:hover{background:rgba(255,255,255,.05); color:#fff}
+.nav-item.active{ background:rgba(255,255,255,.08); color:#fff; font-weight:600; }
 
-.sidebar-footer{
-  padding:14px;
-  border-top:1px solid rgba(255,255,255,.06);
-}
-.last-update-side{
-  font-size:11px;color:rgba(255,255,255,.35);
-  font-family:'IBM Plex Mono',monospace;
-  text-align:center;
-}
+.sidebar-footer{ padding:16px; border-top:1px solid rgba(255,255,255,.05); font-size:11px; color:#4B5563; font-family:'IBM Plex Mono',monospace; text-align:center; }
 
-/* ── MAIN CONTENT ── */
+/* ── MAIN LAYOUT ── */
 .main-wrap{
   margin-left:var(--sidebar-w);
   width:calc(100% - var(--sidebar-w));
-  display:flex;
-  flex-direction:column;
-  min-height:100vh;
+  display:flex; flex-direction:column; min-height:100vh;
 }
-
-/* top bar */
 .topbar{
-  background:rgba(240,238,233,.88);
-  backdrop-filter:blur(14px);
-  -webkit-backdrop-filter:blur(14px);
-  padding:0 1.5rem;
-  height:56px;
-  display:flex;align-items:center;gap:10px;
-  position:sticky;top:0;z-index:200;
-  border-bottom:1px solid rgba(0,0,0,.07);
+  background:rgba(244,243,239,.85); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+  padding:0 2rem; height:60px; display:flex; align-items:center; justify-content:space-between;
+  position:sticky; top:0; z-index:200; border-bottom:1px solid var(--border);
 }
-.topbar-title{font-size:14px;font-weight:700;color:var(--text);letter-spacing:-.01em}
-.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
-.topbar-time{font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;padding:4px 10px;background:var(--surface2);border-radius:99px}
+.topbar-title{font-size:15px; font-weight:600;}
+.topbar-right{display:flex; align-items:center; gap:12px}
+.topbar-time{font-size:11.5px; color:var(--text2); font-family:'IBM Plex Mono',monospace; padding:4px 12px; background:var(--surface2); border-radius:99px}
 .btn-logout{
-  padding:6px 14px;font-size:12px;font-weight:600;
-  border-radius:var(--radius-sm);border:1px solid var(--border-strong);
-  background:var(--surface);color:var(--text2);cursor:pointer;
-  font-family:'Sarabun',sans-serif;transition:.15s;
+  padding:6px 14px; font-size:12.5px; font-weight:500; border-radius:8px;
+  border:1px solid var(--border-strong); background:var(--surface); color:var(--text2);
+  cursor:pointer; font-family:'Sarabun',sans-serif; transition:.15s;
 }
-.btn-logout:hover{background:var(--surface2)}
+.btn-logout:hover{background:var(--surface2); color:var(--text)}
 
 /* ── CONTENT AREA ── */
-.content{
-  flex:1;
-  padding:1.25rem 1.4rem 2rem;
-  max-width:1600px;
-  width:100%;
-}
+.content{ flex:1; padding:2rem; max-width:1400px; width:100%; margin:0 auto; }
+.page-head{ margin-bottom:1.8rem; display:flex; justify-content:space-between; align-items:center; }
+.page-head-title{ font-family:'Plus Jakarta Sans','Sarabun',sans-serif; font-size:24px; font-weight:700; letter-spacing:-0.02em; }
+.page-head-sub{ font-size:13.5px; color:var(--text3); margin-top:2px; }
 
-/* ── PAGE ── */
-.page{display:none;animation:pageFade .22s ease}
-.page.active{display:block}
-@keyframes pageFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-
-/* ── PAGE HEADER ── */
-.page-head{margin-bottom:1.4rem; display:flex; justify-content:space-between; align-items:center;}
-.page-head-title{
-  font-size:22px;font-weight:700;letter-spacing:-.02em;
-  font-family:'Instrument Serif',serif;
-}
-.page-head-sub{font-size:13px;color:var(--text3);margin-top:3px}
-
-/* ── TOOLBAR ── */
-.toolbar{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center}
-.search-wrap{flex:1;min-width:200px;position:relative}
-.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:14px;pointer-events:none}
+/* ── SEARCH & FILTER TOOLBAR ── */
+.toolbar{ display:flex; gap:10px; margin-bottom:1.2rem; }
+.search-wrap{ flex:1; position:relative; }
+.search-icon{ position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--text3); font-size:14px; }
 .search-wrap input{
-  width:100%;padding:10px 16px 10px 40px;
-  border:1px solid var(--border);border-radius:12px;
-  font-size:13.5px;background:var(--surface);
-  color:var(--text);transition:all .18s ease;font-family:'Sarabun',sans-serif;
+  width:100%; padding:11px 16px 11px 42px; border:1px solid var(--border-strong);
+  border-radius:12px; font-size:14px; background:var(--surface); color:var(--text);
+  font-family:'Sarabun',sans-serif; transition:all .2s;
 }
-.search-wrap input:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px rgba(26,101,181,.1)}
+.search-wrap input:focus{ outline:none; border-color:#000; box-shadow:0 0 0 3px rgba(0,0,0,0.05); }
 
-/* ── TABLE ── */
-.table-card{
-  background:var(--surface);
-  border-radius:16px;overflow:hidden;
-  border:1px solid var(--border);
-  box-shadow:var(--shadow);
-}
-.table-header{
-  padding:12px 18px;border-bottom:1px solid var(--border);
-  display:flex;align-items:center;gap:10px;background:var(--surface3);
-}
-.table-header-title{font-size:13.5px;font-weight:700}
-.table-count{font-size:11.5px;color:var(--text3);background:var(--surface2);padding:3px 9px;border-radius:99px;font-family:'IBM Plex Mono',monospace;font-weight:500}
-.table-scroll{overflow-x:auto;max-height:520px;overflow-y:auto}
-table{width:100%;border-collapse:collapse;font-size:13px}
-th{
-  background:#F5F3EE;color:#6B6A65;font-weight:700;
-  font-size:10px;text-transform:uppercase;letter-spacing:.08em;
-  padding:12px 15px;text-align:left;
-  border-bottom:1px solid rgba(0,0,0,.06);
-  position:sticky;top:0;z-index:2;white-space:nowrap;
-}
-td{padding:11px 15px;border-bottom:1px solid var(--border);color:var(--text);white-space:nowrap;vertical-align:middle}
-tr:last-child td{border-bottom:none}
-tr:hover td{background:rgba(26,101,181,.04);transition:.15s}
+/* ── DATA TABLE CARD ── */
+.table-card{ background:var(--surface); border-radius:16px; overflow:hidden; border:1px solid var(--border-strong); box-shadow:0 4px 20px rgba(0,0,0,0.02); }
+.table-header{ padding:14px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; background:var(--surface3); }
+.table-header-title{ font-size:14px; font-weight:600; }
+.table-count{ font-size:12px; color:var(--text2); background:var(--surface2); padding:3px 10px; border-radius:99px; font-family:'IBM Plex Mono',monospace; }
+.table-scroll{ overflow-x:auto; }
+table{ width:100%; border-collapse:collapse; font-size:13.5px; }
+th{ background:var(--surface3); color:var(--text2); font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:.05em; padding:14px 20px; text-align:left; border-bottom:1px solid var(--border-strong); }
+td{ padding:13px 20px; border-bottom:1px solid var(--border); color:var(--text); white-space:nowrap; }
+tr:last-child td{ border-bottom:none; }
+tr:hover td{ background:var(--surface3); }
 
-.td-po{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:var(--blue-text)}
-.td-amt{font-family:'IBM Plex Mono',monospace;font-size:12px;text-align:right;font-weight:500}
+.td-po{ font-family:'IBM Plex Mono',monospace; font-weight:600; color:var(--blue); }
+.td-amt{ font-family:'IBM Plex Mono',monospace; font-weight:600; text-align:right; }
 
-/* Actions buttons inside Table */
-.tr-actions { display:flex; gap:6px; }
-.btn-action {
-  padding:4px 10px; border-radius:6px; border:1px solid var(--border);
-  font-size:12px; font-weight:600; cursor:pointer; font-family:'Sarabun',sans-serif;
-}
-.btn-edit { background:var(--blue-bg); color:var(--blue-text); border-color:var(--blue-light); }
-.btn-edit:hover { background:var(--blue-light); }
-.btn-delete { background:var(--red-bg); color:var(--red-text); border-color:var(--red-light); }
-.btn-delete:hover { background:var(--red-light); }
+/* ROW ACTIONS */
+.tr-actions{ display:flex; gap:6px; justify-content:center; }
+.btn-action{ padding:5px 12px; border-radius:8px; border:1px solid var(--border-strong); font-size:12.5px; font-weight:500; cursor:pointer; font-family:'Sarabun',sans-serif; transition:.15s; }
+.btn-edit{ background:var(--blue-bg); color:var(--blue-text); border-color:var(--blue-light); }
+.btn-edit:hover{ background:var(--blue-light); }
+.btn-delete{ background:var(--red-bg); color:var(--red-text); border-color:var(--red-light); }
+.btn-delete:hover{ background:var(--red-light); }
 
-/* Modal overlay */
-.modal-overlay{
-  display:none; position:fixed; inset:0; background:rgba(0,0,0,.4);
-  z-index:600; backdrop-filter:blur(4px); align-items:center; justify-content:center;
-}
-.modal-overlay.open{display:flex}
-.modal{background:var(--surface); border-radius:20px; box-shadow:0 20px 60px rgba(0,0,0,.2); width:100%; max-width:500px; overflow:hidden}
-.modal-head{padding:1.2rem 1.4rem; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between}
-.modal-title{font-size:15px; font-weight:700}
-.modal-close{width:30px; height:30px; border-radius:8px; border:none; background:var(--surface2); cursor:pointer; display:flex; align-items:center; justify-content:center}
-.modal-body{padding:1.4rem}
-.modal-footer{padding:1rem 1.4rem; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:8px}
+/* ── FORM DIALOG MODAL ── */
+.modal-overlay{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.3); backdrop-filter:blur(4px); z-index:600; align-items:center; justify-content:center; }
+.modal-overlay.open{ display:flex; }
+.modal{ background:var(--surface); border-radius:20px; width:100%; max-width:520px; overflow:hidden; box-shadow:0 25px 60px rgba(0,0,0,0.15); border:1px solid var(--border); animation:modalOpen 0.25s ease; }
+@keyframes modalOpen { from{opacity:0; transform:scale(0.97);} to{opacity:1; transform:scale(1);} }
+.modal-head{ padding:1.25rem 1.5rem; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+.modal-title{ font-size:16px; font-weight:600; }
+.modal-close{ width:32px; height:32px; border-radius:50%; border:none; background:var(--surface2); cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.modal-body{ padding:1.5rem; }
+.modal-footer{ padding:1.25rem 1.5rem; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:8px; background:var(--surface3); }
 
-.form-group{margin-bottom:1rem}
-.form-label{display:block; font-size:12px; font-weight:700; color:var(--text2); margin-bottom:5px; text-transform:uppercase; letter-spacing:.05em}
-.form-input{width:100%; padding:9px 12px; border:1px solid var(--border); border-radius:10px; font-size:13.5px; font-family:'Sarabun',sans-serif;}
-.form-input:focus{outline:none; border-color:var(--acc);}
+.form-group{ margin-bottom:1.2rem; }
+.form-label{ display:block; font-size:12px; font-weight:600; color:var(--text2); margin-bottom:6px; text-transform:uppercase; letter-spacing:.02em; }
+.form-input{ width:100%; padding:11px 14px; border:1px solid var(--border-strong); border-radius:10px; font-size:14px; font-family:'Sarabun',sans-serif; }
+.form-input:focus{ outline:none; border-color:var(--acc); }
 
-.btn{padding:8px 16px; font-size:13px; font-weight:600; border-radius:var(--radius-sm); border:1px solid var(--border-strong); background:var(--surface); cursor:pointer; font-family:'Sarabun',sans-serif}
-.btn-primary{background:var(--acc); color:#fff; border:none}
-.btn-primary:hover{opacity:.9}
+.btn{ padding:10px 18px; font-size:13.5px; font-weight:500; border-radius:10px; border:1px solid var(--border-strong); background:var(--surface); cursor:pointer; font-family:'Sarabun',sans-serif; transition:.15s; }
+.btn:hover{ background:var(--surface2); }
+.btn-primary{ background:var(--acc); color:#fff; border:none; font-weight:600; }
+.btn-primary:hover{ background:#222; color:#fff; }
 </style>
 </head>
 <body>
 
 <div id="loginScreen" class="login-screen">
-  <div class="login-card">
-    <div class="login-logo">PO ERP</div>
-    <div class="login-subtitle">ระบบบริหารจัดการและติดตามใบสั่งซื้อสินค้า</div>
-    
-    <div class="login-field">
-      <label>Email Address</label>
-      <input type="email" id="loginEmail" class="login-input" placeholder="name@company.com" value="admin@po-erp.com">
+  <div class="login-container">
+    <div class="login-card">
+      <div class="login-brand-tag">Enterprise Resource System</div>
+      <h1 class="login-title">PO MANAGEMENT</h1>
+      <p class="login-desc">กรุณาเข้าสู่ระบบบัญชีของคุณ เพื่อเข้าถึงบอร์ดบริหารจัดการข้อมูลใบสั่งซื้อสินค้าส่วนกลาง</p>
+      
+      <div class="login-group">
+        <label class="login-label">Email Address</label>
+        <div class="login-input-wrapper">
+          <span class="login-input-icon">👤</span>
+          <input type="email" id="loginEmail" class="login-ctrl" placeholder="username@company.com" value="admin@po-erp.com">
+        </div>
+      </div>
+      
+      <div class="login-group">
+        <label class="login-label">Password</label>
+        <div class="login-input-wrapper">
+          <span class="login-input-icon">🔒</span>
+          <input type="password" id="loginPassword" class="login-ctrl" placeholder="ป้อนรหัสผ่านของคุณ" value="123456">
+        </div>
+      </div>
+      
+      <button class="btn-submit-premium" onclick="handleLogin()">Sign In Securly</button>
+      <div id="loginError" class="login-fail-msg">❌ อีเมลหรือรหัสผ่านระบบไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง</div>
     </div>
-    
-    <div class="login-field">
-      <label>Password</label>
-      <input type="password" id="loginPassword" class="login-input" placeholder="••••••••" value="123456">
-    </div>
-    
-    <button class="btn-login" onclick="handleLogin()">เข้าสู่ระบบ</button>
-    <div id="loginError" class="login-error">อีเมลหรือรหัสผ่านไม่ถูกต้อง</div>
   </div>
 </div>
 
 <div class="sidebar">
   <div class="sidebar-brand">
-    <div class="brand-icon">📦</div>
-    <div>
-      <div class="brand-name">PO ERP System</div>
-      <div class="brand-sub">Management Workspace</div>
-    </div>
+    <div class="brand-name">PO CONTROL CENTER</div>
+    <div class="brand-sub">ระบบควบคุมและติดตามใบสั่งซื้อ</div>
   </div>
   
   <div class="sidebar-stores">
-    <div class="sidebar-stores-label">เลือกสาขา / คลังสินค้า</div>
+    <div class="sidebar-stores-label">คลังสินค้า / สาขาการทำงาน</div>
     <div class="store-pill-list">
-      <button class="store-pill on" id="btnStore1" onclick="switchStore('Store-A')"><span class="store-dot"></span>Store A</button>
-      <button class="store-pill" id="btnStore2" onclick="switchStore('Store-B')"><span class="store-dot"></span>Store B</button>
+      <button class="store-pill on" id="btnStore1" onclick="switchStore('Store-A')"><span class="store-dot"></span>Store Workspace A</button>
+      <button class="store-pill" id="btnStore2" onclick="switchStore('Store-B')"><span class="store-dot"></span>Store Workspace B</button>
     </div>
   </div>
 
   <div class="sidebar-nav">
-    <div class="sidebar-nav-label">เมนูหลัก</div>
-    <button class="nav-item active"><span class="nav-icon">📋</span>จัดการใบสั่งซื้อ PO</button>
+    <div class="sidebar-nav-label">Navigation</div>
+    <button class="nav-item active"><span>📋</span>จัดการเอกสาร PO</button>
   </div>
 
   <div class="sidebar-footer">
-    <div class="last-update-side">v2.0.26</div>
+    <div>SYSTEM COMPILING v2.5</div>
   </div>
 </div>
 
 <div class="main-wrap">
   <div class="topbar">
-    <div class="topbar-title">ระบบสั่งซื้อสินค้า</div>
+    <div class="topbar-title" id="currentStoreTitle">คลังสินค้า: Store-A</div>
     <div class="topbar-right">
       <div class="topbar-time" id="liveTime">00:00:00</div>
-      <button class="btn-logout" onclick="handleLogout()">ออกจากระบบ</button>
+      <button class="btn-logout" onclick="handleLogout()">Sign Out</button>
     </div>
   </div>
 
@@ -460,34 +431,34 @@ tr:hover td{background:rgba(26,101,181,.04);transition:.15s}
     <div class="page active">
       <div class="page-head">
         <div>
-          <h2 class="page-head-title">Purchase Order Management</h2>
-          <p class="page-head-sub">เพิ่ม ลบ แก้ไข ข้อมูลใบสั่งซื้อและติดตามสถานะ</p>
+          <h2 class="page-head-title">Purchase Order Records</h2>
+          <p class="page-head-sub">รายการฐานข้อมูลใบสำคัญสั่งซื้อ เพิ่ม ลบ และปรับปรุงข้อมูลแบบเรียลไทม์</p>
         </div>
-        <button class="btn btn-primary" onclick="openPoModal('add')">＋ สร้างใบ PO ใหม่</button>
+        <button class="btn btn-primary" onclick="openPoModal('add')">＋ ออกใบ PO ใหม่</button>
       </div>
 
       <div class="toolbar">
         <div class="search-wrap">
           <span class="search-icon">🔍</span>
-          <input type="text" id="searchPo" oninput="renderPoTable()" placeholder="ค้นหาเลขที่ PO, ชื่อร้านค้า, หรือรายการสินค้า...">
+          <input type="text" id="searchPo" oninput="renderPoTable()" placeholder="ค้นหาด่วนด้วย เลขที่ PO, ชื่อซัพพลายเออร์, หรือรายละเอียดสินค้า...">
         </div>
       </div>
 
       <div class="table-card">
         <div class="table-header">
-          <div class="table-header-title">รายการใบสั่งซื้อสินค้าในระบบ</div>
+          <div class="table-header-title">เอกสาร PO ทั้งหมดตามพื้นที่จัดเก็บ</div>
           <div class="table-count" id="poCount">0 รายการ</div>
         </div>
         <div class="table-scroll">
           <table>
             <thead>
               <tr>
-                <th>เลขที่ PO</th>
-                <th>วันที่สั่งซื้อ</th>
-                <th>ชื่อร้านค้า / Vendor</th>
-                <th>รายการสินค้า</th>
-                <th style="text-align:right">ยอดเงินรวม</th>
-                <th style="text-align:center">การจัดการ</th>
+                <th style="width:140px">เลขที่ PO</th>
+                <th style="width:130px">วันที่สั่งซื้อ</th>
+                <th>ชื่อร้านค้า / ผู้จำหน่าย (Vendor)</th>
+                <th>รายการคำสั่งซื้อสินค้า</th>
+                <th style="text-align:right; width:150px">ยอดเงินสุทธิ (บาท)</th>
+                <th style="text-align:center; width:160px">การจัดการ</th>
               </tr>
             </thead>
             <tbody id="poTableBody">
@@ -503,25 +474,25 @@ tr:hover td{background:rgba(26,101,181,.04);transition:.15s}
 <div class="modal-overlay" id="poModal">
   <div class="modal">
     <div class="modal-head">
-      <div class="modal-title" id="modalTitle">สร้างใบสั่งซื้อ PO ใหม่</div>
+      <div class="modal-title" id="modalTitle">ออกใบกำกับสั่งซื้อใหม่</div>
       <button class="modal-close" onclick="closePoModal()">✕</button>
     </div>
     <div class="modal-body">
       <input type="hidden" id="formPoId">
       <div class="form-group">
-        <label class="form-label">เลขที่ PO</label>
+        <label class="form-label">เลขที่เอกสาร PO</label>
         <input type="text" id="formPoNo" class="form-input" placeholder="เช่น PO2026-001">
       </div>
       <div class="form-group">
-        <label class="form-label">ชื่อร้านค้า (Vendor)</label>
-        <input type="text" id="formVendor" class="form-input" placeholder="ชื่อบริษัท หรือ ร้านค้าคู่ค้า">
+        <label class="form-label">ชื่อผู้จำหน่าย / ร้านค้า (Vendor)</label>
+        <input type="text" id="formVendor" class="form-input" placeholder="ระบุชื่อนิติบุคคล หรือร้านค้าคู่ค้า">
       </div>
       <div class="form-group">
-        <label class="form-label">รายการสินค้า / รายละเอียด</label>
-        <input type="text" id="formItems" class="form-input" placeholder="เช่น วัสดุก่อสร้าง, อุปกรณ์สำนักงาน">
+        <label class="form-label">รายละเอียด / รายการวัสดุสินค้า</label>
+        <input type="text" id="formItems" class="form-input" placeholder="เช่น รายการเหล็กเส้น, ปูนซีเมนต์ถุง, เครื่องเขียน">
       </div>
       <div class="form-group">
-        <label class="form-label">ยอดเงินรวม (บาท)</label>
+        <label class="form-label">ยอดรวมมูลค่าทั้งสิ้น (บาท)</label>
         <input type="number" id="formAmount" class="form-input" placeholder="0.00">
       </div>
     </div>
@@ -537,25 +508,27 @@ let currentStore = 'Store-A';
 let allPoData = [];
 let currentEditAction = 'add';
 
-// อัปเดตเวลาเรียลไทม์บนแท็บด้านบน
+// Realtime Timer
 setInterval(() => {
   const now = new Date();
   document.getElementById('liveTime').innerText = now.toLocaleTimeString('th-TH');
 }, 1000);
 
-// ตรวจสอบสถานะการเชื่อมต่อ Firebase และดึงข้อมูล
+// Listener checking Firebase Initialization state
 window.addEventListener('firebase-ready', () => {
   window._authLib.onAuthStateChanged(window._auth, (user) => {
     if (user) {
-      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('loginScreen').style.opacity = '0';
+      setTimeout(() => { document.getElementById('loginScreen').style.display = 'none'; }, 300);
       listenToPoData();
     } else {
       document.getElementById('loginScreen').style.display = 'flex';
+      setTimeout(() => { document.getElementById('loginScreen').style.opacity = '1'; }, 50);
     }
   });
 });
 
-// ฟังก์ชันล็อกอิน
+// Authentication Sign In
 function handleLogin() {
   const email = document.getElementById('loginEmail').value;
   const pass = document.getElementById('loginPassword').value;
@@ -568,20 +541,21 @@ function handleLogin() {
   }
 }
 
-// ฟังก์ชันล็อกเอาท์
+// Authentication Sign Out
 function handleLogout() {
   window._authLib.signOut(window._auth);
 }
 
-// สลับสาขา / คลังสินค้า
+// Switch Working Store Space
 function switchStore(storeName) {
   currentStore = storeName;
+  document.getElementById('currentStoreTitle').innerText = `คลังสินค้า: ${storeName}`;
   document.getElementById('btnStore1').classList.toggle('on', storeName === 'Store-A');
   document.getElementById('btnStore2').classList.toggle('on', storeName === 'Store-B');
   listenToPoData();
 }
 
-// ดึงข้อมูล Realtime Snapshot จาก Firebase Firestore
+// Real-time listener for Firestore Data
 function listenToPoData() {
   if (!window._firebaseReady) return;
   const q = window._fsLib.query(window._fsLib.collection(window._db, 'purchase_orders'), window._fsLib.orderBy('poDate', 'desc'));
@@ -590,7 +564,6 @@ function listenToPoData() {
     allPoData = [];
     snapshot.forEach((doc) => {
       let data = doc.data();
-      // กรองเฉพาะตาม Store ที่เลือก
       if (data.store === currentStore) {
         allPoData.push({ id: doc.id, ...data });
       }
@@ -599,7 +572,7 @@ function listenToPoData() {
   });
 }
 
-// แสดงผลข้อมูลลงตารางพร้อมตัวค้นหา
+// Render dynamic data inside tables with filtration
 function renderPoTable() {
   const tbody = document.getElementById('poTableBody');
   const searchTxt = document.getElementById('searchPo').value.toLowerCase();
@@ -614,7 +587,7 @@ function renderPoTable() {
   document.getElementById('poCount').innerText = `${filtered.length} รายการ`;
 
   if(filtered.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 3rem; color: var(--text3);">ไม่พบข้อมูลใบ PO ในระบบ</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 3.5rem; color: var(--text3);">🗙 ไม่พบข้อมูลเอกสารใบสั่งซื้อใน Workspace นี้</td></tr>`;
     return;
   }
 
@@ -623,10 +596,10 @@ function renderPoTable() {
     tr.innerHTML = `
       <td class="td-po">${po.poNo || '-'}</td>
       <td style="color:var(--text2)">${po.poDate ? po.poDate.substring(0,10) : '-'}</td>
-      <td style="font-weight:500">${po.vendor || '-'}</td>
-      <td style="color:var(--text2); max-width:250px; overflow:hidden; text-overflow:ellipsis;">${po.items || '-'}</td>
+      <td style="font-weight:600">${po.vendor || '-'}</td>
+      <td style="color:var(--text2); max-width:280px; overflow:hidden; text-overflow:ellipsis;">${po.items || '-'}</td>
       <td class="td-amt">${Number(po.amount || 0).toLocaleString('th-TH', {minimumFractionDigits:2})}</td>
-      <td style="text-align:center">
+      <td>
         <div class="tr-actions">
           <button class="btn-action btn-edit" onclick="openPoModal('edit', '${po.id}')">แก้ไข</button>
           <button class="btn-action btn-delete" onclick="deletePoData('${po.id}')">ลบ</button>
@@ -637,21 +610,21 @@ function renderPoTable() {
   });
 }
 
-// เปิดมอดอลสำหรับ เพิ่ม หรือ แก้ไขข้อมูล
+// Open Dialog popup for addition or modification
 function openPoModal(action, id = null) {
   currentEditAction = action;
   const modal = document.getElementById('poModal');
   modal.classList.add('open');
   
   if (action === 'add') {
-    document.getElementById('modalTitle').innerText = 'สร้างใบสั่งซื้อ PO ใหม่';
+    document.getElementById('modalTitle').innerText = 'ออกใบกำกับสั่งซื้อใหม่';
     document.getElementById('formPoId').value = '';
     document.getElementById('formPoNo').value = 'PO' + new Date().getFullYear() + '-' + String(allPoData.length + 1).padStart(3, '0');
     document.getElementById('formVendor').value = '';
     document.getElementById('formItems').value = '';
     document.getElementById('formAmount').value = '';
   } else if (action === 'edit' && id) {
-    document.getElementById('modalTitle').innerText = 'แก้ไขข้อมูลใบสั่งซื้อ PO';
+    document.getElementById('modalTitle').innerText = 'แก้ไขรายละเอียดเอกสารใบสั่งซื้อ';
     const po = allPoData.find(item => item.id === id);
     if (po) {
       document.getElementById('formPoId').value = po.id;
@@ -663,12 +636,12 @@ function openPoModal(action, id = null) {
   }
 }
 
-// ปิดมอดอล
+// Dismiss popup dialog
 function closePoModal() {
   document.getElementById('poModal').classList.remove('open');
 }
 
-// ฟังก์ชัน บันทึกข้อมูล (เพิ่ม/แก้ไข) ไปยัง Firebase Firestore
+// Core function: Save/Update records back into Cloud Firestore
 async function savePoData() {
   const id = document.getElementById('formPoId').value;
   const poNo = document.getElementById('formPoNo').value;
@@ -677,7 +650,7 @@ async function savePoData() {
   const amount = parseFloat(document.getElementById('formAmount').value) || 0;
 
   if(!poNo || !vendor) {
-    alert('กรุณากรอกเลขที่ PO และชื่อร้านค้าด้วยครับ');
+    alert('กรุณากรอกเลขที่เอกสาร PO และชื่อร้านค้าผู้จำหน่ายเพื่อดำเนินการบันทึกครับ');
     return;
   }
 
@@ -692,29 +665,27 @@ async function savePoData() {
 
   try {
     if (currentEditAction === 'add') {
-      // เพิ่มเอกสารใหม่ลง Firestore
       await window._fsLib.addDoc(window._fsLib.collection(window._db, 'purchase_orders'), payload);
     } else if (currentEditAction === 'edit' && id) {
-      // แก้ไขเอกสารเดิมใน Firestore
       const docRef = window._fsLib.doc(window._db, 'purchase_orders', id);
       await window._fsLib.updateDoc(docRef, payload);
     }
     closePoModal();
   } catch (error) {
-    console.error("Error saving PO document: ", error);
-    alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+    console.error("Firestore insertion failed: ", error);
+    alert('ระบบไม่สามารถจัดเก็บข้อมูลปลายทางได้');
   }
 }
 
-// ฟังก์ชันลบข้อมูล PO
+// Core function: Erase record from Firestore
 async function deletePoData(id) {
-  if (confirm('คุณต้องการลบข้อมูลใบสั่งซื้อ PO นี้ใช่หรือไม่? การกระทำนี้ไม่สามารถย้อนคืนได้')) {
+  if (confirm('คุณแน่ใจใช่หรือไม่ที่จะลบเอกสารใบสั่งซื้อฉบับนี้ออกจากระบบฐานข้อมูลหลัก?')) {
     try {
       const docRef = window._fsLib.doc(window._db, 'purchase_orders', id);
       await window._fsLib.deleteDoc(docRef);
     } catch (error) {
-      console.error("Error removing PO document: ", error);
-      alert('เกิดข้อผิดพลาดในการลบข้อมูล');
+      console.error("Firestore delete query failed: ", error);
+      alert('ระบบขัดข้องไม่สามารถลบข้อมูลชิ้นนี้ได้');
     }
   }
 }
