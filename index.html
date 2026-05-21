@@ -3432,35 +3432,52 @@ function closeStoreSheet(){
 function normalizeDateValue(val){
   if(!val) return null;
 
-  // Excel serial date
+  // Excel serial number
   if(typeof val === 'number'){
-    const excelEpoch = new Date((val - 25569) * 86400 * 1000);
-    return excelEpoch;
+    return new Date((val - 25569) * 86400 * 1000);
   }
 
-  // dd/mm/yyyy
   if(typeof val === 'string'){
     let s = val.trim();
 
-    const th = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-    if(th){
-      return new Date(`${th[3]}-${th[2]}-${th[1]}`);
+    // รองรับ 21/5/69 และ 21/05/2569
+    const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+
+    if(m){
+      let day = parseInt(m[1]);
+      let month = parseInt(m[2]) - 1;
+      let year = parseInt(m[3]);
+
+      // ปี พ.ศ.
+      if(year > 2400){
+        year -= 543;
+      }
+
+      // ปี 2 หลัก
+      if(year < 100){
+        year += 2000;
+      }
+
+      return new Date(year, month, day);
     }
 
+    // yyyy-mm-dd
     const d = new Date(s);
-    if(!isNaN(d)) return d;
+
+    if(!isNaN(d)){
+      return d;
+    }
   }
 
   return null;
 }
 
 function calculateTodayPO(rows=[]){
+
   const now = new Date();
-  const y = now.getFullYear();
-  const m = now.getMonth();
-  const d = now.getDate();
 
   return rows.filter(r=>{
+
     const raw =
       r.poDate ||
       r.PODate ||
@@ -3469,23 +3486,22 @@ function calculateTodayPO(rows=[]){
       r.createdDate ||
       r.CreatedDate ||
       r['PO Date'] ||
-      r['Document Date'] ||
       r['Posting Date'] ||
-      r['วันที่'] ||
-      r['Date Requested'];
+      r['Document Date'] ||
+      r['วันที่'];
 
     const dt = normalizeDateValue(raw);
 
-    if(!dt || isNaN(dt)) return false;
+    if(!dt) return false;
 
     return (
-      dt.getFullYear() === y &&
-      dt.getMonth() === m &&
-      dt.getDate() === d
+      dt.getDate() === now.getDate() &&
+      dt.getMonth() === now.getMonth() &&
+      dt.getFullYear() === now.getFullYear()
     );
+
   }).length;
 }
-
 function createTodayCard(targetId){
   const target = document.getElementById(targetId);
   if(!target) return;
