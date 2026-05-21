@@ -656,8 +656,29 @@ tr.row-cancel .td-po{color:var(--red-text)!important}
 .lo-pw-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);border:none;background:transparent;cursor:pointer;opacity:.4;font-size:16px}
 .lo-pw-toggle:hover{opacity:.8}
 .lo-error{padding:10px 12px;background:var(--red-bg);border:1px solid var(--red-light);color:var(--red-text);border-radius:9px;font-size:12.5px;font-weight:600;margin-top:12px;display:none}
-.lo-btn{width:100%;padding:12px;background:var(--text);color:#fff;border:none;border-radius:11px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;margin-top:1rem;transition:.15s}
-.lo-btn:hover{background:#2C2B26}
+
+/* ปรับปรุงปุ่มล็อกอิน ป้องกันสีกลืน และให้คลิกได้ชัวร์ */
+.lo-btn{
+  width:100%;
+  padding:12px;
+  background:#1C1B18 !important; /* บังคับเป็นสีเข้ม */
+  color:#ffffff !important; /* บังคับตัวอักษรสีขาว */
+  border:none;
+  border-radius:11px;
+  font-size:14px;
+  font-weight:700;
+  cursor:pointer;
+  font-family:'Sarabun',sans-serif;
+  margin-top:1rem;
+  display:block !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  pointer-events:auto !important; /* ป้องกันชั้นอื่นมาบังการคลิก */
+  transition:.15s;
+}
+.lo-btn:hover{
+  background:#3b3a35 !important;
+}
 
 @media(max-width:1024px){
   .bento{grid-template-columns:1fr 1fr;gap:10px}
