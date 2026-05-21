@@ -972,6 +972,9 @@ function togglePw(btn){
     <button class="nav-item" data-page="concrete" onclick="openPage('concrete')">
       <span class="nav-icon">🏗️</span><span>คอนกรีต</span>
     </button>
+    <button class="nav-item" data-page="transfers" onclick="switchStore(3)">
+      <span class="nav-icon">🔄</span><span>รายการโอน</span>
+    </button>
     <button class="nav-item active" data-page="dashboard" onclick="openPage('dashboard')">
       <span class="nav-icon">📋</span><span>Dashboard</span>
     </button>
@@ -3004,8 +3007,8 @@ async function handleConcreteFile(file){
     const volCol   = findCol(['vol','คิว','m3','ม3','ลบ.ม','quantity','qty','ปริมาณ','volume','จำนวน']);
     const prCol    = findCol(['pr','purchase request','purchaserequest','ใบขอซื้อ','request no']);
     const poCol    = findCol(['po','purchase order','purchaseorder','เลขpo','po no','pono']);
-    const unitCol  = findCol(['unit price','unitprice','ราคา/หน่วย','ราคาต่อหน่วย','price per unit','unit cost','unitcost']);
-    const totalCol = findCol(['ราคา','total','amount','รวม','ราคารวม','net amount','netamount','price','cost']);
+    const unitCol  = findCol(['unit price','unitprice','ราคา/หน่วย','ราคาต่อหน่วย','price per unit','unit cost','unitcost','ราคาต่อคิว','ราคาต่อม3']);
+    const totalCol = findCol(['ราคารวม','net amount','netamount','ราคา','total','amount','รวม','price','cost']);
     const shopCol  = findCol(['ร้าน','shop','vendor','supplier','บริษัท','store','ร้านค้า']);
     const jobCol   = findCol(['job','jobid','job id','job no','งาน','project','proj']);
     const noteCol  = findCol(['note','หมายเหตุ','remark','detail','comment']);
@@ -3083,8 +3086,25 @@ function renderConcreteSummary(){
   document.getElementById('csm-shops').textContent = shops;
 }
 
+function parseDateTH(str){
+  // รองรับ d/m/yy หรือ d/m/yyyy (พ.ศ. หรือ ค.ศ.)
+  if(!str) return 0;
+  const p = str.trim().split('/');
+  if(p.length!==3) return 0;
+  let [d,m,y] = p.map(Number);
+  if(isNaN(d)||isNaN(m)||isNaN(y)) return 0;
+  // ปี 2 หลัก: ถ้า < 100 ถือว่าเป็น พ.ศ. ย่อ เช่น 69 = 2569 = ค.ศ. 2026
+  if(y < 100) y = y + 2500; // พ.ศ.
+  if(y > 2400) y = y - 543; // แปลงเป็น ค.ศ.
+  return new Date(y, m-1, d).getTime();
+}
 function renderConcreteTable(){
-  const arr = [..._concreteCache].sort((a,b)=>(b._ts||0)-(a._ts||0));
+  const arr = [..._concreteCache].sort((a,b)=>{
+    const da = parseDateTH(a.date);
+    const db = parseDateTH(b.date);
+    if(db !== da) return db - da; // วันล่าสุดบนสุด
+    return (b._ts||0)-(a._ts||0); // ถ้าวันเดียวกันเรียงตาม timestamp
+  });
   const q = (document.getElementById('concreteSearch')||{}).value||'';
   const filtered = q ? arr.filter(c=>
     [c.date,c.st,c.pr,c.po,c.shop,c.job,c.note].some(v=>String(v||'').toLowerCase().includes(q.toLowerCase()))
@@ -3285,6 +3305,10 @@ function closeStoreSheet(){
     <span style="font-size:18px;line-height:1;display:block!important">🏗️</span>
     <span style="font-size:10px;font-weight:700;display:block!important;visibility:visible!important;opacity:1!important">คอนกรีต</span>
   </button>
+  <button class="bnav-item" data-page="transfers" onclick="switchStore(3)">
+    <span style="font-size:18px;line-height:1;display:block!important">🔄</span>
+    <span style="font-size:10px;font-weight:700;display:block!important;visibility:visible!important;opacity:1!important">โอน</span>
+  </button>
   <button class="bnav-item active" data-page="dashboard" onclick="openPage('dashboard')">
     <span style="font-size:18px;line-height:1;display:block!important">📋</span>
     <span style="font-size:10px;font-weight:700;display:block!important;visibility:visible!important;opacity:1!important">Dashboard</span>
@@ -3292,10 +3316,6 @@ function closeStoreSheet(){
   <button class="bnav-item" data-page="analytics" onclick="openPage('analytics')">
     <span style="font-size:18px;line-height:1;display:block!important">📈</span>
     <span style="font-size:10px;font-weight:700;display:block!important;visibility:visible!important;opacity:1!important">Analytics</span>
-  </button>
-  <button class="bnav-item" data-page="transfers" onclick="switchStore(3)">
-    <span style="font-size:18px;line-height:1;display:block!important">🔄</span>
-    <span style="font-size:10px;font-weight:700;display:block!important;visibility:visible!important;opacity:1!important">โอน</span>
   </button>
   <button class="bnav-item" id="bnavStore" onclick="toggleStoreSheet()">
     <span style="font-size:18px;line-height:1;display:block!important">🏪</span>
