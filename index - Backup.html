@@ -1,0 +1,3424 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PO — Management</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, setDoc, doc, getDoc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBJBGc4uMq2gYOxHdRJRNGDkeBHf-r8pzQ",
+  authDomain: "po-erp.firebaseapp.com",
+  projectId: "po-erp",
+  storageBucket: "po-erp.firebasestorage.app",
+  messagingSenderId: "837252410758",
+  appId: "1:837252410758:web:015647963904df4551d007"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+// ── expose to global scope ──
+window._db = db;
+window._auth = auth;
+window._authLib = { signInWithEmailAndPassword, signOut, onAuthStateChanged };
+window._fsLib = { collection, getDocs, addDoc, updateDoc, deleteDoc, setDoc, doc, getDoc, query, orderBy, onSnapshot };
+window._firebaseReady = true;
+window.dispatchEvent(new Event('firebase-ready'));
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#F0EEE9;
+  --surface:#fff;
+  --surface2:#E8E6E0;
+  --surface3:#F7F5F0;
+  --border:rgba(0,0,0,.07);
+  --border-strong:rgba(0,0,0,.13);
+  --text:#1C1B18;
+  --text2:#5C5B55;
+  --text3:#9C9B93;
+  --blue:#1A65B5;
+  --blue-bg:#E8F2FC;
+  --blue-light:#C5DCF5;
+  --blue-text:#0D3D72;
+  --green:#2E6A0A;
+  --green-bg:#E6F3D9;
+  --green-light:#C2E29A;
+  --green-text:#1C430A;
+  --amber:#7A4A08;
+  --amber-bg:#FBF0D8;
+  --amber-light:#F5D68A;
+  --amber-text:#4E2E04;
+  --red:#9C2B2B;
+  --red-bg:#FAEAEA;
+  --red-light:#F5BABA;
+  --red-text:#6B1C1C;
+  --gray-bg:#EDECEA;
+  --gray-text:#5A5956;
+  --radius:14px;
+  --radius-sm:9px;
+  --radius-xs:5px;
+  --shadow:0 1px 4px rgba(0,0,0,.07),0 0 0 1px rgba(0,0,0,.05);
+  --shadow-md:0 6px 24px rgba(0,0,0,.11),0 0 0 1px rgba(0,0,0,.05);
+  --acc:#1A65B5;
+  --acc-bg:#E8F2FC;
+  --acc-light:#C5DCF5;
+  --acc-text:#0D3D72;
+  --nav-bg:#171614;
+  --sidebar-w:240px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'Sarabun',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  font-size:15px;
+  min-height:100vh;
+  display:flex;
+}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  width:var(--sidebar-w);
+  background:var(--nav-bg);
+  color:#fff;
+  position:fixed;
+  left:0;top:0;bottom:0;
+  z-index:300;
+  display:flex;
+  flex-direction:column;
+  border-right:1px solid rgba(255,255,255,.04);
+  transition:background .35s ease;
+}
+.sidebar-brand{
+  padding:20px 18px 16px;
+  border-bottom:1px solid rgba(255,255,255,.06);
+  display:flex;
+  align-items:center;
+  gap:11px;
+}
+.brand-icon{
+  width:40px;height:40px;
+  border-radius:12px;
+  background:rgba(255,255,255,.1);
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;flex-shrink:0;
+}
+.brand-name{font-size:14px;font-weight:700;letter-spacing:-.01em}
+.brand-sub{font-size:11px;opacity:.45;margin-top:1px}
+
+/* store pills in sidebar */
+.sidebar-stores{
+  padding:14px 14px 10px;
+  border-bottom:1px solid rgba(255,255,255,.06);
+}
+.sidebar-stores-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;opacity:.4;margin-bottom:8px;padding:0 4px;font-weight:700}
+.store-pill-list{display:flex;flex-direction:column;gap:3px}
+.store-pill{
+  width:100%;border:none;
+  background:rgba(255,255,255,.05);
+  color:rgba(255,255,255,.65);
+  padding:9px 13px;
+  border-radius:10px;
+  display:flex;align-items:center;gap:9px;
+  cursor:pointer;
+  transition:.17s ease;
+  font-size:13px;font-weight:600;
+  font-family:'Sarabun',sans-serif;
+  text-align:left;
+}
+.store-pill:hover{background:rgba(255,255,255,.09);color:#fff}
+.store-pill.on{
+  background:var(--acc);
+  color:#fff;
+  box-shadow:0 4px 14px rgba(0,0,0,.25);
+}
+.store-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:rgba(255,255,255,.3);flex-shrink:0;
+}
+.store-pill.on .store-dot{background:rgba(255,255,255,.8)}
+
+/* nav */
+.sidebar-nav{flex:1;padding:14px 14px 10px;display:flex;flex-direction:column;gap:3px}
+.sidebar-nav-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;opacity:.4;margin-bottom:6px;padding:0 4px;font-weight:700}
+.nav-item{
+  width:100%;border:none;
+  background:transparent;
+  color:rgba(255,255,255,.55);
+  padding:11px 13px;
+  border-radius:10px;
+  display:flex;align-items:center;gap:11px;
+  cursor:pointer;
+  transition:.17s ease;
+  font-size:13.5px;font-weight:600;
+  font-family:'Sarabun',sans-serif;
+  text-align:left;
+}
+.nav-item .nav-icon{font-size:16px;width:20px;text-align:center;flex-shrink:0}
+.nav-item:hover{background:rgba(255,255,255,.07);color:rgba(255,255,255,.9)}
+.nav-item.active{
+  background:rgba(255,255,255,.12);
+  color:#fff;
+}
+.nav-item.active::before{
+  content:'';
+  position:absolute;
+  left:0;top:0;bottom:0;width:3px;
+  background:var(--acc);
+  border-radius:0 3px 3px 0;
+}
+.nav-item{position:relative}
+
+.sidebar-footer{
+  padding:14px;
+  border-top:1px solid rgba(255,255,255,.06);
+}
+.last-update-side{
+  font-size:11px;color:rgba(255,255,255,.35);
+  font-family:'IBM Plex Mono',monospace;
+  text-align:center;
+}
+
+/* ── MAIN CONTENT ── */
+.main-wrap{
+  margin-left:var(--sidebar-w);
+  width:calc(100% - var(--sidebar-w));
+  display:flex;
+  flex-direction:column;
+  min-height:100vh;
+}
+
+/* top bar */
+.topbar{
+  background:rgba(240,238,233,.88);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+  padding:0 1.5rem;
+  height:56px;
+  display:flex;align-items:center;gap:10px;
+  position:sticky;top:0;z-index:200;
+  border-bottom:1px solid rgba(0,0,0,.07);
+}
+.topbar-title{font-size:14px;font-weight:700;color:var(--text);letter-spacing:-.01em}
+.topbar-breadcrumb{font-size:12px;color:var(--text3)}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.topbar-time{font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;padding:4px 10px;background:var(--surface2);border-radius:99px}
+.btn-topbar{
+  padding:6px 14px;font-size:12px;font-weight:600;
+  border-radius:var(--radius-sm);
+  border:1px solid var(--border-strong);
+  background:var(--surface);color:var(--text2);
+  cursor:pointer;font-family:'Sarabun',sans-serif;
+  transition:.15s;display:none;
+}
+.btn-topbar:hover{background:var(--surface2)}
+.btn-topbar.show{display:inline-block}
+
+/* ── CONTENT AREA ── */
+.content{
+  flex:1;
+  padding:1.25rem 1.4rem 2rem;
+  max-width:1600px;
+  width:100%;
+}
+
+/* ── PAGE ── */
+.page{display:none;animation:pageFade .22s ease}
+.page.active{display:block}
+@keyframes pageFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ── PAGE HEADER ── */
+.page-head{margin-bottom:1.4rem}
+.page-head-title{
+  font-size:22px;font-weight:700;letter-spacing:-.02em;
+  font-family:'Instrument Serif',serif;
+}
+.page-head-sub{font-size:13px;color:var(--text3);margin-top:3px}
+
+/* ── UPLOAD ZONE ── */
+.upload-zone{
+  border:2px dashed rgba(0,0,0,.12);
+  border-radius:20px;
+  padding:4rem 2rem;
+  text-align:center;
+  cursor:pointer;
+  transition:all .22s ease;
+  background:rgba(255,255,255,.7);
+  backdrop-filter:blur(10px);
+  margin-bottom:1.25rem;
+}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--acc);background:var(--acc-bg)}
+.upload-icon{width:68px;height:68px;background:linear-gradient(135deg,var(--surface2),var(--surface3));border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:28px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.store-label{display:inline-flex;align-items:center;gap:6px;padding:5px 13px;border-radius:99px;font-size:13px;font-weight:700;margin-bottom:12px;background:var(--acc-bg);color:var(--acc-text);border:1px solid var(--acc-light)}
+.upload-title{font-size:17px;font-weight:700;margin-bottom:7px}
+.upload-sub{font-size:13.5px;color:var(--text2);margin-bottom:1rem;line-height:1.6}
+.upload-tags{display:flex;gap:7px;justify-content:center;flex-wrap:wrap;margin-bottom:.9rem}
+.upload-tag{padding:3px 11px;background:var(--surface2);border-radius:99px;font-size:12px;color:var(--text2);font-family:'IBM Plex Mono',monospace;border:1px solid var(--border)}
+.upload-note{display:inline-flex;align-items:center;gap:6px;padding:5px 13px;background:var(--green-bg);border-radius:99px;font-size:12px;color:var(--green-text);border:1px solid var(--green-light);font-weight:600}
+.progress-bar{width:100%;max-width:320px;height:4px;background:var(--border);border-radius:2px;margin:1rem auto 0;overflow:hidden;display:none}
+.progress-fill{height:100%;background:var(--acc);border-radius:2px;transition:width .3s}
+.processing-badge{display:none;align-items:center;gap:8px;padding:10px 16px;background:var(--blue-bg);border:1px solid var(--blue-light);border-radius:var(--radius-sm);font-size:13px;color:var(--blue-text);font-weight:500;margin-bottom:1.25rem}
+.processing-badge.show{display:flex}
+.spin{width:15px;height:15px;border:2px solid var(--blue-light);border-top-color:var(--blue);border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── INFO BAR ── */
+.info-bar{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:10px 16px;
+  font-size:13px;color:var(--text2);
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:1.25rem;box-shadow:var(--shadow);flex-wrap:wrap;
+}
+.info-bar-icon{width:26px;height:26px;background:var(--acc-bg);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+
+/* ── HORIZONTAL METRIC ROW ── */
+.bento{
+  display:grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap:12px;
+  margin-bottom:1.25rem;
+}
+.bento-card{
+  background:var(--surface);
+  border-radius:16px;
+  border:1px solid var(--border);
+  box-shadow:var(--shadow);
+  padding:1.1rem 1.2rem;
+  position:relative;overflow:hidden;
+  transition:transform .2s ease,box-shadow .2s ease;
+  cursor:pointer;
+}
+.bento-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md)}
+.bento-card:active{transform:scale(.985)}
+
+/* hero = first card, dark style */
+.bento-hero{
+  background:linear-gradient(145deg,#1C1B18 0%,#2C2B26 100%);
+  color:#fff;
+  border-color:rgba(255,255,255,.05);
+  display:flex;flex-direction:column;justify-content:space-between;
+}
+.bento-hero .hero-label{font-size:10px;text-transform:uppercase;letter-spacing:.1em;opacity:.45;font-weight:700}
+.bento-hero .hero-val{font-size:38px;font-weight:700;font-family:'IBM Plex Mono',monospace;letter-spacing:-.04em;line-height:1;margin:8px 0 4px}
+.bento-hero .hero-sub{font-size:11.5px;opacity:.4}
+.bento-hero .hero-bar{height:3px;background:rgba(255,255,255,.1);border-radius:2px;margin-top:12px;overflow:hidden}
+.bento-hero .hero-bar-fill{height:100%;border-radius:2px;transition:width .6s ease}
+
+/* stat cards */
+.bento-stat{
+  display:flex;flex-direction:column;justify-content:space-between;
+}
+.bento-stat .stat-top{display:flex;align-items:flex-start;justify-content:space-between}
+.bento-stat .stat-icon{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.bento-stat .stat-pct{font-size:10.5px;font-weight:700;font-family:'IBM Plex Mono',monospace;padding:2px 7px;border-radius:99px}
+.bento-stat .stat-label{font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-top:9px}
+.bento-stat .stat-val{font-size:30px;font-weight:700;font-family:'IBM Plex Mono',monospace;letter-spacing:-.03em;line-height:1;margin-top:2px}
+.bento-stat .stat-bar{height:3px;border-radius:2px;margin-top:10px;background:var(--surface2);overflow:hidden}
+.bento-stat .stat-bar-fill{height:100%;border-radius:2px;transition:width .6s ease}
+
+/* colors */
+.c-green{color:var(--green)} .c-amber{color:var(--amber)} .c-blue{color:#1A65B5} .c-red{color:var(--red)}
+.bg-green{background:var(--green-bg)} .bg-amber{background:var(--amber-bg)} .bg-blue{background:#E8F2FC} .bg-red{background:var(--red-bg)}
+.pct-green{background:var(--green-bg);color:var(--green-text)}
+.pct-amber{background:var(--amber-bg);color:var(--amber-text)}
+.pct-blue{background:#E8F2FC;color:#0D3D72}
+.pct-red{background:var(--red-bg);color:var(--red-text)}
+
+.bento-card.af-active{box-shadow:var(--shadow-md),0 0 0 2px var(--acc) inset}
+.bento-stat.af-green.af-active{box-shadow:var(--shadow-md),0 0 0 2px var(--green) inset}
+.bento-stat.af-amber.af-active{box-shadow:var(--shadow-md),0 0 0 2px var(--amber) inset}
+.bento-stat.af-blue.af-active{box-shadow:var(--shadow-md),0 0 0 2px #1A65B5 inset}
+.bento-stat.af-red.af-active{box-shadow:var(--shadow-md),0 0 0 2px var(--red) inset}
+
+/* accent strip bottom */
+.bento-card::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:2px;border-radius:0 0 18px 18px;
+}
+.strip-green::after{background:var(--green)}
+.strip-amber::after{background:var(--amber)}
+.strip-blue::after{background:#1A65B5}
+.strip-red::after{background:var(--red)}
+
+/* ── TOOLBAR ── */
+.toolbar{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center}
+.search-wrap{flex:1;min-width:200px;position:relative}
+.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:14px;pointer-events:none}
+.search-wrap input{
+  width:100%;padding:10px 16px 10px 40px;
+  border:1px solid var(--border);border-radius:12px;
+  font-size:13.5px;background:var(--surface);
+  color:var(--text);transition:all .18s ease;font-family:'Sarabun',sans-serif;
+}
+.search-wrap input:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px rgba(26,101,181,.1)}
+.filter-btns{display:flex;gap:5px;flex-wrap:wrap}
+.fbtn{
+  padding:8px 14px;font-size:12.5px;font-weight:600;
+  border-radius:var(--radius-sm);border:1px solid var(--border-strong);
+  background:var(--surface);color:var(--text2);cursor:pointer;
+  transition:all .15s;font-family:'Sarabun',sans-serif;white-space:nowrap;
+}
+.fbtn:hover{background:var(--surface2)}
+.fbtn.active{background:var(--text);color:#fff;border-color:var(--text)}
+.fbtn.f-green.active{background:var(--green);border-color:var(--green)}
+.fbtn.f-amber.active{background:var(--amber);border-color:var(--amber)}
+.fbtn.f-blue.active{background:#1A65B5;border-color:#1A65B5}
+.fbtn.f-red.active{background:var(--red);border-color:var(--red)}
+
+/* ── TABLE ── */
+.table-card{
+  background:var(--surface);
+  border-radius:16px;overflow:hidden;
+  border:1px solid var(--border);
+  box-shadow:var(--shadow);
+}
+.table-header{
+  padding:12px 18px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;background:var(--surface3);
+}
+.table-header-title{font-size:13.5px;font-weight:700}
+.table-count{font-size:11.5px;color:var(--text3);background:var(--surface2);padding:3px 9px;border-radius:99px;font-family:'IBM Plex Mono',monospace;font-weight:500}
+.table-scroll{overflow-x:auto;max-height:520px;overflow-y:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{
+  background:#F5F3EE;color:#6B6A65;font-weight:700;
+  font-size:10px;text-transform:uppercase;letter-spacing:.08em;
+  padding:12px 15px;text-align:left;
+  border-bottom:1px solid rgba(0,0,0,.06);
+  position:sticky;top:0;z-index:2;white-space:nowrap;
+}
+td{padding:11px 15px;border-bottom:1px solid var(--border);color:var(--text);white-space:nowrap;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(26,101,181,.04);transition:.15s}
+tr.row-cancel td{color:var(--text3);background:rgba(250,234,234,.3)}
+tr.row-cancel:hover td{background:rgba(250,234,234,.55)}
+tr.row-cancel .td-po{color:var(--red-text)!important}
+.td-po{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:var(--blue-text)}
+.td-vendor{font-weight:500;max-width:200px;overflow:hidden;text-overflow:ellipsis}
+.td-muted{color:var(--text2)}
+.td-amt{font-family:'IBM Plex Mono',monospace;font-size:12px;text-align:right;font-weight:500}
+.td-date{color:var(--text2);font-size:12px}
+
+/* Badges */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:99px;font-size:11px;font-weight:700;white-space:nowrap}
+.dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.b-green{background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-light)} .d-green{background:#4B9E1A}
+.b-amber{background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber-light)} .d-amber{background:#C07F20}
+.b-blue{background:var(--blue-bg);color:var(--blue-text);border:1px solid var(--blue-light)}     .d-blue{background:#3A8FDD}
+.b-red{background:var(--red-bg);color:var(--red-text);border:1px solid var(--red-light)}         .d-red{background:#D04444}
+
+.no-data{text-align:center;padding:3.5rem 2rem;color:var(--text3);font-size:14px}
+.no-data-icon{font-size:36px;margin-bottom:10px;opacity:.4}
+.btn{padding:7px 16px;font-size:13px;font-weight:600;border-radius:var(--radius-sm);border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer;transition:all .15s;font-family:'Sarabun',sans-serif}
+.btn-danger{background:var(--red-bg);color:var(--red-text);border-color:rgba(156,43,43,.2)}
+.btn-danger:hover{background:#F5D5D5}
+.btn-update{background:var(--blue-bg);color:var(--blue-text);border-color:var(--blue-light)}
+.btn-update:hover{background:var(--blue-light)}
+.btn-sm{padding:4px 11px;font-size:12px}
+
+/* Job pills */
+.jpill{padding:5px 11px;border-radius:999px;border:1px solid var(--border);background:var(--surface);cursor:pointer;font-size:12px;font-weight:600;font-family:'Sarabun',sans-serif;transition:.15s}
+.jpill.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.jcount{margin-left:5px;opacity:.75}
+.job-row-label{font-size:12px;color:var(--text2);font-weight:700}
+.job-clear{padding:5px 11px;border:none;border-radius:999px;background:var(--red-bg);color:var(--red-text);cursor:pointer;font-size:12px;font-weight:600;font-family:'Sarabun',sans-serif}
+#jobRow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:.75rem}
+
+/* ── ANALYTICS PAGE ── */
+.analytics-bento{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:14px;
+  margin-bottom:1.25rem;
+}
+.ana-card{
+  background:var(--surface);border-radius:16px;border:1px solid var(--border);
+  box-shadow:var(--shadow);padding:1.2rem 1.3rem;
+}
+.ana-card h3{font-size:13.5px;font-weight:700;margin-bottom:1rem;color:var(--text2)}
+.ana-stat-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)}
+.ana-stat-row:last-child{border-bottom:none}
+.ana-stat-label{font-size:13px;color:var(--text)}
+.ana-stat-val{font-size:13px;font-weight:700;font-family:'IBM Plex Mono',monospace}
+.bar-mini{height:6px;border-radius:3px;background:var(--surface2);margin-top:6px;overflow:hidden}
+.bar-mini-fill{height:100%;border-radius:3px;transition:width .6s ease}
+.ana-wide{grid-column:1 / -1}
+.vendor-rank{display:flex;flex-direction:column;gap:8px}
+.vr-item{display:flex;align-items:center;gap:10px}
+.vr-num{width:22px;font-size:11px;font-weight:700;color:var(--text3);font-family:'IBM Plex Mono',monospace;flex-shrink:0}
+.vr-bar-wrap{flex:1;background:var(--surface2);border-radius:4px;height:8px;overflow:hidden}
+.vr-bar{height:100%;border-radius:4px;background:var(--acc);transition:width .6s ease}
+.vr-name{font-size:12.5px;width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0}
+.vr-val{font-size:12px;font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--text2);width:70px;text-align:right;flex-shrink:0}
+
+/* ── VENDORS PAGE ── */
+.vendor-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+  gap:14px;
+}
+.vendor-card{
+  background:var(--surface);border-radius:16px;border:1px solid var(--border);
+  box-shadow:var(--shadow);padding:1.2rem;
+  transition:.2s ease;cursor:default;
+}
+.vendor-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
+.vc-top{display:flex;align-items:center;gap:11px;margin-bottom:12px}
+.vc-avatar{
+  width:42px;height:42px;border-radius:12px;
+  background:var(--acc-bg);color:var(--acc-text);
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:700;flex-shrink:0;
+}
+.vc-name{font-size:14px;font-weight:700;line-height:1.3}
+.vc-id{font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace}
+.vc-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
+.vc-stat{background:var(--surface3);border-radius:9px;padding:8px 10px}
+.vc-stat-label{font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.vc-stat-val{font-size:15px;font-weight:700;font-family:'IBM Plex Mono',monospace;margin-top:2px}
+.vc-status-bar{margin-top:10px;display:flex;gap:4px;height:4px;border-radius:2px;overflow:hidden}
+.vc-status-seg{height:100%;transition:flex .6s ease}
+
+
+/* ── SETTINGS PAGE ── */
+.settings-layout{display:grid;grid-template-columns:220px 1fr;gap:18px}
+.settings-nav{display:flex;flex-direction:column;gap:4px}
+.settings-nav-item{
+  padding:9px 13px;border-radius:10px;cursor:pointer;
+  font-size:13.5px;font-weight:600;color:var(--text2);
+  transition:.15s;border:none;background:transparent;font-family:'Sarabun',sans-serif;text-align:left;
+}
+.settings-nav-item:hover{background:var(--surface2)}
+.settings-nav-item.active{background:var(--acc-bg);color:var(--acc-text)}
+.settings-panel{background:var(--surface);border-radius:16px;border:1px solid var(--border);box-shadow:var(--shadow);padding:1.5rem}
+.settings-section{margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border)}
+.settings-section:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.settings-section-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:.9rem}
+.setting-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+.setting-row:last-child{border-bottom:none}
+.setting-label{font-size:13.5px;font-weight:600}
+.setting-desc{font-size:12px;color:var(--text3);margin-top:2px}
+.setting-val{font-size:13px;color:var(--text2);font-family:'IBM Plex Mono',monospace;padding:4px 10px;background:var(--surface2);border-radius:7px}
+
+/* ── TRANSFER PAGE ── */
+.transfer-toolbar{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center}
+.transfer-search-wrap{flex:1;min-width:200px;position:relative}
+.transfer-search-wrap input{
+  width:100%;padding:10px 16px 10px 40px;
+  border:1px solid var(--border);border-radius:12px;
+  font-size:13.5px;background:var(--surface);
+  color:var(--text);transition:all .18s ease;font-family:'Sarabun',sans-serif;
+}
+.transfer-search-wrap input:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px rgba(26,101,181,.1)}
+.transfer-search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:14px;pointer-events:none}
+.btn-primary{background:var(--acc);color:#fff;border-color:var(--acc);padding:9px 18px;font-size:13px;font-weight:700;border-radius:var(--radius-sm);border:none;cursor:pointer;font-family:'Sarabun',sans-serif;transition:.15s;display:inline-flex;align-items:center;gap:6px}
+.btn-primary:hover{opacity:.88}
+.transfer-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:1.25rem}
+.tsm-card{background:var(--surface);border-radius:14px;border:1px solid var(--border);box-shadow:var(--shadow);padding:1rem 1.2rem}
+.tsm-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);font-weight:700;margin-bottom:4px}
+.tsm-val{font-size:26px;font-weight:700;font-family:'IBM Plex Mono',monospace;letter-spacing:-.03em}
+
+/* Modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:600;backdrop-filter:blur(4px);align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.2);width:100%;max-width:540px;padding:0;overflow:hidden}
+.modal-head{padding:1.2rem 1.4rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:16px;font-weight:700}
+.modal-close{width:30px;height:30px;border-radius:8px;border:none;background:var(--surface2);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;color:var(--text2)}
+.modal-close:hover{background:var(--surface3)}
+.modal-body{padding:1.4rem}
+.modal-footer{padding:1rem 1.4rem;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+.form-group{margin-bottom:1rem}
+.form-label{display:block;font-size:12.5px;font-weight:700;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em}
+.form-input,.form-select,.form-textarea{
+  width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:10px;
+  font-size:13.5px;background:var(--surface);color:var(--text);
+  font-family:'Sarabun',sans-serif;transition:.18s;
+}
+.form-input:focus,.form-select:focus,.form-textarea:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px rgba(26,101,181,.1)}
+.form-textarea{resize:vertical;min-height:72px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tr-actions{display:flex;gap:5px}
+.tr-btn{padding:4px 10px;border-radius:7px;border:1px solid var(--border);background:var(--surface);cursor:pointer;font-size:12px;font-weight:600;font-family:'Sarabun',sans-serif;transition:.15s;color:var(--text2)}
+.tr-btn:hover{background:var(--surface2)}
+.tr-btn-edit{border-color:var(--blue-light);color:var(--blue-text);background:var(--blue-bg)}
+.tr-btn-edit:hover{background:var(--blue-light)}
+.tr-btn-del{border-color:var(--red-light);color:var(--red-text);background:var(--red-bg)}
+.tr-btn-del:hover{background:var(--red-light)}
+.td-transfer-no{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;color:var(--acc-text)}
+.td-amt-tr{font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:600;text-align:right;color:var(--green-text)}
+
+/* store color themes */
+.store-theme-0{--acc:#1A65B5;--acc-bg:#E8F2FC;--acc-light:#C5DCF5;--acc-text:#0D3D72;--nav-bg:#171614}
+.store-theme-1{--acc:#0A6B60;--acc-bg:#E2F5F2;--acc-light:#A0DDD5;--acc-text:#063D38;--nav-bg:#09312C}
+.store-theme-2{--acc:#7A4A08;--acc-bg:#FBF0D8;--acc-light:#F5D68A;--acc-text:#4E2E04;--nav-bg:#4E2E04}
+.store-theme-3{--acc:#6B1C8C;--acc-bg:#F3E8FB;--acc-light:#D9AFF5;--acc-text:#3E0D56;--nav-bg:#2C0A44}
+
+@media(max-width:1200px){
+  .bento{grid-template-columns:repeat(3,1fr)}
+  .analytics-bento{grid-template-columns:1fr 1fr}
+  .reports-grid{grid-template-columns:1fr}
+}
+@media(max-width:820px){
+  :root{--sidebar-w:72px}
+  .brand-name,.brand-sub,.sidebar-stores-label,.store-pill span,.sidebar-nav-label,.sidebar .nav-item span:not(.nav-icon){display:none}
+  #bottomNav span{display:block!important}
+  .store-pill{justify-content:center;padding:10px}
+  .nav-item{justify-content:center;padding:11px}
+  .bento{grid-template-columns:repeat(2,1fr)}
+  .analytics-bento{grid-template-columns:1fr}
+  .settings-layout{grid-template-columns:1fr}
+  .settings-nav{flex-direction:row;overflow-x:auto}
+}
+@media(max-width:560px){
+  :root{--sidebar-w:0px}
+  .sidebar{display:none}
+  .bento{grid-template-columns:1fr 1fr}
+  .main-wrap{padding-bottom:64px}
+  .bottom-nav{display:flex}
+  .store-sheet{display:flex}
+  #bottomNav span{display:block!important;visibility:visible!important}
+  /* modal full-screen on mobile */
+  .modal-overlay{align-items:flex-end;padding:0}
+  .modal{border-radius:20px 20px 0 0;max-width:100%!important;width:100%!important;max-height:92vh;overflow-y:auto}
+  .form-grid{grid-template-columns:1fr!important}
+  /* concrete modal rows → 1 col on mobile */
+  #concreteModal [style*="grid-template-columns:1fr 1fr"],
+  #concreteModal [style*="grid-template-columns:1fr 1fr 1fr"],
+  #concreteModal [style*="grid-template-columns:1fr 2fr"]{
+    grid-template-columns:1fr 1fr!important
+  }
+}
+
+/* ── BOTTOM NAV (mobile) ── */
+.bottom-nav{
+  display:none;
+  position:fixed;bottom:0;left:0;right:0;
+  height:60px;
+  background:var(--nav-bg);
+  border-top:1px solid rgba(255,255,255,.07);
+  z-index:400;
+  align-items:stretch;
+}
+.bnav-item{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:3px;border:none;background:transparent;
+  color:rgba(255,255,255,.45);cursor:pointer;
+  font-family:'Sarabun',sans-serif;
+  padding:6px 4px;transition:.15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.bnav-item:active{background:rgba(255,255,255,.07)}
+.bnav-item.active{color:#fff}
+.bnav-icon{font-size:18px;line-height:1}
+.bnav-label{font-size:9.5px;font-weight:700;letter-spacing:.01em}
+
+
+/* store bottom sheet */
+.store-sheet-overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,.45);z-index:450;
+  backdrop-filter:blur(3px);
+}
+.store-sheet-overlay.open{display:block}
+.store-sheet{
+  display:none;position:fixed;
+  bottom:60px;left:0;right:0;
+  background:var(--nav-bg);
+  border-radius:18px 18px 0 0;
+  border-top:1px solid rgba(255,255,255,.08);
+  z-index:460;padding:12px 14px 16px;
+  flex-direction:column;gap:6px;
+  transform:translateY(100%);
+  transition:transform .25s ease;
+}
+.store-sheet.open{transform:translateY(0)}
+.store-sheet-handle{width:36px;height:4px;background:rgba(255,255,255,.2);border-radius:2px;margin:0 auto 12px}
+.store-sheet-title{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.4);font-weight:700;margin-bottom:4px;padding:0 2px}
+.store-sheet-pill{
+  width:100%;border:none;
+  background:rgba(255,255,255,.06);
+  color:rgba(255,255,255,.7);
+  padding:12px 14px;border-radius:11px;
+  display:flex;align-items:center;gap:10px;
+  cursor:pointer;font-size:14px;font-weight:600;
+  font-family:'Sarabun',sans-serif;text-align:left;
+  transition:.15s;
+}
+.store-sheet-pill:active{background:rgba(255,255,255,.12)}
+.store-sheet-pill.on{background:var(--acc);color:#fff}
+.store-sheet-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+
+
+/* ── VENDOR PAGE ── */
+.vd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.vd-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:16px;
+  padding:18px;cursor:pointer;transition:all .18s;position:relative;overflow:hidden;
+}
+.vd-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px);border-color:var(--acc)}
+.vd-card-top{display:flex;align-items:flex-start;gap:13px;margin-bottom:14px}
+.vd-avatar{
+  width:46px;height:46px;border-radius:14px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:15px;font-weight:700;color:#fff;letter-spacing:-.01em;
+}
+.vd-name{font-size:14.5px;font-weight:700;color:var(--text);line-height:1.3;margin-bottom:2px}
+.vd-code{font-size:11.5px;color:var(--text3);font-family:'IBM Plex Mono',monospace}
+.vd-meta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.vd-tag{padding:3px 9px;border-radius:99px;font-size:11.5px;background:var(--surface2);color:var(--text2);border:1px solid var(--border)}
+.vd-stats-row{display:flex;gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.vd-stat-box{flex:1;padding:8px 10px;text-align:center;border-right:1px solid var(--border)}
+.vd-stat-box:last-child{border-right:none}
+.vd-stat-num{font-size:15px;font-weight:700;color:var(--text);font-family:'IBM Plex Mono',monospace}
+.vd-stat-lbl{font-size:10.5px;color:var(--text3);margin-top:1px}
+.vd-status-bar{display:flex;height:4px;border-radius:99px;overflow:hidden;margin-top:12px;gap:1px}
+.vd-file-badge{
+  position:absolute;top:13px;right:13px;
+  padding:3px 8px;border-radius:99px;font-size:10.5px;font-weight:700;
+  background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-light);
+  display:flex;align-items:center;gap:4px;
+}
+.vd-actions{display:flex;gap:6px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+.vd-btn{
+  flex:1;padding:6px 0;border-radius:8px;border:1px solid var(--border);
+  background:var(--surface2);color:var(--text2);font-size:12px;font-weight:600;
+  cursor:pointer;transition:all .15s;font-family:'Sarabun',sans-serif;
+}
+.vd-btn:hover{background:var(--surface3);color:var(--text)}
+.vd-btn.danger:hover{background:var(--red-bg);color:var(--red-text);border-color:var(--red-light)}
+.vd-empty{
+  grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text3);
+}
+.vd-empty-icon{font-size:40px;margin-bottom:12px}
+.vd-empty-text{font-size:14px;font-weight:600;color:var(--text2);margin-bottom:6px}
+.vd-empty-sub{font-size:13px}
+</style>
+</head>
+<body>
+
+<!-- ── LOGIN OVERLAY ── -->
+<style>
+#loginOverlay{position:fixed;inset:0;z-index:9999;display:flex;font-family:'Sarabun',sans-serif;overflow:hidden}
+.lo-left{
+  flex:1;background:#0F1117;
+  display:flex;flex-direction:column;justify-content:space-between;
+  padding:2.5rem;position:relative;overflow:hidden;
+  min-width:0;
+}
+.lo-grid{
+  position:absolute;inset:0;
+  background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);
+  background-size:40px 40px;
+}
+.lo-glow{
+  position:absolute;width:500px;height:500px;border-radius:50%;
+  background:radial-gradient(circle,rgba(26,101,181,.25) 0%,transparent 70%);
+  top:-100px;left:-100px;pointer-events:none;
+}
+.lo-glow2{
+  position:absolute;width:400px;height:400px;border-radius:50%;
+  background:radial-gradient(circle,rgba(107,28,140,.2) 0%,transparent 70%);
+  bottom:-80px;right:-80px;pointer-events:none;
+}
+.lo-brand{position:relative;z-index:1;display:flex;align-items:center;gap:14px}
+.lo-brand-icon{
+  width:46px;height:46px;border-radius:14px;
+  background:linear-gradient(135deg,#1A65B5,#6B1C8C);
+  display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;
+}
+.lo-brand-name{font-size:17px;font-weight:700;color:#fff;letter-spacing:-.01em}
+.lo-brand-sub{font-size:12px;color:rgba(255,255,255,.4);margin-top:2px}
+.lo-hero{position:relative;z-index:1}
+.lo-hero-title{
+  font-size:clamp(28px,3.5vw,44px);font-weight:700;color:#fff;
+  line-height:1.18;letter-spacing:-.03em;margin-bottom:1.1rem;
+}
+.lo-hero-title span{
+  background:linear-gradient(90deg,#60A5FA,#A78BFA);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.lo-hero-sub{font-size:15px;color:rgba(255,255,255,.45);line-height:1.7;max-width:380px}
+.lo-pills{display:flex;gap:9px;flex-wrap:wrap;position:relative;z-index:1}
+.lo-pill{
+  padding:5px 13px;border-radius:99px;font-size:12px;font-weight:600;
+  border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.5);background:rgba(255,255,255,.05);
+}
+.lo-right{
+  width:420px;flex-shrink:0;background:#fff;
+  display:flex;align-items:center;justify-content:center;
+  padding:3rem 2.8rem;
+}
+.lo-card{width:100%}
+.lo-card-title{font-size:24px;font-weight:700;color:#1C1B18;letter-spacing:-.02em;margin-bottom:.35rem}
+.lo-card-sub{font-size:13.5px;color:#9C9B93;margin-bottom:2rem}
+.lo-field{margin-bottom:1.1rem}
+.lo-label{display:block;font-size:11.5px;font-weight:700;color:#5C5B55;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px}
+.lo-input{
+  width:100%;padding:11px 14px;
+  border:1.5px solid #E8E6E0;border-radius:11px;
+  font-size:14px;font-family:'Sarabun',sans-serif;color:#1C1B18;
+  outline:none;transition:all .18s;box-sizing:border-box;
+  background:#FAFAF8;
+}
+.lo-input:focus{border-color:#1A65B5;box-shadow:0 0 0 3.5px rgba(26,101,181,.12);background:#fff}
+.lo-input::placeholder{color:#C0BEB8}
+.lo-pw-wrap{position:relative}
+.lo-pw-toggle{
+  position:absolute;right:12px;top:50%;transform:translateY(-50%);
+  background:none;border:none;cursor:pointer;color:#9C9B93;font-size:16px;padding:4px;
+  transition:color .15s;
+}
+.lo-pw-toggle:hover{color:#1C1B18}
+.lo-error{
+  display:none;margin-bottom:1rem;padding:10px 14px;
+  background:#FAEAEA;border:1px solid #F5BABA;border-radius:10px;
+  font-size:13px;color:#6B1C1C;font-weight:600;
+  display:flex;align-items:center;gap:8px;
+}
+.lo-error.show{display:flex}
+.lo-btn{
+  width:100%;padding:12.5px;margin-top:.3rem;
+  background:linear-gradient(135deg,#1A65B5 0%,#1558A0 100%);
+  color:#fff;border:none;border-radius:12px;
+  font-size:14.5px;font-weight:700;font-family:'Sarabun',sans-serif;
+  cursor:pointer;transition:all .18s;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  letter-spacing:.01em;
+}
+.lo-btn:hover{opacity:.92;transform:translateY(-1px);box-shadow:0 6px 20px rgba(26,101,181,.35)}
+.lo-btn:active{transform:translateY(0);box-shadow:none}
+.lo-btn:disabled{opacity:.6;cursor:not-allowed;transform:none;box-shadow:none}
+.lo-divider{display:flex;align-items:center;gap:12px;margin:1.4rem 0;color:#C0BEB8;font-size:12px}
+.lo-divider::before,.lo-divider::after{content:'';flex:1;height:1px;background:#E8E6E0}
+.lo-footer{margin-top:1.8rem;font-size:12px;color:#C0BEB8;text-align:center;line-height:1.6}
+@keyframes lo-spin{to{transform:rotate(360deg)}}
+.lo-spin{width:16px;height:16px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:lo-spin .65s linear infinite}
+@keyframes lo-shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+.lo-shake{animation:lo-shake .4s ease}
+@media(max-width:680px){
+  #loginOverlay{flex-direction:column}
+  .lo-left{display:none}
+  .lo-right{width:100%;flex:1;padding:2rem 1.5rem}
+}
+</style>
+<div id="loginOverlay">
+  <!-- Left panel -->
+  <div class="lo-left">
+    <div class="lo-grid"></div>
+    <div class="lo-glow"></div>
+    <div class="lo-glow2"></div>
+    <div class="lo-brand">
+      <div class="lo-brand-icon">📊</div>
+      <div>
+        <div class="lo-brand-name">PO</div>
+        <div class="lo-brand-sub">Management System</div>
+      </div>
+    </div>
+    <div class="lo-hero">
+      <div class="lo-hero-title">จัดการ Purchase Order<br><span>ทุกบริษัท ที่เดียว</span></div>
+      <div class="lo-hero-sub">ติดตามสถานะ PO แบบ Realtime เชื่อมข้อมูลทุกบริษัทพร้อมกัน วิเคราะห์และออกรายงานได้ทันที</div>
+    </div>
+    <div class="lo-pills">
+      <div class="lo-pill">📍 ส.เขมราฐ</div>
+      <div class="lo-pill">📍 ส.สิทธิโชค</div>
+      <div class="lo-pill">📍 ส.ทรานสปอต</div>
+      <div class="lo-pill">🔄 รายการโอน</div>
+    </div>
+  </div>
+  <!-- Right panel -->
+  <div class="lo-right">
+    <div class="lo-card">
+      <div class="lo-card-title">เข้าสู่ระบบ</div>
+      <div class="lo-card-sub">ใส่ข้อมูลบัญชีของคุณเพื่อดำเนินการต่อ</div>
+
+      <div class="lo-field">
+        <label class="lo-label" for="loginEmail">อีเมล</label>
+        <input class="lo-input" id="loginEmail" type="email" placeholder="your@email.com"
+          onkeydown="if(event.key==='Enter')document.getElementById('loginPassword').focus()">
+      </div>
+
+      <div class="lo-field">
+        <label class="lo-label" for="loginPassword">รหัสผ่าน</label>
+        <div class="lo-pw-wrap">
+          <input class="lo-input" id="loginPassword" type="password" placeholder="••••••••"
+            style="padding-right:42px" onkeydown="if(event.key==='Enter')doLogin()">
+          <button class="lo-pw-toggle" type="button" onclick="togglePw(this)" tabindex="-1">👁</button>
+        </div>
+      </div>
+
+      <div id="loginError" class="lo-error">
+        <span>⚠️ กรุณากรอกข้อมูลให้ครบถ้วน</span><span id="loginErrorText"></span>
+      </div>
+
+      <button class="lo-btn" id="loginBtn" onclick="doLogin()">
+        <span id="loginBtnText">เข้าสู่ระบบ</span>
+      </button>
+
+      <div class="lo-footer">
+        ระบบสำหรับพนักงานที่ได้รับอนุญาตเท่านั้น<br>
+        ติดต่อผู้ดูแลระบบหากไม่สามารถเข้าสู่ระบบได้
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+
+
+async function loadCloudExcel(){
+  const urlInput = document.getElementById('cloudExcelUrl');
+  let url = (urlInput.value || '').trim();
+
+  if(!url){
+    alert('กรุณาวางลิงก์ไฟล์ Excel');
+    return;
+  }
+
+  try{
+    showProcessing('กำลังโหลดไฟล์จาก Cloud...');
+
+    // Google Sheets -> CSV export
+    if(url.includes('docs.google.com/spreadsheets')){
+      const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
+      if(match){
+        url = `https://docs.google.com/spreadsheets/d/${match[1]}/export?format=xlsx`;
+      }
+    }
+
+    // OneDrive share link
+    if(url.includes('1drv.ms') || url.includes('onedrive.live.com')){
+      url = 'https://corsproxy.io/?' + encodeURIComponent(url);
+    }
+
+    const res = await fetch(url);
+
+    if(!res.ok){
+      throw new Error('ไม่สามารถโหลดไฟล์ได้');
+    }
+
+    const buffer = await res.arrayBuffer();
+
+    const wb = XLSX.read(buffer,{type:'array'});
+    workbooks = [wb];
+
+    let rows = [];
+    let headers = [];
+
+    wb.SheetNames.forEach(sn=>{
+      const ws = wb.Sheets[sn];
+      const json = XLSX.utils.sheet_to_json(ws,{defval:''});
+
+      if(json.length){
+        rows.push(...json);
+
+        Object.keys(json[0]).forEach(h=>{
+          if(!headers.includes(h)) headers.push(h);
+        });
+      }
+    });
+
+    const s = S();
+    s.rows = rows;
+    s.hdrs = headers;
+
+    detectColumns();
+    await saveStore();
+
+    renderAll();
+    hideProcessing();
+
+    alert('โหลดข้อมูลจาก Cloud สำเร็จ');
+
+  }catch(err){
+    console.error(err);
+    hideProcessing();
+    alert('โหลดไฟล์ Cloud ไม่สำเร็จ');
+  }
+}
+
+
+function togglePw(btn){
+  const inp=document.getElementById('loginPassword');
+  if(inp.type==='password'){inp.type='text';btn.textContent='🙈';}
+  else{inp.type='password';btn.textContent='👁';}
+}
+</script>
+
+<!-- ── SIDEBAR ── -->
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon">📊</div>
+    <div>
+      <div class="brand-name">PO</div>
+      <div class="brand-sub">Management System</div>
+    </div>
+  </div>
+
+  <div class="sidebar-stores">
+    <div class="sidebar-stores-label">บริษัท</div>
+    <div class="store-pill-list" id="storePills"></div>
+  </div>
+
+  <div class="sidebar-nav">
+    <div class="sidebar-nav-label">เมนู</div>
+    <button class="nav-item" data-page="concrete" onclick="openPage('concrete')">
+      <span class="nav-icon">🏗️</span><span>คอนกรีต</span>
+    </button>
+    <button class="nav-item" data-page="transfers" onclick="openPage('transfers')">
+      <span class="nav-icon">🔄</span><span>รายการโอน</span>
+    </button>
+    <button class="nav-item active" data-page="dashboard" onclick="openPage('dashboard')">
+      <span class="nav-icon">📋</span><span>Dashboard</span>
+    </button>
+    <button class="nav-item" data-page="analytics" onclick="openPage('analytics')">
+      <span class="nav-icon">📈</span><span>Analytics</span>
+    </button>
+    <button class="nav-item" data-page="settings" onclick="openPage('settings')">
+      <span class="nav-icon">⚙️</span><span>Settings</span>
+    </button>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="last-update-side" id="lastUpdateSide">อัปเดต: —</div>
+  </div>
+</div>
+
+<!-- ── MAIN ── -->
+<div class="main-wrap">
+  <div class="topbar">
+    <span class="topbar-title" id="topbarTitle">PO Dashboard</span>
+    <span class="topbar-breadcrumb" id="topbarBreadcrumb">— เลือกบริษัทด้านซ้าย</span>
+    <div class="topbar-right">
+      <span id="globalFbStatus" style="font-size:11px;padding:3px 10px;border-radius:99px;background:var(--surface2);color:var(--text3);font-weight:600;display:inline-flex;align-items:center;gap:5px;transition:background .3s,color .3s">⏳ กำลังเชื่อมต่อ...</span>
+      <span class="topbar-time" id="topbarTime">—</span>
+      <span id="topbarUser" style="font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;padding:4px 10px;background:var(--surface2);border-radius:99px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+      <button class="btn-topbar show" id="logoutBtn" onclick="doLogout()" style="color:var(--red-text);border-color:var(--red-light)">⏏ ออกจากระบบ</button>
+      <button class="btn-topbar" id="resetBtn" onclick="resetAll()">⟳ เปลี่ยนไฟล์</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ── DASHBOARD PAGE ── -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-head">
+        <div class="page-head-title">Dashboard</div>
+        <div class="page-head-sub" id="pageHeadSub">สรุปภาพรวม Purchase Order</div>
+      </div>
+
+      <div class="upload-zone" id="uploadZone">
+        <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" multiple style="display:none">
+        <div class="upload-icon">📂</div>
+        <div class="store-label" id="storeLbl">📍 เลือกบริษัท</div>
+        <div class="upload-title">ลากไฟล์ Excel มาวางที่นี่ หรือคลิกเพื่อเลือก</div>
+        <div class="upload-sub">Export จาก AX แล้ววางได้เลย — ระบบจะ<strong>จับ column อัตโนมัติ</strong><br>รองรับหลายไฟล์พร้อมกัน และ 3,000+ rows ไม่มีปัญหา</div>
+        <div class="upload-tags">
+          <span class="upload-tag">.xlsx</span><span class="upload-tag">.xls</span>
+          <span class="upload-tag">.csv</span><span class="upload-tag">หลายไฟล์</span><span class="upload-tag">ภาษาไทย ✓</span>
+        </div>
+        <div class="upload-note">⚡ ไม่ต้องตั้งค่า — โหลดแล้วแสดงผลเลย</div>
+        <div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+        <div style="margin-top:14px;padding-top:14px;border-top:1px dashed rgba(0,0,0,.1)">
+          <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">
+            ☁️ โหลดจาก Excel Cloud / Google Sheets
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+            <input type="text" id="cloudExcelUrl"
+              placeholder="วางลิงก์ .xlsx หรือ Google Sheet"
+              style="width:min(480px,100%);padding:10px 12px;border:1px solid var(--border);border-radius:10px;font-size:13px">
+            <button class="btn-primary" type="button" onclick="loadCloudExcel()">
+              ☁️ โหลด Cloud
+            </button>
+          </div>
+          <div style="font-size:11px;color:var(--text3);margin-top:8px">
+            รองรับ OneDrive, Google Sheets, Dropbox และลิงก์ไฟล์ .xlsx ตรง
+          </div>
+        </div>
+
+      </div>
+
+      <div class="processing-badge" id="processingBadge">
+        <div class="spin"></div><span id="processingText">กำลังอ่านไฟล์...</span>
+      </div>
+
+      <div id="mainSection" style="display:none">
+        <div class="info-bar">
+          <div class="info-bar-icon">📊</div>
+          <span id="infoText">—</span>
+          <div style="margin-left:auto;display:flex;gap:7px">
+            <button class="btn btn-sm btn-update" onclick="triggerUpdateFile()" title="โหลดไฟล์ใหม่และ Merge เข้ากับข้อมูลเดิม">📥 อัพเดทไฟล์</button>
+            <button class="btn btn-sm btn-danger" onclick="clearAll()">🗑 ล้างข้อมูล</button>
+          </div>
+          <input type="file" id="updateFileInput" accept=".xlsx,.xls,.csv" multiple style="display:none">
+        </div>
+
+        <!-- BENTO METRICS -->
+        <div class="bento" id="bento"></div>
+
+        <!-- TOOLBAR -->
+        <div class="toolbar">
+          <div class="search-wrap">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="search" placeholder="ค้นหา PO, Vendor, Invoice...">
+          </div>
+          <div class="filter-btns" id="filters"></div>
+<button class="btn-primary" onclick="openPOModal()">＋ เพิ่ม PO</button>
+        </div>
+        <div id="jobRow"></div>
+
+        <div class="table-card">
+          <div class="table-header">
+            <span class="table-header-title" id="tableTitle">รายการ PO</span>
+            <span class="table-count" id="tableCount">—</span>
+            <div style="margin-left:auto;font-size:11px;color:var(--text3)" id="colMapInfo"></div>
+          </div>
+          <div class="table-scroll">
+            <table><thead><tr id="thead"></tr></thead><tbody id="tbody"></tbody></table>
+            <div class="no-data" id="nodata" style="display:none">
+              <div class="no-data-icon">🔍</div>ไม่พบข้อมูลที่ค้นหา
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /dashboard -->
+
+    <!-- ── ANALYTICS PAGE ── -->
+    <div class="page" id="page-analytics">
+      <div class="page-head">
+        <div class="page-head-title">Analytics</div>
+        <div class="page-head-sub">วิเคราะห์ข้อมูล PO เชิงลึก</div>
+      </div>
+      <div id="analyticsContent">
+        <div class="no-data-small">⬅ กรุณาโหลดข้อมูลจาก Dashboard ก่อน</div>
+      </div>
+    </div>
+
+    <!-- ── VENDORS PAGE ── -->
+    <div class="page" id="page-vendors">
+      <div class="page-head" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div>
+          <div class="page-head-title">Vendors</div>
+          <div class="page-head-sub">อัปโหลดไฟล์ Vendor จาก AX ได้เลย — ระบบดึงรายชื่อให้อัตโนมัติ</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <input type="text" id="vendorSearch" placeholder="🔍 ค้นหา vendor..." style="padding:7px 12px;border:1px solid var(--border);border-radius:9px;font-size:13px;background:var(--surface);color:var(--text);outline:none;width:190px" oninput="renderVendors()">
+          <button class="btn" onclick="openAddVendorModal()" style="display:flex;align-items:center;gap:5px;font-size:13px">
+            ＋ เพิ่มเอง
+          </button>
+        </div>
+      </div>
+
+      <!-- Upload card — always visible, primary action -->
+      <div style="margin-bottom:16px">
+        <div id="vendorDropZone" style="border:2px dashed var(--border);border-radius:16px;background:var(--surface2);padding:28px 24px;text-align:center;cursor:pointer;transition:all .2s"
+          onclick="document.getElementById('vendorFileInput').click()"
+          ondragover="event.preventDefault();this.style.borderColor='var(--acc)';this.style.background='var(--surface3)'"
+          ondragleave="this.style.borderColor='var(--border)';this.style.background='var(--surface2)'"
+          ondrop="event.preventDefault();this.style.borderColor='var(--border)';this.style.background='var(--surface2)';handleVendorFileDrop(event.dataTransfer.files[0])">
+          <input type="file" id="vendorFileInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleVendorFile(this.files[0]);this.value=''">
+          <div style="font-size:32px;margin-bottom:8px">📂</div>
+          <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:4px">คลิกหรือลากไฟล์มาวางที่นี่</div>
+          <div style="font-size:12.5px;color:var(--text3)">รองรับ Excel (.xlsx, .xls) และ CSV จาก AX — ระบบดึงรายชื่อ Vendor ให้อัตโนมัติ</div>
+          <div id="vendorUploadStatus" style="margin-top:12px;font-size:13px;font-weight:600;color:var(--acc)"></div>
+        </div>
+      </div>
+
+      <!-- Stats bar -->
+      <div id="vendorStatsBar" style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap"></div>
+
+      <!-- Vendor cards grid -->
+      <div id="vendorsContent">
+        <div class="no-data-small">อัปโหลดไฟล์ Vendor จาก AX เพื่อเริ่มต้น</div>
+      </div>
+    </div>
+
+    <!-- ── VENDOR MODAL ── -->
+    <div id="vendorModal" style="display:none;position:fixed;inset:0;z-index:1200;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:16px">
+      <div style="background:var(--surface);border-radius:20px;width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,.25);border:1px solid var(--border);overflow:hidden">
+        <div style="padding:22px 24px 0">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+            <div style="font-size:17px;font-weight:700;color:var(--text)" id="vendorModalTitle">เพิ่ม Vendor ใหม่</div>
+            <button onclick="closeVendorModal()" style="background:none;border:none;font-size:20px;color:var(--text3);cursor:pointer;line-height:1">✕</button>
+          </div>
+          <div style="display:grid;gap:14px">
+            <div>
+              <label style="font-size:11.5px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">ชื่อบริษัท *</label>
+              <input id="vm-name" type="text" placeholder="เช่น บริษัท ABC จำกัด" class="form-input" style="width:100%;box-sizing:border-box">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div>
+                <label style="font-size:11.5px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Vendor Code</label>
+                <input id="vm-code" type="text" placeholder="เช่น V001" class="form-input" style="width:100%;box-sizing:border-box">
+              </div>
+              <div>
+                <label style="font-size:11.5px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">เบอร์โทร</label>
+                <input id="vm-phone" type="text" placeholder="081-xxx-xxxx" class="form-input" style="width:100%;box-sizing:border-box">
+              </div>
+            </div>
+            <div>
+              <label style="font-size:11.5px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">เลขประจำตัวผู้เสียภาษี</label>
+              <input id="vm-taxid" type="text" placeholder="13 หลัก" class="form-input" style="width:100%;box-sizing:border-box">
+            </div>
+            <div>
+              <label style="font-size:11.5px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">ที่อยู่</label>
+              <textarea id="vm-address" placeholder="ที่อยู่บริษัท" class="form-input" rows="2" style="width:100%;box-sizing:border-box;resize:vertical"></textarea>
+            </div>
+            <div>
+              <label style="font-size:11.5px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">หมายเหตุ</label>
+              <input id="vm-note" type="text" placeholder="ข้อมูลเพิ่มเติม" class="form-input" style="width:100%;box-sizing:border-box">
+            </div>
+          </div>
+        </div>
+        <div style="padding:18px 24px;display:flex;gap:10px;justify-content:flex-end;border-top:1px solid var(--border);margin-top:20px">
+          <button class="btn" onclick="closeVendorModal()">ยกเลิก</button>
+          <button class="btn-primary" onclick="saveVendorModal()" id="vm-save-btn">บันทึก</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TRANSFERS PAGE ── -->
+    <div class="page" id="page-transfers">
+      <div class="page-head">
+        <div class="page-head-title">รายการโอน</div>
+        <div class="page-head-sub">จัดการรายการโอนเงิน — เพิ่ม แก้ไข ลบ &nbsp;<span id="fbStatus" style="font-size:11px;padding:2px 9px;border-radius:99px;background:var(--surface2);color:var(--text3)">⏳ กำลังเชื่อมต่อ...</span></div>
+      </div>
+
+      <!-- Summary cards -->
+      <div class="transfer-summary" id="transferSummary">
+        <div class="tsm-card">
+          <div class="tsm-label">รายการทั้งหมด</div>
+          <div class="tsm-val" id="tsm-total">0</div>
+        </div>
+        <div class="tsm-card">
+          <div class="tsm-label">ยอดโอนรวม (บาท)</div>
+          <div class="tsm-val" id="tsm-amount" style="color:var(--green)">฿0</div>
+        </div>
+        <div class="tsm-card">
+          <div class="tsm-label">จำนวนร้านค้า</div>
+          <div class="tsm-val" id="tsm-shops">0</div>
+        </div>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="transfer-toolbar">
+        <div class="transfer-search-wrap">
+          <span class="transfer-search-icon">🔍</span>
+          <input type="text" id="transferSearch" placeholder="ค้นหา ใบโอน, PO, JOB, ร้านค้า..." oninput="renderTransferTable()">
+        </div>
+        <button class="btn-primary" onclick="openTransferModal()">＋ เพิ่มรายการโอน</button>
+      </div>
+
+      <!-- Table -->
+      <div class="table-card">
+        <div class="table-header">
+          <span class="table-header-title">รายการโอน</span>
+          <span class="table-count" id="transferTableCount">0 รายการ</span>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>วันที่</th>
+                <th>ใบโอน</th>
+                <th>PO</th>
+                <th>JOB</th>
+                <th>ยอดเงิน</th>
+                <th>ร้านค้า</th>
+                <th>รายละเอียด</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="transferTbody"></tbody>
+          </table>
+          <div class="no-data" id="transferNodata" style="display:none">
+            <div class="no-data-icon">🔄</div>ไม่พบรายการโอน
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CONCRETE PAGE ── -->
+    <div class="page" id="page-concrete">
+      <div class="page-head">
+        <div class="page-head-title">คอนกรีต</div>
+        <div class="page-head-sub">จัดการรายการคอนกรีต — เพิ่ม แก้ไข ลบ &nbsp;<span id="concreteFbStatus" style="font-size:11px;padding:2px 9px;border-radius:99px;background:var(--surface2);color:var(--text3)">⏳ กำลังเชื่อมต่อ...</span></div>
+      </div>
+
+      <!-- Summary cards -->
+      <div class="transfer-summary" id="concreteSummary">
+        <div class="tsm-card">
+          <div class="tsm-label">รายการทั้งหมด</div>
+          <div class="tsm-val" id="csm-total">0</div>
+        </div>
+        <div class="tsm-card">
+          <div class="tsm-label">ราคารวมทั้งหมด (บาท)</div>
+          <div class="tsm-val" id="csm-amount" style="color:var(--green)">฿0</div>
+        </div>
+        <div class="tsm-card">
+          <div class="tsm-label">ปริมาณ (คิว)</div>
+          <div class="tsm-val" id="csm-vol">0</div>
+        </div>
+        <div class="tsm-card">
+          <div class="tsm-label">จำนวนร้าน</div>
+          <div class="tsm-val" id="csm-shops">0</div>
+        </div>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="transfer-toolbar">
+        <div class="transfer-search-wrap">
+          <span class="transfer-search-icon">🔍</span>
+          <input type="text" id="concreteSearch" placeholder="ค้นหา ST, PO, JOB, ร้าน..." oninput="clearTimeout(window._csT);window._csT=setTimeout(renderConcreteTable,300)">
+        </div>
+        <label class="btn" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:9px 16px;font-size:13px;font-weight:600;border-radius:10px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text2)">
+          📤 อัพไฟล์
+          <input type="file" id="concreteFileInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleConcreteFile(this.files[0]);this.value=''">
+        </label>
+        <button class="btn btn-danger" onclick="clearAllConcrete()" style="font-size:13px;font-weight:600;padding:9px 16px;border-radius:10px">🗑 ลบทั้งหมด</button>
+        <button class="btn-primary" onclick="openConcreteModal()">＋ เพิ่มคอนกรีต</button>
+      </div>
+
+      <!-- Table -->
+      <div class="table-card">
+        <div class="table-header">
+          <span class="table-header-title">รายการคอนกรีต</span>
+          <span class="table-count" id="concreteTableCount">0 รายการ</span>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>วันที่</th>
+                <th>ST</th>
+                <th>คิว</th>
+                <th>PR</th>
+                <th>PO</th>
+                <th style="text-align:right">ราคา/หน่วย</th>
+                <th style="text-align:right">ราคา</th>
+                <th>ร้าน</th>
+                <th>JOB</th>
+                <th>หมายเหตุ</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="concreteTbody"></tbody>
+          </table>
+          <div class="no-data" id="concreteNodata" style="display:none">
+            <div class="no-data-icon">🏗️</div>ไม่พบรายการคอนกรีต
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CONCRETE MODAL ── -->
+    <div class="modal-overlay" id="concreteModal">
+      <div class="modal" style="max-width:620px">
+        <div class="modal-head">
+          <span class="modal-title" id="concreteModalTitle">เพิ่มรายการคอนกรีต</span>
+          <button class="modal-close" onclick="closeConcreteModal()">✕</button>
+        </div>
+        <div class="modal-body" style="padding:1rem 1.2rem">
+          <!-- Row 1: วันที่ + ST -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">วันที่</label>
+              <input type="text" class="form-input" id="ct-date" placeholder="เช่น 3/5/69">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">ST</label>
+              <input type="text" class="form-input" id="ct-st" placeholder="เลขที่ ST">
+            </div>
+          </div>
+          <!-- Row 2: คิว + PR + PO -->
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">คิว (ม³)</label>
+              <input type="number" class="form-input" id="ct-vol" placeholder="0.00" step="0.01" oninput="calcConcreteTotal()">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">PR</label>
+              <input type="text" class="form-input" id="ct-pr" placeholder="เลขที่ PR">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">PO</label>
+              <input type="text" class="form-input" id="ct-po" placeholder="เลขที่ PO">
+            </div>
+          </div>
+          <!-- Row 3: ราคา/หน่วย + ราคา + ร้าน -->
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">ราคา/หน่วย</label>
+              <input type="number" class="form-input" id="ct-unit-price" placeholder="0.00" step="0.01" oninput="calcConcreteTotal()">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">ราคา (บาท)</label>
+              <input type="number" class="form-input" id="ct-total-price" placeholder="คำนวณอัตโนมัติ" step="0.01" style="background:var(--surface2)">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">ร้าน</label>
+              <input type="text" class="form-input" id="ct-shop" placeholder="ชื่อร้าน">
+            </div>
+          </div>
+          <!-- Row 4: JOB + หมายเหตุ -->
+          <div style="display:grid;grid-template-columns:1fr 2fr;gap:10px;margin-bottom:0">
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">JOB</label>
+              <input type="text" class="form-input" id="ct-job" placeholder="รหัส Job">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">หมายเหตุ</label>
+              <input type="text" class="form-input" id="ct-note" placeholder="หมายเหตุเพิ่มเติม">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn" onclick="closeConcreteModal()">ยกเลิก</button>
+          <button class="btn-primary" onclick="saveConcrete()">💾 บันทึก</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TRANSFER MODAL ── -->
+    <div class="modal-overlay" id="transferModal">
+      <div class="modal">
+        <div class="modal-head">
+          <span class="modal-title" id="transferModalTitle">เพิ่มรายการโอน</span>
+          <button class="modal-close" onclick="closeTransferModal()">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">วันที่</label>
+              <input type="date" class="form-input" id="tf-date">
+            </div>
+            <div class="form-group">
+              <label class="form-label">ใบโอน</label>
+              <input type="text" class="form-input" id="tf-no" placeholder="เช่น TR-2024-001">
+            </div>
+            <div class="form-group">
+              <label class="form-label">PO</label>
+              <input type="text" class="form-input" id="tf-po" placeholder="เลขที่ PO">
+            </div>
+            <div class="form-group">
+              <label class="form-label">JOB</label>
+              <input type="text" class="form-input" id="tf-job" placeholder="รหัส Job">
+            </div>
+            <div class="form-group">
+              <label class="form-label">ยอดเงิน (บาท)</label>
+              <input type="number" class="form-input" id="tf-amount" placeholder="0.00" step="0.01">
+            </div>
+            <div class="form-group">
+              <label class="form-label">ร้านค้า</label>
+              <input type="text" class="form-input" id="tf-shop" placeholder="ชื่อร้านค้า">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">รายละเอียด</label>
+            <textarea class="form-textarea" id="tf-detail" placeholder="รายละเอียดเพิ่มเติม..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn" onclick="closeTransferModal()">ยกเลิก</button>
+          <button class="btn-primary" onclick="saveTransfer()">💾 บันทึก</button>
+        </div>
+      </div>
+    </div>
+
+    
+    <!-- ── PO MODAL ── -->
+    <div class="modal-overlay" id="poModal">
+      <div class="modal">
+        <div class="modal-head">
+          <span class="modal-title" id="poModalTitle">เพิ่ม PO</span>
+          <button class="modal-close" onclick="closePOModal()">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">PO</label>
+              <input type="text" class="form-input" id="po-po" placeholder="เลขที่ PO">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Vendor</label>
+              <input type="text" class="form-input" id="po-vendor" placeholder="ชื่อ Vendor">
+            </div>
+            <div class="form-group">
+              <label class="form-label">วันที่</label>
+              <input type="date" class="form-input" id="po-date">
+            </div>
+            <div class="form-group">
+              <label class="form-label">จำนวนเงิน</label>
+              <input type="number" class="form-input" id="po-amount" placeholder="0.00">
+            </div>
+            <div class="form-group">
+              <label class="form-label">JOB</label>
+              <input type="text" class="form-input" id="po-job" placeholder="JOB">
+            </div>
+            <div class="form-group">
+              <label class="form-label">สถานะ</label>
+              <select class="form-select" id="po-status">
+                <option value="confirm">Confirm</option>
+                <option value="received">Received</option>
+                <option value="invoiced">Invoiced</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn" onclick="closePOModal()">ยกเลิก</button>
+          <button class="btn-primary" onclick="savePO()">💾 บันทึก</button>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ── SETTINGS PAGE ── -->
+    <div class="page" id="page-settings">
+      <div class="page-head">
+        <div class="page-head-title">Settings</div>
+        <div class="page-head-sub">ตั้งค่าการแสดงผลและระบบ</div>
+      </div>
+      <div class="settings-layout">
+        <div class="settings-nav" id="settingsNav">
+          <button class="settings-nav-item active" onclick="openSettingsTab('general',this)">ทั่วไป</button>
+          <button class="settings-nav-item" onclick="openSettingsTab('stores',this)">บริษัท</button>
+          <button class="settings-nav-item" onclick="openSettingsTab('columns',this)">Columns</button>
+          <button class="settings-nav-item" onclick="openSettingsTab('data',this)">ข้อมูล</button>
+        </div>
+        <div class="settings-panel" id="settingsPanel">
+          <div id="settingsContent"></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main-wrap -->
+
+<script>
+/* ─── CONFIG ─── */
+const STORES = [
+  { id:'khemarat',   name:'ส.เขมราฐ',               sk:'po_km',  sm:'po_km_m',
+    acc:'#1A65B5', accBg:'#E8F2FC', accLight:'#C5DCF5', accText:'#0D3D72', navBg:'#171614', dot:'#1A65B5' },
+  { id:'sittichai',  name:'ส.สิทธิโชค',              sk:'po_sc',  sm:'po_sc_m',
+    acc:'#0A6B60', accBg:'#E2F5F2', accLight:'#A0DDD5', accText:'#063D38', navBg:'#09312C', dot:'#0A6B60' },
+  { id:'transport',  name:'ส.เขมราฐ ทรานสปอต',       sk:'po_kt',  sm:'po_kt_m',
+    acc:'#7A4A08', accBg:'#FBF0D8', accLight:'#F5D68A', accText:'#4E2E04', navBg:'#4E2E04', dot:'#C07F20' },
+
+];
+const STATUS_RANK = { confirm:1, received:2, invoiced:3, cancelled:0 };
+const FILTERS = [
+  { key:'all',       label:'ทั้งหมด',    cls:'' },
+  { key:'confirm',   label:'✓ Confirm',  cls:'f-green' },
+  { key:'received',  label:'📦 Received', cls:'f-amber' },
+  { key:'invoiced',  label:'🧾 Invoiced', cls:'f-blue' },
+  { key:'cancelled', label:'🚫 Cancel',   cls:'f-red' },
+];
+const COL_FIELDS = [
+  { key:'po',     hints:['po','purch','purchase order','purchid','order no','order number','เลข po','เลขที่ po','หมายเลข po'] },
+  { key:'vendor', hints:['vendor','supplier','vendname','vendor name','ผู้ขาย','บริษัท','ชื่อผู้ขาย','vendor account'] },
+  { key:'date',   hints:['date','วันที่','orderdate','purchdate','created','order date','วันที่สั่ง'] },
+  { key:'amount', hints:['amount','มูลค่า','total','value','lineamount','price','ราคา','รวม','net amount'] },
+  { key:'status', hints:['status','สถานะ','purchstatus','order status','po status','state','approval status'] },
+  { key:'job',    hints:['job','jobid','job id','job no','job number','งาน','project','proj','wbs','projid','cost center','costcenter'] },
+];
+
+/* ─── STATE ─── */
+let curStore = 0;
+let currentPage = 'dashboard';
+let currentSettingsTab = 'general';
+let state = STORES.map(()=>({
+  rows:[], colMap:{po:'',vendor:'',date:'',amount:'',status:'',job:''},
+  hdrs:[], af:'all', sv:'', jf:'', nR:0, uR:0, xR:0
+}));
+let workbooks = [];
+function S(){ return state[curStore]; }
+function ST(){ return STORES[curStore]; }
+
+/* ─── STORAGE (Firestore shared + localStorage fallback) ─── */
+
+// Firestore document per store: collection "po_stores", doc = store.id
+// doc structure: { rows: [...], hdrs: [...], colMap: {...}, at: ISO string }
+
+let _storeUnsubscribers = {}; // idx -> unsubscribe fn
+
+function _fsStoreCol(){ return window._fsLib.collection(window._db, 'po_stores'); }
+function _fsStoreDoc(idx){ return window._fsLib.doc(window._db, 'po_stores', STORES[idx].id); }
+
+async function saveStore(){
+  const s=S(),t=ST(),idx=curStore;
+  const payload = {
+    rows: s.rows,
+    hdrs: s.hdrs,
+    colMap: s.colMap,
+    at: new Date().toISOString(),
+    _storeId: t.id
+  };
+  // always mirror to localStorage as fast cache
+  try{
+    localStorage.setItem(t.sk, JSON.stringify(s.rows));
+    localStorage.setItem(t.sm, JSON.stringify({hdrs:s.hdrs,colMap:s.colMap,at:payload.at}));
+  }catch(e){}
+  // save to Firestore (shared)
+  try{
+    if(!window._firebaseReady) throw new Error('not ready');
+    const { setDoc } = window._fsLib;
+    await setDoc(_fsStoreDoc(idx), payload);
+  }catch(err){
+    console.warn('Firestore saveStore failed, localStorage only:', err);
+  }
+}
+
+function loadStore(idx){
+  // Load from localStorage immediately (fast)
+  const t=STORES[idx],s=state[idx];
+  try{
+    const r=localStorage.getItem(t.sk),m=localStorage.getItem(t.sm);
+    if(r&&m){
+      s.rows=JSON.parse(r);
+      const j=JSON.parse(m); s.hdrs=j.hdrs||[]; s.colMap={...s.colMap,...(j.colMap||{})};
+      _sortRows(s);
+    }
+  }catch(e){}
+  // Subscribe to Firestore for real-time shared updates
+  _subscribeStore(idx);
+  return s.rows.length>0;
+}
+
+function _sortRows(s){
+  const poCol=s.colMap.po||'';
+  if(poCol) s.rows.sort((a,b)=>{
+    const na=parseInt(String(a[poCol]||'').replace(/\D/g,'').slice(-4)||'0',10);
+    const nb=parseInt(String(b[poCol]||'').replace(/\D/g,'').slice(-4)||'0',10);
+    return nb-na;
+  });
+}
+
+/* ─── GLOBAL FB STATUS BADGE ─── */
+function setFbStatus(state){
+  const el = document.getElementById('globalFbStatus');
+  if(!el) return;
+  if(state==='connecting'){
+    el.textContent='⏳ กำลังเชื่อมต่อ...';
+    el.style.background='var(--amber-bg)'; el.style.color='var(--amber-text)';
+  } else if(state==='online'){
+    el.innerHTML='<span style="width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;flex-shrink:0"></span> เชื่อมต่อแล้ว — ข้อมูล Realtime';
+    el.style.background='var(--green-bg)'; el.style.color='var(--green-text)';
+  } else if(state==='offline'){
+    el.innerHTML='<span style="width:7px;height:7px;border-radius:50%;background:var(--red);display:inline-block;flex-shrink:0"></span> ออฟไลน์ — ข้อมูลเครื่องนี้';
+    el.style.background='var(--red-bg)'; el.style.color='var(--red-text)';
+  }
+}
+
+function _subscribeStore(idx){
+  if(!window._firebaseReady){
+    window.addEventListener('firebase-ready', ()=>_subscribeStore(idx), {once:true});
+    return;
+  }
+  if(_storeUnsubscribers[idx]) _storeUnsubscribers[idx]();
+  setFbStatus('connecting');
+  const { onSnapshot } = window._fsLib;
+  _storeUnsubscribers[idx] = onSnapshot(_fsStoreDoc(idx), snap => {
+    setFbStatus('online');
+    if(!snap.exists()) return;
+    const d = snap.data();
+    const s = state[idx];
+    s.rows = d.rows || [];
+    s.hdrs = d.hdrs || [];
+    s.colMap = {...s.colMap, ...(d.colMap||{})};
+    _sortRows(s);
+    // mirror to localStorage
+    try{
+      const t=STORES[idx];
+      localStorage.setItem(t.sk, JSON.stringify(s.rows));
+      localStorage.setItem(t.sm, JSON.stringify({hdrs:s.hdrs,colMap:s.colMap,at:d.at||''}));
+    }catch(e){}
+    // if this store is currently active, refresh UI
+    if(idx===curStore){
+      const has=s.rows.length>0;
+      document.getElementById('uploadZone').style.display=has?'none':'block';
+      document.getElementById('mainSection').style.display=has?'block':'none';
+      document.getElementById('resetBtn').classList.toggle('show',has);
+      if(has){ showInfoLoaded(); renderAll(); }
+    }
+  }, err=>{ console.warn('Firestore store['+idx+'] listen error:', err); setFbStatus('offline'); });
+}
+
+async function wipeStore(){
+  const t=ST(),idx=curStore;
+  localStorage.removeItem(t.sk); localStorage.removeItem(t.sm);
+  try{
+    if(!window._firebaseReady) throw new Error('not ready');
+    const { deleteDoc } = window._fsLib;
+    await deleteDoc(_fsStoreDoc(idx));
+  }catch(err){ console.warn('Firestore wipeStore failed:', err); }
+}
+
+/* ─── THEME ─── */
+function applyTheme(){
+  const t=ST();
+  const root=document.documentElement;
+  root.style.setProperty('--acc',t.acc);
+  root.style.setProperty('--acc-bg',t.accBg);
+  root.style.setProperty('--acc-light',t.accLight);
+  root.style.setProperty('--acc-text',t.accText);
+  root.style.setProperty('--nav-bg',t.navBg);
+  document.getElementById('sidebar').style.background=t.navBg;
+  document.getElementById('topbarTitle').textContent='PO — '+t.name;
+  document.getElementById('storeLbl').textContent='📍 '+t.name;
+  document.getElementById('tableTitle').textContent='รายการ PO — '+t.name;
+  document.getElementById('pageHeadSub').textContent='สรุปภาพรวม Purchase Order — '+t.name;
+  // update store pills
+  document.querySelectorAll('.store-pill').forEach((p,i)=>{
+    p.classList.toggle('on',i===curStore);
+  });
+}
+
+/* ─── BUILD STORE PILLS ─── */
+function buildStorePills(){
+  const container=document.getElementById('storePills');
+  container.innerHTML=STORES.map((st,i)=>{
+    if(st.isTransfer){
+      return `<button class="store-pill${i===curStore?' on':''}" onclick="switchStore(${i})" style="margin-top:4px;border-top:1px solid rgba(255,255,255,.07);padding-top:12px">
+        <span style="font-size:14px">🔄</span>
+        <span>${st.name}</span>
+      </button>`;
+    }
+    return `<button class="store-pill${i===curStore?' on':''}" onclick="switchStore(${i})">
+      <span class="store-dot" style="background:${st.dot}"></span>
+      <span>${st.name}</span>
+    </button>`;
+  }).join('');
+}
+
+/* ─── SWITCH STORE ─── */
+function switchStore(idx){
+  // If clicking the "รายการโอน" slot, just open the transfers page directly
+  if(STORES[idx].isTransfer){
+    curStore=idx; applyTheme(); buildStorePills(); updateBnavStore();
+    openPage('transfers');
+    return;
+  }
+  if(idx===curStore && currentPage!=='transfers') return;
+  S().sv=document.getElementById('search').value;
+  curStore=idx; applyTheme(); buildStorePills(); updateBnavStore();
+  document.getElementById('search').value=S().sv;
+  const has=S().rows.length>0;
+  document.getElementById('uploadZone').style.display=has?'none':'block';
+  document.getElementById('mainSection').style.display=has?'block':'none';
+  document.getElementById('resetBtn').classList.toggle('show',has);
+  if(has){ showInfoLoaded(); renderAll(); }
+  else document.getElementById('topbarTime').textContent='—';
+  // refresh active page
+  if(currentPage==='transfers') openPage('dashboard');
+  else if(currentPage!=='dashboard') refreshPageContent(currentPage);
+}
+
+/* ─── PAGE NAVIGATION ─── */
+function openPage(page){
+  currentPage=page;
+  syncBottomNav(page);
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const el=document.getElementById('page-'+page);
+  if(el) el.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const nav=document.querySelector(`.sidebar [data-page="${page}"]`);
+  if(nav) nav.classList.add('active');
+  document.getElementById('topbarBreadcrumb').textContent='/ '+{
+    dashboard:'Dashboard',analytics:'Analytics',
+    concrete:'คอนกรีต',settings:'Settings',transfers:'รายการโอน'
+  }[page]||page;
+  refreshPageContent(page);
+}
+
+function refreshPageContent(page){
+  if(page==='transfers'){ renderTransferPage(); return; }
+  if(page==='concrete'){ renderConcretePage(); return; }
+  if(!S().rows.length) return;
+  if(page==='analytics') renderAnalytics();
+  if(page==='settings')  renderSettings(currentSettingsTab);
+}
+
+/* ─── COLUMN GUESS ─── */
+function guessCol(hs,hints){
+  for(const h of hints){ const x=hs.find(v=>v.toLowerCase()===h.toLowerCase()); if(x) return x; }
+  for(const h of hints){ const x=hs.find(v=>v.toLowerCase().includes(h.toLowerCase())); if(x) return x; }
+  return '';
+}
+function guessColumns(hs){ COL_FIELDS.forEach(f=>{ S().colMap[f.key]=guessCol(hs,f.hints); }); }
+
+/* ─── STATUS ─── */
+function statusOf(row){
+  const v=String(row._status||'').toLowerCase().trim();
+  if(!v||v==='-') return 'confirm';
+  if(['cancel','cancelled','canceled','ยกเลิก','void','voided'].some(k=>v.includes(k))) return 'cancelled';
+  if(['invoiced','invoice','ใบกำกับ','ใบแจ้งหนี้','billed','posted invoice','invoice posted','invoiced - posted'].some(k=>v.includes(k))) return 'invoiced';
+  if(['received','receipt','รับของ','รับสินค้า','packingslip','product receipt','delivered','delivery posted','received - posted'].some(k=>v.includes(k))) return 'received';
+  return 'confirm';
+}
+function badgeHTML(s){
+  return { confirm:`<span class="badge b-green"><span class="dot d-green"></span>Confirm</span>`,
+    received:`<span class="badge b-amber"><span class="dot d-amber"></span>Received</span>`,
+    invoiced:`<span class="badge b-blue"><span class="dot d-blue"></span>Invoiced</span>`,
+    cancelled:`<span class="badge b-red"><span class="dot d-red"></span>Cancel</span>`,
+  }[s]||`<span class="badge b-green"><span class="dot d-green"></span>Confirm</span>`;
+}
+function jobOf(row){ const s=S(); return s.colMap.job?String(row[s.colMap.job]||'').trim():''; }
+function amtOf(row){ const s=S(); return s.colMap.amount?parseFloat(String(row[s.colMap.amount]||'0').replace(/[^0-9.-]/g,''))||0:0; }
+function vendorOf(row){ const s=S(); return s.colMap.vendor?String(row[s.colMap.vendor]||'').trim():''; }
+
+/* ─── MERGE ─── */
+// Returns list of {poKey, oldStatus, newStatus} for rows that had status changed
+function mergeData(inc){
+  const s=S(); s.nR=0; s.uR=0; s.xR=0;
+  s._statusUpdates = []; // track which POs had status changed
+  const map=new Map();
+  s.rows.forEach(r=>map.set(String(r[s.colMap.po]||'').trim(),r));
+  inc.forEach(r=>{
+    const key=String(r[s.colMap.po]||'').trim(); if(!key) return;
+    const ns=statusOf(r);
+    if(map.has(key)){
+      const ex=map.get(key),os=statusOf(ex);
+      if(os===ns){ s.xR++; }
+      else{
+        const or=STATUS_RANK[os]||0,nr=STATUS_RANK[ns]||0;
+        if(nr>=or||ns==='cancelled'){
+          // Update ONLY the status field, keep all other existing data intact
+          const updated = {...ex, _status: r[s.colMap.status]||ns, _ts: Date.now()};
+          // also update the raw status column if it exists
+          if(s.colMap.status && r[s.colMap.status] !== undefined){
+            updated[s.colMap.status] = r[s.colMap.status];
+          }
+          map.set(key, updated);
+          s._statusUpdates.push({poKey:key, oldStatus:os, newStatus:ns});
+          s.uR++;
+        } else s.xR++;
+      }
+    }else{ map.set(key,{...r,_status:r[s.colMap.status]||'',_ts:Date.now()}); s.nR++; }
+  });
+  s.rows=Array.from(map.values()).sort((a,b)=>{
+    const pa=String(a[s.colMap.po]||'').trim();
+    const pb=String(b[s.colMap.po]||'').trim();
+    const na=parseInt(pa.replace(/\D/g,'').slice(-4)||'0',10);
+    const nb=parseInt(pb.replace(/\D/g,'').slice(-4)||'0',10);
+    return nb-na;
+  });
+}
+
+/* ─── GET JOBS ─── */
+function getJobs(){
+  const s=S(); if(!s.colMap.job) return [];
+  const set=new Set();
+  s.rows.forEach(r=>{ const j=jobOf(r); if(j) set.add(j); });
+  return [...set].sort();
+}
+
+/* ─── FILTER DATA ─── */
+function getFiltered(){
+  const s=S(),q=s.sv.toLowerCase();
+  return s.rows.filter(row=>{
+    const mf=s.af==='all'||statusOf(row)===s.af;
+    const mj=!s.jf||jobOf(row)===s.jf;
+    const ms=!q||Object.values(row).some(v=>String(v).toLowerCase().includes(q));
+    return mf&&mj&&ms;
+  });
+}
+
+function esc(v){
+  return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function fmtAmt(v){
+  const n=parseFloat(String(v).replace(/[^0-9.-]/g,''));
+  if(isNaN(n)) return esc(v);
+  return n.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+
+/* ─── RENDER BENTO METRICS ─── */
+function renderMetrics(){
+  const s=S(),rows=s.rows,tot=rows.length;
+  const co=rows.filter(r=>statusOf(r)==='confirm').length;
+  const re=rows.filter(r=>statusOf(r)==='received').length;
+  const iv=rows.filter(r=>statusOf(r)==='invoiced').length;
+  const ca=rows.filter(r=>statusOf(r)==='cancelled').length;
+  const active=tot-ca;
+  const pct=v=>active?Math.round(v/active*100):0;
+  const cpct=tot?Math.round(ca/tot*100):0;
+  const isAf=k=>s.af===k;
+
+  document.getElementById('bento').innerHTML=`
+    <!-- HERO card -->
+    <div class="bento-card bento-hero${isAf('all')?' af-active':''}" onclick="setFilter('all')">
+      <div class="hero-label">รวม PO ทั้งหมด (ไม่นับ Cancel)</div>
+      <div class="hero-val">${active.toLocaleString()}</div>
+      <div class="hero-sub">จากทั้งหมด ${tot.toLocaleString()} รายการ</div>
+      <div class="hero-bar"><div class="hero-bar-fill" style="width:${tot?Math.round(active/tot*100):0}%;background:var(--acc)"></div></div>
+    </div>
+    <!-- Confirm -->
+    <div class="bento-card bento-stat strip-green af-green${isAf('confirm')?' af-active':''}" onclick="setFilter('confirm')">
+      <div class="stat-top">
+        <div class="stat-icon bg-green">✅</div>
+        <span class="stat-pct pct-green">${pct(co)}%</span>
+      </div>
+      <div class="stat-label">Confirm</div>
+      <div class="stat-val c-green">${co.toLocaleString()}</div>
+      <div class="stat-bar"><div class="stat-bar-fill" style="width:${pct(co)}%;background:var(--green)"></div></div>
+    </div>
+    <!-- Received -->
+    <div class="bento-card bento-stat strip-amber af-amber${isAf('received')?' af-active':''}" onclick="setFilter('received')">
+      <div class="stat-top">
+        <div class="stat-icon bg-amber">📦</div>
+        <span class="stat-pct pct-amber">${pct(re)}%</span>
+      </div>
+      <div class="stat-label">Received</div>
+      <div class="stat-val c-amber">${re.toLocaleString()}</div>
+      <div class="stat-bar"><div class="stat-bar-fill" style="width:${pct(re)}%;background:var(--amber)"></div></div>
+    </div>
+    <!-- Invoiced -->
+    <div class="bento-card bento-stat strip-blue af-blue${isAf('invoiced')?' af-active':''}" onclick="setFilter('invoiced')">
+      <div class="stat-top">
+        <div class="stat-icon bg-blue">🧾</div>
+        <span class="stat-pct pct-blue">${pct(iv)}%</span>
+      </div>
+      <div class="stat-label">Invoiced</div>
+      <div class="stat-val c-blue">${iv.toLocaleString()}</div>
+      <div class="stat-bar"><div class="stat-bar-fill" style="width:${pct(iv)}%;background:#1A65B5"></div></div>
+    </div>
+    <!-- Cancel -->
+    <div class="bento-card bento-stat strip-red af-red${isAf('cancelled')?' af-active':''}" onclick="setFilter('cancelled')">
+      <div class="stat-top">
+        <div class="stat-icon bg-red">🚫</div>
+        <span class="stat-pct pct-red">${cpct}%</span>
+      </div>
+      <div class="stat-label">Cancel</div>
+      <div class="stat-val c-red">${ca.toLocaleString()}</div>
+      <div class="stat-bar"><div class="stat-bar-fill" style="width:${cpct}%;background:var(--red)"></div></div>
+    </div>
+  `;
+}
+
+function setFilter(key){
+  S().af=key;
+  renderMetrics(); renderFilters(); renderTable();
+}
+
+/* ─── RENDER JOB PILLS ─── */
+function renderJobPills(){
+  const s=S();
+  const jobs=getJobs();
+  const el=document.getElementById('jobRow');
+  if(!jobs.length){ el.innerHTML=''; return; }
+  const q=s.sv.toLowerCase();
+  const cnt={};
+  s.rows.forEach(r=>{
+    const j=jobOf(r); if(!j) return;
+    const mf=s.af==='all'||statusOf(r)===s.af;
+    const ms=!q||Object.values(r).some(v=>String(v).toLowerCase().includes(q));
+    if(mf&&ms) cnt[j]=(cnt[j]||0)+1;
+  });
+  el.innerHTML=
+    `<span class="job-row-label">🏗 Job</span>`+
+    jobs.map(j=>`<button class="jpill${s.jf===j?' on':''}" onclick="toggleJob('${j.replace(/'/g,"\\'")}')">
+      ${esc(j)}<span class="jcount">${cnt[j]||0}</span>
+    </button>`).join('')+
+    (s.jf?`<button class="job-clear" onclick="toggleJob('')">✕ ล้าง Job</button>`:'');
+}
+function toggleJob(j){
+  S().jf = S().jf===j?'':j;
+  renderJobPills(); renderTable();
+}
+
+/* ─── RENDER FILTERS ─── */
+function renderFilters(){
+  document.getElementById('filters').innerHTML=FILTERS.map(f=>
+    `<button class="fbtn ${f.cls}${S().af===f.key?' active':''}" data-key="${f.key}">${f.label}</button>`
+  ).join('');
+  document.querySelectorAll('.fbtn').forEach(b=>b.onclick=()=>{
+    S().af=b.dataset.key; renderMetrics(); renderFilters(); renderTable();
+  });
+}
+
+/* ─── RENDER TABLE ─── */
+function renderTable(){
+  const s=S(),data=getFiltered();
+  document.getElementById('tableCount').textContent=`${data.length.toLocaleString()} รายการ`;
+  const tbody=document.getElementById('tbody');
+  const nodata=document.getElementById('nodata');
+  if(!data.length){ tbody.innerHTML=''; nodata.style.display='block'; return; }
+  nodata.style.display='none';
+  const SMART=['po','job','vendor','date','amount'];
+  const pCols=SMART.map(k=>s.colMap[k]).filter(Boolean);
+  const skip=new Set([...pCols,s.colMap.status,'_status','_ts']);
+  const hideCols=['Subcontract','Contract number'];
+  const rest=s.hdrs.filter(h=>!skip.has(h)&&!hideCols.includes(h));
+  const cols=[...pCols,...rest].slice(0,10);
+  document.getElementById('thead').innerHTML=
+    cols.map(h=>`<th>${esc(h)}</th>`).join('')+'<th style="text-align:center">สถานะ</th><th style="text-align:center">จัดการ</th>';
+  const LIMIT=1000;
+  tbody.innerHTML=data.slice(0,LIMIT).map(row=>{
+    const st=statusOf(row),isC=st==='cancelled';
+    const cells=cols.map(h=>{
+      const v=row[h]??'-';
+      if(h===s.colMap.amount) return `<td class="td-amt${isC?' td-muted':''}">${fmtAmt(v)}</td>`;
+      if(h===s.colMap.po)     return `<td class="td-po">${esc(v)}</td>`;
+      if(h===s.colMap.job)    return `<td><span class="td-job">${esc(v)||'—'}</span></td>`;
+      if(h===s.colMap.vendor) return `<td class="td-vendor" title="${esc(v)}">${esc(v)}</td>`;
+      if(h===s.colMap.date)   return `<td class="td-date">${esc(v)}</td>`;
+      return `<td class="td-muted">${esc(v)}</td>`;
+    }).join('');
+    return `<tr class="${isC?'row-cancel':''}">${cells}<td style="text-align:center">${badgeHTML(st)}</td><td style="text-align:center"><div class="tr-actions"><button class="tr-btn tr-btn-edit" onclick="editPO(${s.rows.indexOf(row)})">✏️ แก้ไข</button><button class="tr-btn tr-btn-del" onclick="deletePO(${s.rows.indexOf(row)})">🗑 ลบ</button></div></td></tr>`;
+  }).join('');
+  if(data.length>LIMIT)
+    tbody.innerHTML+=`<tr><td colspan="${cols.length+2}" style="text-align:center;color:var(--text3);font-size:12px;padding:12px;border-top:1px solid var(--border)">แสดง ${LIMIT.toLocaleString()} แถวแรก จากทั้งหมด ${data.length.toLocaleString()} — กรองเพื่อจำกัดผล</td></tr>`;
+}
+
+
+let editingPOIndex = -1;
+
+function openPOModal(){
+  editingPOIndex = -1;
+  document.getElementById('poModalTitle').textContent = 'เพิ่ม PO';
+  ['po-po','po-vendor','po-date','po-amount','po-job'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('po-status').value='confirm';
+  document.getElementById('poModal').classList.add('open');
+}
+
+function closePOModal(){
+  document.getElementById('poModal').classList.remove('open');
+}
+
+function editPO(idx){
+  const s = S();
+  const row = s.rows[idx];
+  editingPOIndex = idx;
+
+  document.getElementById('poModalTitle').textContent = 'แก้ไข PO';
+  document.getElementById('po-po').value = row[s.colMap.po] || '';
+  document.getElementById('po-vendor').value = row[s.colMap.vendor] || '';
+  document.getElementById('po-date').value = row[s.colMap.date] || '';
+  document.getElementById('po-amount').value = row[s.colMap.amount] || '';
+  document.getElementById('po-job').value = row[s.colMap.job] || '';
+  document.getElementById('po-status').value = row._status || 'confirm';
+
+  document.getElementById('poModal').classList.add('open');
+}
+
+async function savePO(){
+  const s = S();
+
+  const row = {};
+
+  // ใส่ข้อมูลให้ตรงกับ column เดิมของตาราง
+  s.hdrs.forEach(h=>{
+    const hl = h.toLowerCase();
+
+    if(h === s.colMap.po || hl.includes('po')){
+      row[h] = document.getElementById('po-po').value;
+    }
+    else if(h === s.colMap.vendor || hl.includes('vendor') || hl.includes('supplier')){
+      row[h] = document.getElementById('po-vendor').value;
+    }
+    else if(h === s.colMap.date || hl.includes('date') || hl.includes('วันที่')){
+      row[h] = document.getElementById('po-date').value;
+    }
+    else if(h === s.colMap.amount || hl.includes('amount') || hl.includes('total') || hl.includes('ราคา')){
+      row[h] = Number(document.getElementById('po-amount').value || 0);
+    }
+    else if(h === s.colMap.job || hl.includes('job')){
+      row[h] = document.getElementById('po-job').value;
+    }
+    else if(h === s.colMap.status || hl.includes('status') || hl.includes('สถานะ')){
+      row[h] = document.getElementById('po-status').value;
+    }
+    else{
+      row[h] = '';
+    }
+  });
+
+  // fallback ถ้ายังไม่มี header
+  if(!s.hdrs.length){
+    row['PO'] = document.getElementById('po-po').value;
+    row['Vendor'] = document.getElementById('po-vendor').value;
+    row['Date'] = document.getElementById('po-date').value;
+    row['Amount'] = Number(document.getElementById('po-amount').value || 0);
+    row['JOB'] = document.getElementById('po-job').value;
+    row['Status'] = document.getElementById('po-status').value;
+
+    s.hdrs = ['PO','Vendor','Date','Amount','JOB','Status'];
+    s.colMap = {
+      po:'PO',
+      vendor:'Vendor',
+      date:'Date',
+      amount:'Amount',
+      job:'JOB',
+      status:'Status'
+    };
+  }
+
+  row._status = document.getElementById('po-status').value;
+  row._ts = Date.now();
+
+  if(editingPOIndex >= 0){
+    s.rows[editingPOIndex] = row;
+  } else {
+    s.rows.unshift(row);
+  }
+
+  await saveStore();
+  renderAll();
+  closePOModal();
+}
+
+async function deletePO(idx){
+  if(!confirm('ยืนยันลบ PO นี้?')) return;
+  S().rows.splice(idx,1);
+  await saveStore();
+  renderAll();
+}
+
+
+function renderAll(){
+  renderMetrics(); renderFilters(); renderTable();
+}
+
+/* ─── ANALYTICS ─── */
+function renderAnalytics(){
+  const s=S(),rows=s.rows;
+  if(!rows.length){ document.getElementById('analyticsContent').innerHTML='<div class="no-data-small">ไม่มีข้อมูล</div>'; return; }
+  const tot=rows.length;
+  const co=rows.filter(r=>statusOf(r)==='confirm').length;
+  const re=rows.filter(r=>statusOf(r)==='received').length;
+  const iv=rows.filter(r=>statusOf(r)==='invoiced').length;
+  const ca=rows.filter(r=>statusOf(r)==='cancelled').length;
+  const active=tot-ca;
+  // total amount
+  const totalAmt=rows.reduce((a,r)=>a+amtOf(r),0);
+  const activeAmt=rows.filter(r=>statusOf(r)!=='cancelled').reduce((a,r)=>a+amtOf(r),0);
+  // vendor stats
+  const vendorMap={};
+  rows.forEach(r=>{
+    const v=vendorOf(r); if(!v) return;
+    if(!vendorMap[v]) vendorMap[v]={count:0,amt:0};
+    vendorMap[v].count++;
+    vendorMap[v].amt+=amtOf(r);
+  });
+  const topVendors=Object.entries(vendorMap).sort((a,b)=>b[1].count-a[1].count).slice(0,8);
+  const maxCount=topVendors[0]?.[1]?.count||1;
+  // status by amount
+  const statusAmts={
+    confirm:rows.filter(r=>statusOf(r)==='confirm').reduce((a,r)=>a+amtOf(r),0),
+    received:rows.filter(r=>statusOf(r)==='received').reduce((a,r)=>a+amtOf(r),0),
+    invoiced:rows.filter(r=>statusOf(r)==='invoiced').reduce((a,r)=>a+amtOf(r),0),
+    cancelled:rows.filter(r=>statusOf(r)==='cancelled').reduce((a,r)=>a+amtOf(r),0),
+  };
+  document.getElementById('analyticsContent').innerHTML=`
+    <div class="analytics-bento">
+      <!-- Status Summary -->
+      <div class="ana-card">
+        <h3>📊 สรุปตามสถานะ (จำนวน PO)</h3>
+        <div class="ana-stat-row"><span class="ana-stat-label">✅ Confirm</span><span class="ana-stat-val c-green">${co.toLocaleString()}</span></div>
+        <div class="bar-mini"><div class="bar-mini-fill" style="width:${active?Math.round(co/active*100):0}%;background:var(--green)"></div></div>
+        <div class="ana-stat-row" style="margin-top:10px"><span class="ana-stat-label">📦 Received</span><span class="ana-stat-val c-amber">${re.toLocaleString()}</span></div>
+        <div class="bar-mini"><div class="bar-mini-fill" style="width:${active?Math.round(re/active*100):0}%;background:var(--amber)"></div></div>
+        <div class="ana-stat-row" style="margin-top:10px"><span class="ana-stat-label">🧾 Invoiced</span><span class="ana-stat-val c-blue">${iv.toLocaleString()}</span></div>
+        <div class="bar-mini"><div class="bar-mini-fill" style="width:${active?Math.round(iv/active*100):0}%;background:#1A65B5"></div></div>
+        <div class="ana-stat-row" style="margin-top:10px"><span class="ana-stat-label">🚫 Cancel</span><span class="ana-stat-val c-red">${ca.toLocaleString()}</span></div>
+        <div class="bar-mini"><div class="bar-mini-fill" style="width:${tot?Math.round(ca/tot*100):0}%;background:var(--red)"></div></div>
+      </div>
+      <!-- Amount Summary -->
+      <div class="ana-card">
+        <h3>💰 มูลค่า PO</h3>
+        <div class="ana-stat-row"><span class="ana-stat-label">รวมทั้งหมด</span><span class="ana-stat-val">${(totalAmt/1e6).toFixed(2)}M</span></div>
+        <div class="ana-stat-row"><span class="ana-stat-label">Active (ไม่รวม Cancel)</span><span class="ana-stat-val" style="color:var(--acc)">${(activeAmt/1e6).toFixed(2)}M</span></div>
+        <div class="ana-stat-row"><span class="ana-stat-label">Confirm</span><span class="ana-stat-val c-green">${(statusAmts.confirm/1e6).toFixed(2)}M</span></div>
+        <div class="ana-stat-row"><span class="ana-stat-label">Received</span><span class="ana-stat-val c-amber">${(statusAmts.received/1e6).toFixed(2)}M</span></div>
+        <div class="ana-stat-row"><span class="ana-stat-label">Invoiced</span><span class="ana-stat-val c-blue">${(statusAmts.invoiced/1e6).toFixed(2)}M</span></div>
+      </div>
+      <!-- Quick Stats -->
+      <div class="ana-card">
+        <h3>📌 Quick Stats</h3>
+        <div class="ana-stat-row"><span class="ana-stat-label">จำนวน Vendor</span><span class="ana-stat-val">${Object.keys(vendorMap).length.toLocaleString()}</span></div>
+        <div class="ana-stat-row"><span class="ana-stat-label">PO Active</span><span class="ana-stat-val">${active.toLocaleString()}</span></div>
+        <div class="ana-stat-row"><span class="ana-stat-label">อัตรา Cancel</span><span class="ana-stat-val c-red">${tot?Math.round(ca/tot*100):0}%</span></div>
+        <div class="ana-stat-row"><span class="ana-stat-label">อัตรา Complete</span><span class="ana-stat-val c-blue">${active?Math.round(iv/active*100):0}%</span></div>
+        <div class="ana-stat-row"><span class="ana-stat-label">มูลค่าเฉลี่ย/PO</span><span class="ana-stat-val">${active?((activeAmt/active)/1000).toFixed(1)+'K':'—'}</span></div>
+      </div>
+      <!-- Top Vendors -->
+      <div class="ana-card ana-wide">
+        <h3>🏆 Top Vendors (ตามจำนวน PO)</h3>
+        <div class="vendor-rank">
+          ${topVendors.map(([name,d],i)=>`
+            <div class="vr-item">
+              <span class="vr-num">${i+1}</span>
+              <span class="vr-name" title="${esc(name)}">${esc(name)}</span>
+              <div class="vr-bar-wrap"><div class="vr-bar" style="width:${Math.round(d.count/maxCount*100)}%;background:var(--acc)"></div></div>
+              <span class="vr-val">${d.count.toLocaleString()} PO</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* ─── VENDORS ─── */
+/* ─── VENDOR DATA STORE ─── */
+// vendorDB: array of { id, name, code, phone, taxid, address, note, color, files:[], poCount, poAmt }
+let vendorDB = [];
+let _vendorEditId = null;
+const VD_COLORS = ['#3B82F6','#8B5CF6','#10B981','#F59E0B','#EF4444','#EC4899','#06B6D4','#84CC16'];
+
+async function loadVendorDB(){
+  try{
+    if(!window._firebaseReady) return;
+    const {doc,getDoc} = window._fsLib;
+    // store vendor list in Firestore doc "vendor_meta/list"
+    const snap = await window._fsLib.getDoc(window._fsLib.doc(window._db,'vendor_meta','list'));
+    if(snap.exists()) vendorDB = snap.data().vendors || [];
+  }catch(e){ console.warn('loadVendorDB',e); }
+  renderVendors();
+}
+
+async function saveVendorDB(){
+  try{
+    if(!window._firebaseReady) return;
+    await window._fsLib.setDoc(window._fsLib.doc(window._db,'vendor_meta','list'), {vendors: vendorDB});
+  }catch(e){ console.warn('saveVendorDB',e); }
+}
+
+function openAddVendorModal(){
+  _vendorEditId = null;
+  document.getElementById('vendorModalTitle').textContent = 'เพิ่ม Vendor ใหม่';
+  document.getElementById('vm-save-btn').textContent = 'เพิ่ม Vendor';
+  ['vm-name','vm-code','vm-phone','vm-taxid','vm-address','vm-note'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('vendorModal').style.display='flex';
+}
+
+function openEditVendorModal(id){
+  const vd = vendorDB.find(v=>v.id===id); if(!vd) return;
+  _vendorEditId = id;
+  document.getElementById('vendorModalTitle').textContent = 'แก้ไข Vendor';
+  document.getElementById('vm-save-btn').textContent = 'บันทึกการแก้ไข';
+  document.getElementById('vm-name').value = vd.name||'';
+  document.getElementById('vm-code').value = vd.code||'';
+  document.getElementById('vm-phone').value = vd.phone||'';
+  document.getElementById('vm-taxid').value = vd.taxid||'';
+  document.getElementById('vm-address').value = vd.address||'';
+  document.getElementById('vm-note').value = vd.note||'';
+  document.getElementById('vendorModal').style.display='flex';
+}
+
+function closeVendorModal(){
+  document.getElementById('vendorModal').style.display='none';
+}
+
+async function saveVendorModal(){
+  const name = document.getElementById('vm-name').value.trim();
+  if(!name){ alert('กรุณาใส่ชื่อบริษัท'); return; }
+  const btn = document.getElementById('vm-save-btn');
+  btn.disabled=true; btn.textContent='กำลังบันทึก...';
+  if(_vendorEditId){
+    const idx = vendorDB.findIndex(v=>v.id===_vendorEditId);
+    if(idx>=0){
+      vendorDB[idx] = {...vendorDB[idx],
+        name, code:document.getElementById('vm-code').value.trim(),
+        phone:document.getElementById('vm-phone').value.trim(),
+        taxid:document.getElementById('vm-taxid').value.trim(),
+        address:document.getElementById('vm-address').value.trim(),
+        note:document.getElementById('vm-note').value.trim(),
+      };
+    }
+  } else {
+    vendorDB.push({
+      id: 'vd_'+Date.now(),
+      name, code:document.getElementById('vm-code').value.trim(),
+      phone:document.getElementById('vm-phone').value.trim(),
+      taxid:document.getElementById('vm-taxid').value.trim(),
+      address:document.getElementById('vm-address').value.trim(),
+      note:document.getElementById('vm-note').value.trim(),
+      color: VD_COLORS[vendorDB.length % VD_COLORS.length],
+      files:[],
+    });
+  }
+  await saveVendorDB();
+  btn.disabled=false;
+  closeVendorModal();
+  renderVendors();
+}
+
+async function deleteVendor(id){
+  if(!confirm('ลบ Vendor นี้?')) return;
+  vendorDB = vendorDB.filter(v=>v.id!==id);
+  await saveVendorDB();
+  renderVendors();
+}
+
+/* ── File upload per vendor (AX direct) ── */
+
+function handleVendorFileDrop(file){ if(file) _processVendorFile(file); }
+function handleVendorFile(file){ if(file) _processVendorFile(file); }
+// keep old signatures for any stray calls
+function openVendorUploadDirect(){ document.getElementById('vendorFileInput').click(); }
+function openVendorUpload(id){ document.getElementById('vendorFileInput').click(); }
+function closeVendorUpload(){}
+
+async function _processVendorFile(file){
+  const statusEl = document.getElementById('vendorUploadStatus');
+  const dropZone = document.getElementById('vendorDropZone');
+  if(statusEl) statusEl.textContent = '⏳ กำลังอ่านไฟล์...';
+  if(dropZone){ dropZone.style.borderColor='var(--acc)'; dropZone.style.background='var(--surface3)'; }
+
+  try{
+    const ab = await file.arrayBuffer();
+    const wb = XLSX.read(ab,{type:'array'});
+    const rows = wb.SheetNames.flatMap(sn =>
+      XLSX.utils.sheet_to_json(wb.Sheets[sn],{defval:'',raw:false})
+    );
+    if(!rows.length){ if(statusEl) statusEl.textContent='❌ ไม่พบข้อมูลในไฟล์'; return; }
+
+    const hdrs = Object.keys(rows[0]);
+
+    // Detect vendor name & code columns
+    const nameHints = ['vendor name','vendname','ชื่อ vendor','ชื่อผู้ขาย','name','บริษัท','company','vendor'];
+    const codeHints = ['vendor account','vendor code','vendaccount','account','รหัส vendor','รหัสผู้ขาย','code'];
+    const phoneHints = ['phone','telephone','โทร','เบอร์','tel'];
+    const taxHints = ['tax','vat','taxid','เลขภาษี','ผู้เสียภาษี'];
+    const addrHints = ['address','ที่อยู่','addr'];
+
+    const findCol = hints => hdrs.find(h=>hints.some(k=>h.toLowerCase().replace(/\s/g,'').includes(k.replace(/\s/g,'')))) || '';
+
+    const nameCol = findCol(nameHints);
+    const codeCol = findCol(codeHints);
+    const phoneCol = findCol(phoneHints);
+    const taxCol  = findCol(taxHints);
+    const addrCol = findCol(addrHints);
+
+    if(!nameCol){ if(statusEl) statusEl.textContent='⚠️ ไม่พบคอลัมน์ชื่อ Vendor — ลองเลือกไฟล์อื่น'; return; }
+
+    // Extract unique vendors from file
+    const seen = new Map(); // name -> {code, phone, taxid, address}
+    rows.forEach(r => {
+      const name = String(r[nameCol]||'').trim(); if(!name) return;
+      if(!seen.has(name)){
+        seen.set(name, {
+          code:    codeCol  ? String(r[codeCol]||'').trim()  : '',
+          phone:   phoneCol ? String(r[phoneCol]||'').trim() : '',
+          taxid:   taxCol   ? String(r[taxCol]||'').trim()   : '',
+          address: addrCol  ? String(r[addrCol]||'').trim()  : '',
+        });
+      }
+    });
+
+    let added=0, updated=0;
+    const dbNameMap = new Map(vendorDB.map(v=>[v.name.toLowerCase(), v]));
+
+    seen.forEach((info, name) => {
+      const existing = dbNameMap.get(name.toLowerCase());
+      if(existing){
+        // Update info from file if missing
+        if(!existing.code    && info.code)    existing.code    = info.code;
+        if(!existing.phone   && info.phone)   existing.phone   = info.phone;
+        if(!existing.taxid   && info.taxid)   existing.taxid   = info.taxid;
+        if(!existing.address && info.address) existing.address = info.address;
+        // Always record this file upload
+        if(!existing.files) existing.files = [];
+        updated++;
+      } else {
+        vendorDB.push({
+          id: 'vd_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),
+          name, ...info,
+          color: VD_COLORS[vendorDB.length % VD_COLORS.length],
+          files: [],
+        });
+        dbNameMap.set(name.toLowerCase(), vendorDB[vendorDB.length-1]);
+        added++;
+      }
+    });
+
+    // Record file on ALL vendors that appear in it
+    seen.forEach((_, name) => {
+      const vd = dbNameMap.get(name.toLowerCase());
+      if(vd){
+        if(!vd.files) vd.files=[];
+        vd.files.push({ name: file.name, uploadedAt: new Date().toISOString(), rowCount: rows.length, vendorNames: [...seen.keys()].slice(0,50) });
+      }
+    });
+
+    await saveVendorDB();
+
+    const msg = `✅ นำเข้าสำเร็จ — ใหม่ ${added} รายการ, อัปเดต ${updated} รายการ จากทั้งหมด ${seen.size} Vendor ในไฟล์`;
+    if(statusEl) statusEl.textContent = msg;
+    if(dropZone){ dropZone.style.borderColor='var(--green)'; dropZone.style.background='var(--green-bg)'; }
+    setTimeout(()=>{
+      if(dropZone){ dropZone.style.borderColor='var(--border)'; dropZone.style.background='var(--surface2)'; }
+      if(statusEl) statusEl.textContent='';
+    }, 4000);
+
+    renderVendors();
+  } catch(e){
+    console.error(e);
+    if(statusEl) statusEl.textContent='❌ อ่านไฟล์ไม่ได้: '+e.message;
+    if(dropZone){ dropZone.style.borderColor='var(--red)'; dropZone.style.background='var(--red-bg)'; }
+    setTimeout(()=>{
+      if(dropZone){ dropZone.style.borderColor='var(--border)'; dropZone.style.background='var(--surface2)'; }
+    }, 3000);
+  }
+}
+
+async function removeVendorFile(vendorId, fileIdx){
+  if(!confirm('ลบไฟล์นี้?')) return;
+  const vd=vendorDB.find(v=>v.id===vendorId); if(!vd) return;
+  vd.files.splice(fileIdx,1);
+  await saveVendorDB();
+  renderVendors();
+}
+
+
+/* ── Render vendor cards ── */
+function renderVendors(){
+  // PO stats from current store
+  const s=S(), poRows=s.rows;
+  const poByVendor={};
+  poRows.forEach(r=>{
+    const v=vendorOf(r); if(!v) return;
+    if(!poByVendor[v]) poByVendor[v]={count:0,amt:0,statuses:{confirm:0,received:0,invoiced:0,cancelled:0}};
+    poByVendor[v].count++;
+    poByVendor[v].amt+=amtOf(r);
+    const st=statusOf(r);
+    poByVendor[v].statuses[st]=(poByVendor[v].statuses[st]||0)+1;
+  });
+
+  const q=((document.getElementById('vendorSearch')||{}).value||'').toLowerCase();
+  const statusColors={confirm:'var(--green)',received:'var(--amber)',invoiced:'#1A65B5',cancelled:'var(--red)'};
+
+  // Stats bar
+  const withFiles=vendorDB.filter(v=>v.files&&v.files.length).length;
+  const withPO=vendorDB.filter(v=>poByVendor[v.name]).length;
+  document.getElementById('vendorStatsBar').innerHTML=`
+    <div style="padding:7px 13px;background:var(--surface);border:1px solid var(--border);border-radius:10px;font-size:12.5px;color:var(--text2)">
+      🏢 <strong style="color:var(--text)">${vendorDB.length}</strong> Vendor
+    </div>
+    ${withPO?`<div style="padding:7px 13px;background:var(--green-bg);border:1px solid var(--green-light);border-radius:10px;font-size:12.5px;color:var(--green-text)">
+      📦 มี PO: <strong>${withPO}</strong>
+    </div>`:''}
+    ${withFiles?`<div style="padding:7px 13px;background:var(--surface);border:1px solid var(--border);border-radius:10px;font-size:12.5px;color:var(--text2)">
+      📂 มีไฟล์: <strong style="color:var(--text)">${withFiles}</strong>
+    </div>`:''}
+  `;
+
+  const cards = vendorDB
+    .filter(v=>!q || v.name.toLowerCase().includes(q) || (v.code||'').toLowerCase().includes(q))
+    .map((vd,i)=>{
+      const po=poByVendor[vd.name]||{count:0,amt:0,statuses:{confirm:0,received:0,invoiced:0,cancelled:0}};
+      const initials=vd.name.replace(/บริษัท|จำกัด|co\.|ltd\./gi,'').trim().substring(0,2).toUpperCase()||'VD';
+      const fileCount=(vd.files||[]).length;
+      return `<div class="vd-card">
+        ${fileCount?`<div class="vd-file-badge">📂 ${fileCount} ไฟล์</div>`:''}
+        <div class="vd-card-top">
+          <div class="vd-avatar" style="background:${vd.color||VD_COLORS[i%VD_COLORS.length]}">${initials}</div>
+          <div style="flex:1;min-width:0">
+            <div class="vd-name">${esc(vd.name)}</div>
+            <div class="vd-code">${vd.code||'ไม่ระบุรหัส'}</div>
+          </div>
+        </div>
+        ${vd.phone||vd.taxid?`<div class="vd-meta">
+          ${vd.phone?`<span class="vd-tag">📞 ${esc(vd.phone)}</span>`:''}
+          ${vd.taxid?`<span class="vd-tag">🪪 ${esc(vd.taxid)}</span>`:''}
+        </div>`:''}
+        <div class="vd-stats-row">
+          <div class="vd-stat-box"><div class="vd-stat-num">${po.count||0}</div><div class="vd-stat-lbl">PO</div></div>
+          <div class="vd-stat-box"><div class="vd-stat-num">${po.amt>=1000?(po.amt/1000).toFixed(0)+'K':po.amt.toFixed(0)}</div><div class="vd-stat-lbl">บาท</div></div>
+          <div class="vd-stat-box"><div class="vd-stat-num">${fileCount}</div><div class="vd-stat-lbl">ไฟล์</div></div>
+        </div>
+        ${po.count?`<div class="vd-status-bar">
+          ${['confirm','received','invoiced','cancelled'].map(k=>`<div style="flex:${po.statuses[k]||0};background:${statusColors[k]};opacity:.8"></div>`).join('')}
+        </div>`:''}
+        ${fileCount?`<div style="margin-top:10px">
+          <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px">ไฟล์ที่อัปโหลด</div>
+          ${(vd.files||[]).map((f,fi)=>{
+            const names = f.vendorNames||[];
+            return `<div style="padding:7px 0;border-bottom:1px solid var(--border)">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:${names.length?'6px':'0'}">
+                <span style="font-size:14px">📄</span>
+                <span style="flex:1;font-size:12px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(f.name)}">${esc(f.name)}</span>
+                <span style="font-size:11px;color:var(--text3);flex-shrink:0">${f.rowCount||''}แถว</span>
+                <button onclick="event.stopPropagation();removeVendorFile('${vd.id}',${fi})" style="background:none;border:none;cursor:pointer;color:var(--red-text);font-size:13px;padding:2px 4px">✕</button>
+              </div>
+              ${names.length?`<div style="display:flex;flex-wrap:wrap;gap:4px;padding-left:22px">
+                ${names.slice(0,8).map(n=>`<span style="padding:2px 7px;border-radius:6px;font-size:11px;background:var(--surface2);border:1px solid var(--border);color:var(--text2)">${esc(n)}</span>`).join('')}
+                ${names.length>8?`<span style="font-size:11px;color:var(--text3);align-self:center">+${names.length-8}</span>`:''}
+              </div>`:''}
+            </div>`;
+          }).join('')}
+        </div>`:''}
+        <div class="vd-actions">
+          <button class="vd-btn" onclick="openEditVendorModal('${vd.id}')">✏️ แก้ไข</button>
+          <button class="vd-btn danger" onclick="deleteVendor('${vd.id}')">🗑 ลบ</button>
+        </div>
+      </div>`;
+    });
+
+  const el=document.getElementById('vendorsContent');
+  if(!cards.length){
+    el.innerHTML=`<div class="vd-empty">
+      <div class="vd-empty-icon">🏢</div>
+      <div class="vd-empty-text">${q?'ไม่พบ Vendor ที่ค้นหา':'ยังไม่มีข้อมูล Vendor'}</div>
+      <div class="vd-empty-sub">${q?'ลองค้นหาด้วยคำอื่น':'อัปโหลดไฟล์จาก AX ด้านบน หรือกด เพิ่มเอง'}</div>
+    </div>`;
+    return;
+  }
+  el.innerHTML=`<div class="vd-grid">${cards.join('')}</div>`;
+}
+
+function openAddVendorFromPO(name){
+  openAddVendorModal();
+  document.getElementById('vm-name').value=name;
+}
+
+/* ─── SETTINGS ─── */
+function openSettingsTab(tab,btn){
+  currentSettingsTab=tab;
+  document.querySelectorAll('.settings-nav-item').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  renderSettings(tab);
+}
+
+function renderSettings(tab){
+  const s=S(),t=ST();
+  const panels={
+    general:`
+      <div class="settings-section">
+        <div class="settings-section-title">บริษัทปัจจุบัน</div>
+        <div class="setting-row">
+          <div><div class="setting-label">ชื่อบริษัท</div></div>
+          <span class="setting-val">${t.name}</span>
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Storage Key</div></div>
+          <span class="setting-val">${t.sk}</span>
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">จำนวน PO</div><div class="setting-desc">ข้อมูลในหน่วยความจำ</div></div>
+          <span class="setting-val">${s.rows.length.toLocaleString()}</span>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-title">Version</div>
+        <div class="setting-row">
+          <div><div class="setting-label">PO Dashboard</div><div class="setting-desc">รองรับ .xlsx / .xls / .csv</div></div>
+          <span class="setting-val">v2.0</span>
+        </div>
+      </div>
+    `,
+    stores:`
+      <div class="settings-section">
+        <div class="settings-section-title">บริษัททั้งหมด</div>
+        ${STORES.map((st,i)=>{
+          const cnt=state[i].rows.length;
+          return `<div class="setting-row">
+            <div>
+              <div class="setting-label" style="display:flex;align-items:center;gap:8px">
+                <span style="width:10px;height:10px;border-radius:50%;background:${st.dot};display:inline-block"></span>
+                ${st.name}
+              </div>
+              <div class="setting-desc">Key: ${st.sk}</div>
+            </div>
+            <span class="setting-val">${cnt.toLocaleString()} PO</span>
+          </div>`;
+        }).join('')}
+      </div>
+    `,
+    columns:`
+      <div class="settings-section">
+        <div class="settings-section-title">Column Mapping — ${t.name}</div>
+        ${Object.entries(s.colMap).map(([k,v])=>`
+          <div class="setting-row">
+            <div><div class="setting-label">${k.toUpperCase()}</div></div>
+            <span class="setting-val">${v||'—'}</span>
+          </div>
+        `).join('')}
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-title">Headers ที่พบ</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">
+          ${s.hdrs.map(h=>`<span class="upload-tag">${esc(h)}</span>`).join('')||'<span style="color:var(--text3);font-size:13px">ยังไม่มีข้อมูล</span>'}
+        </div>
+      </div>
+    `,
+    data:`
+      <div class="settings-section">
+        <div class="settings-section-title">จัดการข้อมูล</div>
+        <div class="setting-row">
+          <div><div class="setting-label">ล้างข้อมูลบริษัทนี้</div><div class="setting-desc">ลบ ${s.rows.length.toLocaleString()} PO ของ ${t.name}</div></div>
+          <button class="btn btn-sm btn-danger" onclick="clearAll()">🗑 ล้างข้อมูล</button>
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">เปลี่ยนไฟล์</div><div class="setting-desc">โหลดไฟล์ Excel ใหม่</div></div>
+          <button class="btn btn-sm" onclick="openPage('dashboard');resetAll()">⟳ เปลี่ยนไฟล์</button>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-title">ล้างทุกบริษัท</div>
+        <div class="setting-row">
+          <div><div class="setting-label">ล้างข้อมูลทั้งหมด</div><div class="setting-desc">ลบข้อมูลทุกบริษัทออกจาก Local Storage</div></div>
+          <button class="btn btn-sm btn-danger" onclick="if(confirm('ยืนยันลบทุกบริษัท?')){STORES.forEach((_,i)=>{curStore=i;wipeStore();state[i].rows=[]});curStore=0;applyTheme();document.getElementById('mainSection').style.display='none';document.getElementById('uploadZone').style.display='block';renderSettings('data')}">🗑 ล้างทั้งหมด</button>
+        </div>
+      </div>
+    `
+  };
+  document.getElementById('settingsContent').innerHTML=panels[tab]||'';
+}
+
+/* ─── INFO ─── */
+function showInfoMerge(){
+  const s=S(),now=new Date();
+  const statusLabel={confirm:'Confirm',received:'Received',invoiced:'Invoiced',cancelled:'Cancel'};
+  const statusColor={confirm:'var(--green-text)',received:'var(--amber-text)',invoiced:'var(--blue-text)',cancelled:'var(--red-text)'};
+  let updatesDetail='';
+  if(s._statusUpdates&&s._statusUpdates.length){
+    const shown=s._statusUpdates.slice(0,5);
+    updatesDetail=`<div style="margin-top:8px;padding:8px 12px;background:var(--amber-bg);border:1px solid var(--amber-light);border-radius:9px;font-size:12.5px;line-height:1.9">`+
+      `<b style="color:var(--amber-text)">🔄 PO ที่เปลี่ยนสถานะ (${s._statusUpdates.length} รายการ):</b><br>`+
+      shown.map(u=>`<span style="font-family:'IBM Plex Mono',monospace;font-weight:700">${esc(u.poKey)}</span>`+
+        ` <span style="color:var(--text3)">${statusLabel[u.oldStatus]||u.oldStatus}</span>`+
+        ` → <span style="color:${statusColor[u.newStatus]||'var(--text)'};font-weight:700">${statusLabel[u.newStatus]||u.newStatus}</span>`).join('<br>')+
+      (s._statusUpdates.length>5?`<br><span style="color:var(--text3)">และอีก ${s._statusUpdates.length-5} รายการ...</span>`:'')+
+      `</div>`;
+  }
+  document.getElementById('infoText').innerHTML=
+    `บันทึกแล้ว — <b style="color:var(--green-text)">+${s.nR} ใหม่</b> &nbsp;|&nbsp; `+
+    `<b style="color:var(--amber-text)">${s.uR} อัปเดตสถานะ</b> &nbsp;|&nbsp; `+
+    `<span style="color:var(--text3)">${s.xR} ซ้ำ (ไม่เปลี่ยน)</span> &nbsp;|&nbsp; `+
+    `รวม <b>${s.rows.length.toLocaleString()} PO</b>${s.colMap.job?' · Job: '+s.colMap.job:''} · ${now.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})} น.`+
+    updatesDetail;
+  const ts=now.toLocaleDateString('th-TH',{day:'numeric',month:'short'})+' '+now.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('topbarTime').textContent=ts;
+  document.getElementById('lastUpdateSide').textContent='อัปเดต: '+ts;
+  document.getElementById('colMapInfo').textContent=`PO:${s.colMap.po||'—'} · Job:${s.colMap.job||'ไม่พบ'} · Status:${s.colMap.status||'—'}`;
+}
+function showInfoLoaded(){
+  const s=S();
+  try{
+    const m=JSON.parse(localStorage.getItem(ST().sm)||'{}');
+    const at=m.at?new Date(m.at):new Date();
+    document.getElementById('infoText').innerHTML=
+      `โหลดจากหน่วยความจำ — <b>${s.rows.length.toLocaleString()} PO</b> · `+
+      `บันทึกล่าสุด ${at.toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'})} ${at.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})} น.`;
+    const ts=at.toLocaleDateString('th-TH',{day:'numeric',month:'short'})+' '+at.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+    document.getElementById('topbarTime').textContent=ts;
+    document.getElementById('lastUpdateSide').textContent='อัปเดต: '+ts;
+    document.getElementById('colMapInfo').textContent=`PO:${s.colMap.po||'—'} · Job:${s.colMap.job||'ไม่พบ'} · Status:${s.colMap.status||'—'}`;
+  }catch(e){}
+}
+
+/* ─── UPDATE FILE (merge without reset) ─── */
+function triggerUpdateFile(){
+  document.getElementById('updateFileInput').click();
+}
+
+/* ─── PROCESS FILES ─── */
+function processFiles(files){
+  const pb=document.getElementById('progressBar'),pf=document.getElementById('progressFill'),pr=document.getElementById('processingBadge');
+  pb.style.display='block'; pf.style.width='0%'; pr.classList.add('show');
+  workbooks=[]; let loaded=0;
+  Array.from(files).forEach(file=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      try{
+        const data=new Uint8Array(e.target.result);
+        let wb; try{ wb=XLSX.read(data,{type:'array',codepage:874}); }catch(_){ wb=XLSX.read(data,{type:'array'}); }
+        workbooks.push({wb,name:file.name});
+      }catch(err){ console.warn(err); }
+      loaded++;
+      pf.style.width=Math.round(loaded/files.length*100)+'%';
+      if(loaded===files.length){ pb.style.display='none'; afterLoad(); }
+    };
+    reader.readAsArrayBuffer(file);
+  });
+}
+async function afterLoad(){
+  const pr=document.getElementById('processingBadge');
+  document.getElementById('processingText').textContent='กำลังวิเคราะห์...';
+  const s=S();
+  const firstWb=workbooks[0].wb;
+  const sample=XLSX.utils.sheet_to_json(firstWb.Sheets[firstWb.SheetNames[0]],{defval:'',raw:false});
+  if(!sample.length){ pr.classList.remove('show'); alert('ไม่พบข้อมูลในไฟล์'); return; }
+  s.hdrs=Object.keys(sample[0]); guessColumns(s.hdrs);
+  const inc=workbooks.flatMap(({wb})=>wb.SheetNames.flatMap(sn=>XLSX.utils.sheet_to_json(wb.Sheets[sn],{defval:'',raw:false})));
+  mergeData(inc.map(r=>({...r,_status:r[s.colMap.status]||'',_ts:Date.now()})));
+  document.getElementById('processingText').textContent='กำลังบันทึกข้อมูลกลาง...';
+  await saveStore();
+  pr.classList.remove('show');
+  document.getElementById('uploadZone').style.display='none';
+  document.getElementById('resetBtn').classList.add('show');
+  document.getElementById('mainSection').style.display='block';
+  showInfoMerge(); renderAll();
+}
+
+/* ─── RESET / CLEAR ─── */
+async function resetAll(){
+  const choice=confirm('ล้างข้อมูลร้านนี้ด้วยไหม?\n\nOK = ล้างหมด  |  Cancel = แค่เปลี่ยนไฟล์');
+  if(choice){ await wipeStore(); S().rows=[]; }
+  workbooks=[]; Object.assign(S(),{af:'all',sv:''});
+  document.getElementById('search').value='';
+  document.getElementById('uploadZone').style.display='block';
+  document.getElementById('mainSection').style.display='none';
+  document.getElementById('resetBtn').classList.remove('show');
+  document.getElementById('topbarTime').textContent='—';
+  document.getElementById('fileInput').value='';
+  if(S().rows.length){ document.getElementById('mainSection').style.display='block'; renderAll(); }
+}
+async function clearAll(){
+  if(!confirm('ยืนยันลบข้อมูล PO ของร้านนี้ทั้งหมด?')) return;
+  await wipeStore(); S().rows=[];
+  document.getElementById('mainSection').style.display='none';
+  document.getElementById('uploadZone').style.display='block';
+  document.getElementById('resetBtn').classList.remove('show');
+  document.getElementById('topbarTime').textContent='—';
+}
+
+/* ─── TRANSFERS (Firestore) ─── */
+let transferEditId = null;
+let _transfersCache = [];
+let _transferUnsubscribe = null;
+
+function getTransferKey(){ return 'transfers_data'; } // kept for legacy compat
+
+function _fsCol(){ return window._fsLib.collection(window._db, 'transfers'); }
+
+/* Subscribe to real-time updates */
+function subscribeTransfers(){
+  if(!window._firebaseReady){ window.addEventListener('firebase-ready', subscribeTransfers, {once:true}); return; }
+  if(_transferUnsubscribe) _transferUnsubscribe();
+  setFbStatus('connecting');
+  const { onSnapshot, query, orderBy } = window._fsLib;
+  const q = query(_fsCol(), orderBy('_ts','desc'));
+  _transferUnsubscribe = onSnapshot(q, snap => {
+    _transfersCache = snap.docs.map(d => ({...d.data(), _fid: d.id}));
+    setFbStatus('online');
+    if(document.getElementById('page-transfers').classList.contains('active')){
+      renderTransferSummary();
+      renderTransferTable();
+    }
+  }, err => {
+    console.warn('Firestore error:', err);
+    setFbStatus('offline');
+    try{ _transfersCache = JSON.parse(localStorage.getItem(getTransferKey())||'[]'); }catch(e){}
+    renderTransferSummary(); renderTransferTable();
+  });
+}
+
+function loadTransfers(){ return _transfersCache; }
+
+function openTransferModal(fid){
+  transferEditId = fid||null;
+  const modal = document.getElementById('transferModal');
+  document.getElementById('transferModalTitle').textContent = fid ? '✏️ แก้ไขรายการโอน' : '＋ เพิ่มรายการโอน';
+  if(fid){
+    const t = _transfersCache.find(x=>x._fid===fid);
+    if(t){
+      document.getElementById('tf-date').value = t.date||'';
+      document.getElementById('tf-no').value = t.no||'';
+      document.getElementById('tf-po').value = t.po||'';
+      document.getElementById('tf-job').value = t.job||'';
+      document.getElementById('tf-amount').value = t.amount||'';
+      document.getElementById('tf-shop').value = t.shop||'';
+      document.getElementById('tf-detail').value = t.detail||'';
+    }
+  } else {
+    ['tf-date','tf-no','tf-po','tf-job','tf-amount','tf-shop','tf-detail'].forEach(id=>{ document.getElementById(id).value=''; });
+    document.getElementById('tf-date').value = new Date().toISOString().slice(0,10);
+  }
+  modal.classList.add('open');
+}
+function closeTransferModal(){
+  document.getElementById('transferModal').classList.remove('open');
+  transferEditId = null;
+}
+
+async function saveTransfer(){
+  const date = document.getElementById('tf-date').value;
+  const no   = document.getElementById('tf-no').value.trim();
+  const po   = document.getElementById('tf-po').value.trim();
+  const job  = document.getElementById('tf-job').value.trim();
+  const amount = parseFloat(document.getElementById('tf-amount').value)||0;
+  const shop = document.getElementById('tf-shop').value.trim();
+  const detail = document.getElementById('tf-detail').value.trim();
+  if(!date||!no){ alert('กรุณากรอกวันที่และเลขใบโอน'); return; }
+
+  const saveBtn = document.querySelector('#transferModal .btn-primary');
+  saveBtn.textContent = '⏳ กำลังบันทึก...'; saveBtn.disabled = true;
+
+  const payload = {date, no, po, job, amount, shop, detail, _ts: Date.now()};
+
+  try {
+    if(!window._firebaseReady) throw new Error('Firebase not ready');
+    const { addDoc, updateDoc, doc } = window._fsLib;
+    if(transferEditId){
+      await updateDoc(doc(window._db,'transfers',transferEditId), payload);
+    } else {
+      await addDoc(_fsCol(), payload);
+    }
+  } catch(err){
+    console.warn('Firestore save failed, using localStorage:', err);
+    const arr = JSON.parse(localStorage.getItem(getTransferKey())||'[]');
+    if(transferEditId){
+      const idx = arr.findIndex(x=>x.id===transferEditId||x._fid===transferEditId);
+      if(idx>-1) arr[idx] = {...arr[idx],...payload};
+    } else {
+      arr.unshift({...payload, id:'tr_'+Date.now()});
+    }
+    localStorage.setItem(getTransferKey(), JSON.stringify(arr));
+    _transfersCache = arr;
+    renderTransferSummary(); renderTransferTable();
+  }
+
+  saveBtn.textContent = '💾 บันทึก'; saveBtn.disabled = false;
+  closeTransferModal();
+}
+
+async function deleteTransfer(fid){
+  if(!confirm('ยืนยันลบรายการโอนนี้?')) return;
+  try {
+    if(!window._firebaseReady) throw new Error('Firebase not ready');
+    const { deleteDoc, doc } = window._fsLib;
+    await deleteDoc(doc(window._db,'transfers',fid));
+  } catch(err){
+    console.warn('Firestore delete failed, using localStorage:', err);
+    const arr = JSON.parse(localStorage.getItem(getTransferKey())||'[]').filter(x=>(x.id||x._fid)!==fid);
+    localStorage.setItem(getTransferKey(), JSON.stringify(arr));
+    _transfersCache = arr;
+    renderTransferSummary(); renderTransferTable();
+  }
+}
+
+function renderTransferPage(){
+  renderTransferSummary();
+  renderTransferTable();
+  subscribeTransfers();
+}
+
+function renderTransferSummary(){
+  const arr = _transfersCache;
+  const total = arr.length;
+  const amount = arr.reduce((s,t)=>s+(parseFloat(t.amount)||0),0);
+  const shops = new Set(arr.map(t=>t.shop).filter(Boolean)).size;
+  document.getElementById('tsm-total').textContent = total.toLocaleString();
+  document.getElementById('tsm-amount').textContent = '฿'+amount.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('tsm-shops').textContent = shops;
+}
+
+function renderTransferTable(){
+  const arr = [..._transfersCache].sort((a,b)=>{
+    const da = a.date ? new Date(a.date).getTime() : (a._ts||0);
+    const db = b.date ? new Date(b.date).getTime() : (b._ts||0);
+    return db - da;
+  });
+  const q = (document.getElementById('transferSearch')||{}).value||'';
+  const filtered = q ? arr.filter(t=>
+    [t.date,t.no,t.po,t.job,t.shop,t.detail].some(v=>String(v||'').toLowerCase().includes(q.toLowerCase()))
+  ) : arr;
+  const tbody = document.getElementById('transferTbody');
+  const nodata = document.getElementById('transferNodata');
+  document.getElementById('transferTableCount').textContent = filtered.length.toLocaleString()+' รายการ';
+  if(!filtered.length){ tbody.innerHTML=''; nodata.style.display='block'; return; }
+  nodata.style.display='none';
+  tbody.innerHTML = filtered.map(t=>{
+    const fid = t._fid||t.id;
+    const dateStr = t.date ? new Date(t.date).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'}) : '—';
+    const amt = (parseFloat(t.amount)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+    return `<tr>
+      <td class="td-date">${dateStr}</td>
+      <td class="td-transfer-no">${esc(t.no||'—')}</td>
+      <td class="td-po">${esc(t.po||'—')}</td>
+      <td class="td-muted">${esc(t.job||'—')}</td>
+      <td class="td-amt-tr">฿${amt}</td>
+      <td class="td-vendor">${esc(t.shop||'—')}</td>
+      <td class="td-muted" style="max-width:180px;overflow:hidden;text-overflow:ellipsis;font-size:12px">${esc(t.detail||'—')}</td>
+      <td>
+        <div class="tr-actions">
+          <button class="tr-btn tr-btn-edit" onclick="openTransferModal('${fid}')">✏️ แก้ไข</button>
+          <button class="tr-btn tr-btn-del" onclick="deleteTransfer('${fid}')">🗑</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+/* ─── CONCRETE (Firestore) ─── */
+let concreteEditId = null;
+let _concreteCache = [];
+let _concreteUnsubscribe = null;
+
+function _fsConcreteCol(){ return window._fsLib.collection(window._db, 'concrete'); }
+
+function setConcreteFbStatus(s){
+  const el = document.getElementById('concreteFbStatus'); if(!el) return;
+  const map = { online:['🟢 Online','color:var(--green-text);background:var(--green-bg)'], offline:['🔴 Offline','color:var(--red-text);background:var(--red-bg)'], connecting:['⏳ กำลังเชื่อมต่อ...','color:var(--text3);background:var(--surface2)'] };
+  const [txt,style] = map[s]||map.connecting; el.textContent=txt; el.style.cssText=`font-size:11px;padding:2px 9px;border-radius:99px;${style}`;
+}
+
+function subscribeConcretes(){
+  if(!window._firebaseReady){ window.addEventListener('firebase-ready', subscribeConcretes, {once:true}); return; }
+  if(_concreteUnsubscribe) _concreteUnsubscribe();
+  setConcreteFbStatus('connecting');
+  const { onSnapshot, query, orderBy } = window._fsLib;
+  const q = query(_fsConcreteCol(), orderBy('_ts','desc'));
+  _concreteUnsubscribe = onSnapshot(q, snap => {
+    _concreteCache = snap.docs.map(d => ({...d.data(), _fid: d.id}));
+    setConcreteFbStatus('online');
+    if(document.getElementById('page-concrete').classList.contains('active')){
+      renderConcreteSummary();
+      renderConcreteTable();
+    }
+  }, err => {
+    console.warn('Firestore concrete error:', err);
+    setConcreteFbStatus('offline');
+    try{ _concreteCache = JSON.parse(localStorage.getItem('concrete_data')||'[]'); }catch(e){}
+    _rebuildConcreteSorted(); renderConcreteSummary(); renderConcreteTable();
+  });
+}
+
+function calcConcreteTotal(){
+  const vol = parseFloat(document.getElementById('ct-vol').value)||0;
+  const unitPrice = parseFloat(document.getElementById('ct-unit-price').value)||0;
+  if(vol && unitPrice){
+    document.getElementById('ct-total-price').value = (vol * unitPrice).toFixed(2);
+  }
+}
+
+function openConcreteModal(fid){
+  concreteEditId = fid||null;
+  document.getElementById('concreteModalTitle').textContent = fid ? '✏️ แก้ไขรายการคอนกรีต' : '＋ เพิ่มรายการคอนกรีต';
+  if(fid){
+    const c = _concreteCache.find(x=>x._fid===fid);
+    if(c){
+      document.getElementById('ct-date').value = c.date||'';
+      document.getElementById('ct-st').value = c.st||'';
+      document.getElementById('ct-vol').value = c.vol||'';
+      document.getElementById('ct-pr').value = c.pr||'';
+      document.getElementById('ct-po').value = c.po||'';
+      document.getElementById('ct-unit-price').value = c.unitPrice||'';
+      document.getElementById('ct-total-price').value = c.totalPrice||'';
+      document.getElementById('ct-shop').value = c.shop||'';
+      document.getElementById('ct-job').value = c.job||'';
+      document.getElementById('ct-note').value = c.note||'';
+    }
+  } else {
+    ['ct-date','ct-st','ct-vol','ct-pr','ct-po','ct-unit-price','ct-total-price','ct-shop','ct-job','ct-note'].forEach(id=>{ document.getElementById(id).value=''; });
+  }
+  document.getElementById('concreteModal').classList.add('open');
+}
+
+function closeConcreteModal(){
+  document.getElementById('concreteModal').classList.remove('open');
+  concreteEditId = null;
+}
+
+async function saveConcrete(){
+  const date = document.getElementById('ct-date').value;
+  const st   = document.getElementById('ct-st').value.trim();
+  if(!date){ alert('กรุณากรอกวันที่'); return; }
+
+  const saveBtn = document.querySelector('#concreteModal .btn-primary');
+  saveBtn.textContent = '⏳ กำลังบันทึก...'; saveBtn.disabled = true;
+
+  const vol = parseFloat(document.getElementById('ct-vol').value)||0;
+  const unitPrice = parseFloat(document.getElementById('ct-unit-price').value)||0;
+  const totalPriceInput = parseFloat(document.getElementById('ct-total-price').value)||0;
+  const totalPrice = totalPriceInput || (vol * unitPrice);
+
+  const payload = {
+    date, st,
+    vol, pr: document.getElementById('ct-pr').value.trim(),
+    po: document.getElementById('ct-po').value.trim(),
+    unitPrice, totalPrice,
+    shop: document.getElementById('ct-shop').value.trim(),
+    job: document.getElementById('ct-job').value.trim(),
+    note: document.getElementById('ct-note').value.trim(),
+    _ts: Date.now()
+  };
+
+  try {
+    if(!window._firebaseReady) throw new Error('Firebase not ready');
+    const { addDoc, updateDoc, doc } = window._fsLib;
+    if(concreteEditId){
+      await updateDoc(doc(window._db,'concrete',concreteEditId), payload);
+    } else {
+      await addDoc(_fsConcreteCol(), payload);
+    }
+  } catch(err){
+    console.warn('Firestore concrete save failed, using localStorage:', err);
+    const arr = JSON.parse(localStorage.getItem('concrete_data')||'[]');
+    if(concreteEditId){
+      const idx = arr.findIndex(x=>x.id===concreteEditId||x._fid===concreteEditId);
+      if(idx>-1) arr[idx] = {...arr[idx],...payload};
+    } else {
+      arr.unshift({...payload, id:'ct_'+Date.now()});
+    }
+    localStorage.setItem('concrete_data', JSON.stringify(arr));
+    _concreteCache = arr;
+    _rebuildConcreteSorted(); renderConcreteSummary(); renderConcreteTable();
+  }
+
+  saveBtn.textContent = '💾 บันทึก'; saveBtn.disabled = false;
+  closeConcreteModal();
+}
+
+async function deleteConcrete(fid){
+  if(!confirm('ยืนยันลบรายการคอนกรีตนี้?')) return;
+  try {
+    if(!window._firebaseReady) throw new Error('Firebase not ready');
+    const { deleteDoc, doc } = window._fsLib;
+    await deleteDoc(doc(window._db,'concrete',fid));
+  } catch(err){
+    console.warn('Firestore concrete delete failed, using localStorage:', err);
+    const arr = JSON.parse(localStorage.getItem('concrete_data')||'[]').filter(x=>(x.id||x._fid)!==fid);
+    localStorage.setItem('concrete_data', JSON.stringify(arr));
+    _concreteCache = arr;
+    _rebuildConcreteSorted(); renderConcreteSummary(); renderConcreteTable();
+  }
+}
+
+async function handleConcreteFile(file){
+  if(!file) return;
+  try {
+    const ab = await file.arrayBuffer();
+    const wb = XLSX.read(ab,{type:'array',raw:true});
+    const rows = wb.SheetNames.flatMap(sn => XLSX.utils.sheet_to_json(wb.Sheets[sn],{defval:'',raw:true}));
+    if(!rows.length){ alert('ไม่พบข้อมูลในไฟล์'); return; }
+
+    const hdrs = Object.keys(rows[0]);
+    const norm = h => String(h).toLowerCase().replace(/\s/g,'');
+
+    // assigned set: each header can only be claimed once — prevents 'ราคา' being stolen by unitCol
+    const assigned = new Set();
+    const findCol = hints => {
+      // 1) exact match, skip already-assigned
+      for(const k of hints){
+        const x = hdrs.find(h => !assigned.has(h) && norm(h)===norm(k));
+        if(x){ assigned.add(x); return x; }
+      }
+      // 2) partial match, skip already-assigned
+      for(const k of hints){
+        const x = hdrs.find(h => !assigned.has(h) && norm(h).includes(norm(k)));
+        if(x){ assigned.add(x); return x; }
+      }
+      return '';
+    };
+
+    const dateCol  = findCol(['วัน/เดือน/ปี','วันเดือนปี','วันที่','date','delivery date','deliverydate','shipdate','วัน']);
+    const stCol    = findCol(['st','delivery slip','deliveryslip','delivery no','deliveryno','ใบส่ง','เลขส่ง','คอนกรีต','concrete','slip','สลิป']);
+    const volCol   = findCol(['vol','คิว','m3','ม3','ลบ.ม','quantity','qty','ปริมาณ','volume','จำนวน']);
+    const prCol    = findCol(['pr','purchase request','purchaserequest','ใบขอซื้อ','request no']);
+    const poCol    = findCol(['po','purchase order','purchaseorder','เลขpo','po no','pono']);
+    // unitCol claimed first — locks out 'ราคา/หน่วย' before totalCol runs
+    const unitCol  = findCol(['ราคา/หน่วย','ราคาต่อหน่วย','unit price','unitprice','price per unit','unit cost','unitcost','ราคาต่อคิว','ราคาต่อม3']);
+    // totalCol: 'ราคา' exact match will now succeed because unitCol already took 'ราคา/หน่วย'
+    const totalCol = findCol(['ราคารวม','netamount','net amount','ราคา','total','amount','รวม','price','cost']);
+    const shopCol  = findCol(['ร้าน','ร้านค้า','shop','vendor','supplier','store']);
+    const jobCol   = findCol(['job','jobid','job id','job no','งาน','project','proj']);
+    const noteCol  = findCol(['note','หมายเหตุ','remark','detail','comment']);
+
+    console.log('📦 Concrete cols →',{dateCol,stCol,volCol,prCol,poCol,unitCol,totalCol,shopCol,jobCol,noteCol});
+
+    // build existing key set for dedup: key = date__st__po
+    const existingKeys = new Set(_concreteCache.map(c=>(c.date||'')+'__'+(c.st||'')+'__'+(c.po||'')));
+
+    const toAdd = [];
+    const skippedRows = [];
+    for(const r of rows){
+      const date = dateCol ? normalizeDateTH(r[dateCol]) : '';
+      const st   = stCol   ? String(r[stCol]||'').trim()   : '';
+      const po   = poCol   ? String(r[poCol]||'').trim()   : '';
+      const key  = date+'__'+st+'__'+po;
+      if(date && st && existingKeys.has(key)){ skippedRows.push({date,st,po}); continue; }
+      if(date && st) existingKeys.add(key);
+
+      const unitPrice  = parseFloat(String(r[unitCol] ||'0').replace(/[^0-9.-]/g,''))||0;
+      // totalPrice read directly from file column — never computed from vol×unit
+      const totalPrice = parseFloat(String(r[totalCol]||'0').replace(/[^0-9.-]/g,''))||0;
+
+      toAdd.push({
+        date, st, po,
+        vol:       parseFloat(String(r[volCol]||'0').replace(/[^0-9.-]/g,''))||0,
+        pr:        prCol   ? String(r[prCol]||'').trim()   : '',
+        unitPrice, totalPrice,
+        shop:      shopCol ? String(r[shopCol]||'').trim() : '',
+        job:       jobCol  ? String(r[jobCol]||'').trim()  : '',
+        note:      noteCol ? String(r[noteCol]||'').trim() : '',
+        _ts: Date.now()
+      });
+    }
+
+    let added = 0;
+    if(toAdd.length){
+      try {
+        if(!window._firebaseReady) throw new Error('Firebase not ready');
+        const { addDoc } = window._fsLib;
+        for(const p of toAdd){ await addDoc(_fsConcreteCol(), p); added++; }
+      } catch(err){
+        const arr = JSON.parse(localStorage.getItem('concrete_data')||'[]');
+        toAdd.forEach(p=>{ arr.unshift({...p, id:'ct_'+Date.now()+'_'+Math.random().toString(36).slice(2,5)}); added++; });
+        localStorage.setItem('concrete_data', JSON.stringify(arr));
+        _concreteCache = arr;
+      }
+    }
+
+    _rebuildConcreteSorted(); renderConcreteSummary(); renderConcreteTable();
+    if(skippedRows.length){
+      const lines = skippedRows.map(r=>`• ${r.date||'?'} | ST:${r.st||'?'} | PO:${r.po||'?'}`).join('\n');
+      alert(`✅ นำเข้าสำเร็จ ${added} รายการ\n⚠️ ข้ามซ้ำ ${skippedRows.length} รายการ:\n\n${lines}`);
+    } else {
+      alert(`✅ นำเข้าสำเร็จ ${added} รายการ`);
+    }
+  } catch(e){
+    console.error(e);
+    alert('อ่านไฟล์ไม่ได้: '+e.message);
+  }
+}
+
+async function clearAllConcrete(){
+  const count = _concreteCache.length;
+  if(!count){ alert('ไม่มีข้อมูลคอนกรีต'); return; }
+  if(!confirm(`ยืนยันลบข้อมูลคอนกรีตทั้งหมด ${count.toLocaleString()} รายการ?\n\nการกระทำนี้ไม่สามารถยกเลิกได้`)) return;
+
+  try {
+    if(!window._firebaseReady) throw new Error('Firebase not ready');
+    const { deleteDoc, doc } = window._fsLib;
+    for(const c of _concreteCache){
+      const fid = c._fid||c.id;
+      if(fid) await deleteDoc(doc(window._db,'concrete',fid));
+    }
+  } catch(err){
+    console.warn('Firestore clearAll concrete failed, clearing localStorage:', err);
+    localStorage.removeItem('concrete_data');
+    _concreteCache = [];
+    renderConcreteSummary();
+    renderConcreteTable();
+  }
+}
+
+function renderConcretePage(){
+  renderConcreteSummary();
+  renderConcreteTable();
+  subscribeConcretes();
+}
+
+function renderConcreteSummary(){
+  const arr = _concreteCache;
+  const total = arr.length;
+  const amount = arr.reduce((s,c)=>s+(parseFloat(c.totalPrice)||0), 0);
+  const vol = arr.reduce((s,c)=>s+(parseFloat(c.vol)||0), 0);
+  const shops = new Set(arr.map(c=>c.shop).filter(Boolean)).size;
+  document.getElementById('csm-total').textContent = total.toLocaleString();
+  document.getElementById('csm-amount').textContent = '฿'+amount.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('csm-vol').textContent = vol.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('csm-shops').textContent = shops;
+}
+
+// แปลงวันที่จากทุกรูปแบบ → d/m/yy (พ.ศ. ย่อ) เช่น 4/5/69
+function normalizeDateTH(raw){
+  if(raw===null||raw===undefined||raw==='') return '';
+
+  // XLSX raw:true ส่งมาเป็น JS Date object
+  if(raw instanceof Date){
+    if(isNaN(raw)) return '';
+    const d = raw.getDate();
+    const m = raw.getMonth()+1;
+    const y = (raw.getFullYear()+543)%100;
+    return `${d}/${m}/${y}`;
+  }
+
+  const s = String(raw).trim();
+  if(!s) return '';
+
+  // Excel serial number (pure integer)
+  if(/^\d{4,6}$/.test(s)){
+    const serial = parseInt(s);
+    const ms = (serial - 25569) * 86400000;
+    const dt = new Date(ms);
+    if(isNaN(dt)) return s;
+    const d = dt.getUTCDate();
+    const m = dt.getUTCMonth()+1;
+    const y = (dt.getUTCFullYear()+543)%100;
+    return `${d}/${m}/${y}`;
+  }
+
+  // d/m/yy หรือ d/m/yyyy
+  const p = s.split('/');
+  if(p.length===3){
+    let [d,m,y] = p.map(Number);
+    if(!isNaN(d)&&!isNaN(m)&&!isNaN(y)){
+      if(y>=100 && y<=2400) y = (y+543)%100; // ค.ศ. → พ.ศ. 2 หลัก
+      else if(y>2400) y = y%100;
+      return `${d}/${m}/${y}`;
+    }
+  }
+
+  // ISO yyyy-mm-dd
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(iso){
+    const d=parseInt(iso[3]), m=parseInt(iso[2]);
+    const y = (parseInt(iso[1])+543)%100;
+    return `${d}/${m}/${y}`;
+  }
+
+  return s;
+}
+
+function parseDateTH(str){
+  // รองรับ d/m/yy หรือ d/m/yyyy (พ.ศ. หรือ ค.ศ.)
+  if(!str) return 0;
+  const p = str.trim().split('/');
+  if(p.length!==3) return 0;
+  let [d,m,y] = p.map(Number);
+  if(isNaN(d)||isNaN(m)||isNaN(y)) return 0;
+  // ปี 2 หลัก: ถ้า < 100 ถือว่าเป็น พ.ศ. ย่อ เช่น 69 = 2569 = ค.ศ. 2026
+  if(y < 100) y = y + 2500; // พ.ศ.
+  if(y > 2400) y = y - 543; // แปลงเป็น ค.ศ.
+  return new Date(y, m-1, d).getTime();
+}
+let _concreteSorted = []; // cache sorted array, rebuilt only when data changes
+function _rebuildConcreteSorted(){
+  _concreteSorted = [..._concreteCache].sort((a,b)=>{
+    const da = parseDateTH(a.date), db = parseDateTH(b.date);
+    if(db !== da) return db - da;
+    return (b._ts||0)-(a._ts||0);
+  });
+}
+function renderConcreteTable(){
+  if(!_concreteSorted.length && _concreteCache.length) _rebuildConcreteSorted();
+  const q = ((document.getElementById('concreteSearch')||{}).value||'').toLowerCase().trim();
+  const filtered = q ? _concreteSorted.filter(c=>
+    [c.date,c.st,c.pr,c.po,c.shop,c.job,c.note].some(v=>String(v||'').toLowerCase().includes(q))
+  ) : _concreteSorted;
+  const tbody = document.getElementById('concreteTbody');
+  const nodata = document.getElementById('concreteNodata');
+  document.getElementById('concreteTableCount').textContent = filtered.length.toLocaleString()+' รายการ';
+  if(!filtered.length){ tbody.innerHTML=''; nodata.style.display='block'; return; }
+  nodata.style.display='none';
+  // render max 200 rows to keep DOM fast
+  const LIMIT = 200;
+  const show = filtered.length > LIMIT ? filtered.slice(0, LIMIT) : filtered;
+  tbody.innerHTML = show.map(c=>{
+    const fid = c._fid||c.id;
+    const vol   = (parseFloat(c.vol)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+    const unitP = (parseFloat(c.unitPrice)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+    const totalP= (parseFloat(c.totalPrice)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+    return `<tr>
+      <td class="td-date">${esc(c.date||'—')}</td>
+      <td class="td-transfer-no">${esc(c.st||'—')}</td>
+      <td style="font-family:'IBM Plex Mono',monospace;font-size:12.5px">${vol}</td>
+      <td class="td-muted">${esc(c.pr||'—')}</td>
+      <td class="td-po">${esc(c.po||'—')}</td>
+      <td style="text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12.5px">฿${unitP}</td>
+      <td class="td-amt-tr" style="text-align:right">฿${totalP}</td>
+      <td class="td-vendor">${esc(c.shop||'—')}</td>
+      <td class="td-muted">${esc(c.job||'—')}</td>
+      <td class="td-muted" style="max-width:160px;overflow:hidden;text-overflow:ellipsis;font-size:12px">${esc(c.note||'—')}</td>
+      <td><div class="tr-actions">
+        <button class="tr-btn tr-btn-edit" onclick="openConcreteModal('${fid}')">✏️ แก้ไข</button>
+        <button class="tr-btn tr-btn-del" onclick="deleteConcrete('${fid}')">🗑</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+  if(filtered.length > LIMIT){
+    tbody.insertAdjacentHTML('beforeend',`<tr><td colspan="11" style="text-align:center;padding:12px;color:var(--text3);font-size:13px">แสดง ${LIMIT} จาก ${filtered.length.toLocaleString()} รายการ — กรองด้วยช่องค้นหาเพื่อดูเพิ่ม</td></tr>`);
+  }
+}
+
+/* ─── AUTH ─── */
+function doLogin(){
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass  = document.getElementById('loginPassword').value;
+  const btn   = document.getElementById('loginBtn');
+  const btnText = document.getElementById('loginBtnText');
+  if(!email||!pass){ showLoginError('กรุณากรอกอีเมลและรหัสผ่าน'); shakeCard(); return; }
+  btnText.innerHTML='<span class="lo-spin"></span> กำลังเข้าสู่ระบบ...';
+  btn.disabled=true;
+  hideLoginError();
+  const { signInWithEmailAndPassword } = window._authLib;
+  signInWithEmailAndPassword(window._auth, email, pass)
+    .catch(e=>{
+      btnText.textContent='เข้าสู่ระบบ'; btn.disabled=false;
+      const msg = {
+        'auth/invalid-credential':'อีเมลหรือรหัสผ่านไม่ถูกต้อง',
+        'auth/user-not-found':'ไม่พบบัญชีนี้',
+        'auth/wrong-password':'รหัสผ่านไม่ถูกต้อง',
+        'auth/invalid-email':'รูปแบบอีเมลไม่ถูกต้อง',
+        'auth/too-many-requests':'พยายามเข้าสู่ระบบมากเกินไป กรุณารอสักครู่',
+      }[e.code]||'เกิดข้อผิดพลาด: '+e.message;
+      showLoginError(msg); shakeCard();
+    });
+}
+function showLoginError(msg){
+  const err=document.getElementById('loginError');
+  const txt=document.getElementById('loginErrorText');
+  if(txt) txt.textContent=msg;
+  err.classList.add('show');
+}
+function hideLoginError(){
+  document.getElementById('loginError').classList.remove('show');
+}
+function shakeCard(){
+  const card=document.querySelector('.lo-card');
+  if(!card) return;
+  card.classList.remove('lo-shake');
+  void card.offsetWidth;
+  card.classList.add('lo-shake');
+}
+async function doLogout(){
+  if(!confirm('ยืนยันออกจากระบบ?')) return;
+  const { signOut } = window._authLib;
+  await signOut(window._auth);
+}
+function initApp(){
+  buildStorePills();
+  STORES.forEach((_,i)=>loadStore(i));
+  loadVendorDB();
+  applyTheme();
+  const has=S().rows.length>0;
+  document.getElementById('uploadZone').style.display=has?'none':'block';
+  document.getElementById('mainSection').style.display=has?'block':'none';
+  document.getElementById('resetBtn').classList.toggle('show',has);
+  if(has){ showInfoLoaded(); renderAll(); }
+  openPage('dashboard');
+  renderSettings('general');
+}
+
+/* ─── INIT ─── */
+window.addEventListener('load',()=>{
+  // Wait for firebase-ready then watch auth state
+  function startAuth(){
+    const { onAuthStateChanged } = window._authLib;
+    onAuthStateChanged(window._auth, user => {
+      if(user){
+        // logged in — hide login screen, show app
+        document.getElementById('loginOverlay').style.display='none';
+        const emailEl = document.getElementById('topbarUser');
+        if(emailEl) emailEl.textContent=user.email;
+        initApp();
+      } else {
+        // not logged in — show login screen, hide app content
+        document.getElementById('loginOverlay').style.display='flex';
+        const emailEl = document.getElementById('topbarUser');
+        if(emailEl) emailEl.textContent='';
+      }
+    });
+  }
+  if(window._firebaseReady){ startAuth(); }
+  else { window.addEventListener('firebase-ready', startAuth, {once:true}); }
+});
+
+/* ─── EVENTS ─── */
+const uz=document.getElementById('uploadZone'),fi=document.getElementById('fileInput');
+uz.onclick=()=>fi.click();
+fi.onchange=e=>{ if(e.target.files.length) processFiles(e.target.files); };
+document.getElementById('updateFileInput').onchange=e=>{ if(e.target.files.length){ processFiles(e.target.files); e.target.value=''; } };
+uz.ondragover=e=>{ e.preventDefault(); uz.classList.add('drag'); };
+uz.ondragleave=()=>uz.classList.remove('drag');
+uz.ondrop=e=>{ e.preventDefault(); uz.classList.remove('drag'); if(e.dataTransfer.files.length) processFiles(e.dataTransfer.files); };
+document.getElementById('search').addEventListener('input',function(){
+  S().sv=this.value;
+  renderTable();
+});
+
+document.getElementById('transferModal').addEventListener('click',function(e){
+  if(e.target===this) closeTransferModal();
+});
+
+document.getElementById('concreteModal').addEventListener('click',function(e){
+  if(e.target===this) closeConcreteModal();
+});
+
+function syncBottomNav(page){
+  document.querySelectorAll('#bottomNav .bnav-item[data-page]').forEach(b=>{
+    b.classList.toggle('active', b.dataset.page===page);
+  });
+}
+function buildStoreSheet(){
+  const el=document.getElementById('storeSheetPills');
+  if(!el) return;
+  el.innerHTML=STORES.map((st,i)=>{
+    if(st.isTransfer){
+      return `<button class="store-sheet-pill${i===curStore?' on':''}"
+        onclick="switchStore(${i});closeStoreSheet()">
+        <span style="font-size:16px">🔄</span>
+        <span>${st.name}</span>
+      </button>`;
+    }
+    return `<button class="store-sheet-pill${i===curStore?' on':''}"
+      onclick="switchStore(${i});closeStoreSheet()">
+      <span class="store-sheet-dot" style="background:${st.dot}"></span>
+      <span>${st.name}</span>
+    </button>`;
+  }).join('');
+}
+function toggleStoreSheet(){
+  const sheet=document.getElementById('storeSheet');
+  const overlay=document.getElementById('storeSheetOverlay');
+  if(sheet.classList.contains('open')){ closeStoreSheet(); }
+  else{ buildStoreSheet(); sheet.classList.add('open'); overlay.classList.add('open'); }
+}
+function updateBnavStore(){
+  const btn=document.getElementById('bnavStore');
+  if(!btn) return;
+  const st=STORES[curStore];
+  if(st.isTransfer){
+    btn.innerHTML=`<span style="font-size:16px;display:block!important;margin:0 auto 2px;text-align:center">🔄</span><span style="font-size:9px;font-weight:700;display:block!important;visibility:visible!important;color:#9B3DC8;text-align:center">โอน</span>`;
+  } else {
+    btn.innerHTML=`<span style="width:10px;height:10px;border-radius:50%;background:${st.dot};display:block!important;margin:0 auto 2px"></span><span style="font-size:9px;font-weight:700;display:block!important;visibility:visible!important;color:${st.dot};max-width:62px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center">${st.name}</span>`;
+  }
+}
+function closeStoreSheet(){
+  document.getElementById('storeSheet').classList.remove('open');
+  document.getElementById('storeSheetOverlay').classList.remove('open');
+}
+</script>
+
+<!-- ── STORE SHEET OVERLAY ── -->
+<div class="store-sheet-overlay" id="storeSheetOverlay" onclick="closeStoreSheet()"></div>
+
+<!-- ── STORE BOTTOM SHEET ── -->
+<div class="store-sheet" id="storeSheet">
+  <div class="store-sheet-handle"></div>
+  <div class="store-sheet-title">เลือกบริษัท</div>
+  <div id="storeSheetPills"></div>
+</div>
+
+<!-- ── BOTTOM NAV ── -->
+<nav class="bottom-nav" id="bottomNav">
+  <button class="bnav-item" data-page="concrete" onclick="openPage('concrete')">
+    <span style="font-size:18px;line-height:1;display:block!important">🏗️</span>
+    <span style="font-size:10px;font-weight:700;display:block!important;visibility:visible!important;opacity:1!important">คอนกรีต</span>
+  </button>
+  <button class="bnav-item" data-page="transfers" onclick="openPage('transfers')">
+    <span style="font-size:18px;line-height:1;display:block!important">🔄</span>
+    <span style="font-size:10px;font-weight:700;display:block!important;visibility:visible!important;opacity:1!important">โอน</span>
+  </button>
+  <button class="bnav-item active" data-page="dashboard" onclick="openPage('dashboard')">
+    <span style="font-size:18px;line-height:1;display:block!important">📋</span>
+    <span style="font-size:10px;font-weight:700;display:block!important;visibility:visible!important;opacity:1!important">Dashboard</span>
+  </button>
+  <button class="bnav-item" data-page="analytics" onclick="openPage('analytics')">
+    <span style="font-size:18px;line-height:1;display:block!important">📈</span>
+    <span style="font-size:10px;font-weight:700;display:block!important;visibility:visible!important;opacity:1!important">Analytics</span>
+  </button>
+  <button class="bnav-item" id="bnavStore" onclick="toggleStoreSheet()">
+    <span style="font-size:18px;line-height:1;display:block!important">🏪</span>
+    <span style="font-size:10px;font-weight:700;display:block!important;visibility:visible!important;opacity:1!important">บริษัท</span>
+  </button>
+</nav>
+
+</body>
+</html>
