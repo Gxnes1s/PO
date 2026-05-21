@@ -2228,7 +2228,7 @@ async function _processVendorFile(file){
       const vd = dbNameMap.get(name.toLowerCase());
       if(vd){
         if(!vd.files) vd.files=[];
-        vd.files.push({ name: file.name, uploadedAt: new Date().toISOString(), rowCount: rows.length });
+        vd.files.push({ name: file.name, uploadedAt: new Date().toISOString(), rowCount: rows.length, vendorNames: [...seen.keys()].slice(0,50) });
       }
     });
 
@@ -2323,12 +2323,21 @@ function renderVendors(){
         </div>`:''}
         ${fileCount?`<div style="margin-top:10px">
           <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px">ไฟล์ที่อัปโหลด</div>
-          ${(vd.files||[]).map((f,fi)=>`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">
-            <span style="font-size:14px">📄</span>
-            <span style="flex:1;font-size:12px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(f.name)}">${esc(f.name)}</span>
-            <span style="font-size:11px;color:var(--text3);flex-shrink:0">${f.rowCount||''}แถว</span>
-            <button onclick="event.stopPropagation();removeVendorFile('${vd.id}',${fi})" style="background:none;border:none;cursor:pointer;color:var(--red-text);font-size:13px;padding:2px 4px">✕</button>
-          </div>`).join('')}
+          ${(vd.files||[]).map((f,fi)=>{
+            const names = f.vendorNames||[];
+            return `<div style="padding:7px 0;border-bottom:1px solid var(--border)">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:${names.length?'6px':'0'}">
+                <span style="font-size:14px">📄</span>
+                <span style="flex:1;font-size:12px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(f.name)}">${esc(f.name)}</span>
+                <span style="font-size:11px;color:var(--text3);flex-shrink:0">${f.rowCount||''}แถว</span>
+                <button onclick="event.stopPropagation();removeVendorFile('${vd.id}',${fi})" style="background:none;border:none;cursor:pointer;color:var(--red-text);font-size:13px;padding:2px 4px">✕</button>
+              </div>
+              ${names.length?`<div style="display:flex;flex-wrap:wrap;gap:4px;padding-left:22px">
+                ${names.slice(0,8).map(n=>`<span style="padding:2px 7px;border-radius:6px;font-size:11px;background:var(--surface2);border:1px solid var(--border);color:var(--text2)">${esc(n)}</span>`).join('')}
+                ${names.length>8?`<span style="font-size:11px;color:var(--text3);align-self:center">+${names.length-8}</span>`:''}
+              </div>`:''}
+            </div>`;
+          }).join('')}
         </div>`:''}
         <div class="vd-actions">
           <button class="vd-btn" onclick="openEditVendorModal('${vd.id}')">✏️ แก้ไข</button>
