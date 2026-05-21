@@ -3000,15 +3000,31 @@ async function handleConcreteFile(file){
     if(!rows.length){ alert('ไม่พบข้อมูลในไฟล์'); return; }
 
     const hdrs = Object.keys(rows[0]);
-    const findCol = hints => hdrs.find(h=>hints.some(k=>h.toLowerCase().replace(/\s/g,'').includes(k.replace(/\s/g,'')))) || '';
+    // exact match first, then partial match — prevents 'ราคา' matching 'ราคา/หน่วย'
+    const findCol = hints => {
+      const norm = h => h.toLowerCase().replace(/\s/g,'');
+      // 1) exact match
+      for(const k of hints){ const x=hdrs.find(h=>norm(h)===norm(k)); if(x) return x; }
+      // 2) partial match (exclude already exact-matched by other col)
+      for(const k of hints){ const x=hdrs.find(h=>norm(h).includes(norm(k))); if(x) return x; }
+      return '';
+    };
 
-    const dateCol  = findCol(['date','วันที่','วัน','delivery date','deliverydate','shipdate']);
+    const dateCol  = findCol(['วันที่','date','delivery date','deliverydate','shipdate']);
     const stCol    = findCol(['st','คอนกรีต','concrete','slip','สลิป','delivery slip','delivery no','deliveryno','ใบส่ง','เลขส่ง']);
     const volCol   = findCol(['vol','คิว','m3','ม3','ลบ.ม','quantity','qty','ปริมาณ','volume','จำนวน']);
     const prCol    = findCol(['pr','purchase request','purchaserequest','ใบขอซื้อ','request no']);
     const poCol    = findCol(['po','purchase order','purchaseorder','เลขpo','po no','pono']);
-    const unitCol  = findCol(['unit price','unitprice','ราคา/หน่วย','ราคาต่อหน่วย','price per unit','unit cost','unitcost','ราคาต่อคิว','ราคาต่อม3']);
-    const totalCol = findCol(['ราคารวม','net amount','netamount','ราคา','total','amount','รวม','price','cost']);
+    const unitCol  = findCol(['ราคา/หน่วย','ราคาต่อหน่วย','unit price','unitprice','price per unit','unit cost','unitcost','ราคาต่อคิว','ราคาต่อม3']);
+    // totalCol: match 'ราคา' exactly — must NOT re-use a col already taken by unitCol
+    const totalCol = (()=>{
+      const taken = new Set([unitCol]);
+      const hints = ['ราคารวม','net amount','netamount','ราคา','total','amount','รวม','price','cost'];
+      const norm = h => h.toLowerCase().replace(/\s/g,'');
+      for(const k of hints){ const x=hdrs.find(h=>!taken.has(h)&&norm(h)===norm(k)); if(x) return x; }
+      for(const k of hints){ const x=hdrs.find(h=>!taken.has(h)&&norm(h).includes(norm(k))); if(x) return x; }
+      return '';
+    })();
     const shopCol  = findCol(['ร้าน','shop','vendor','supplier','บริษัท','store','ร้านค้า']);
     const jobCol   = findCol(['job','jobid','job id','job no','งาน','project','proj']);
     const noteCol  = findCol(['note','หมายเหตุ','remark','detail','comment']);
