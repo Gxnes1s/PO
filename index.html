@@ -3031,28 +3031,28 @@ async function handleConcreteFile(file){
 
     console.log('📦 Concrete cols →',{dateCol,stCol,volCol,prCol,poCol,unitCol,totalCol,shopCol,jobCol,noteCol});
 
-    // build existing key set for dedup: key = date__st
-    const existingKeys = new Set(_concreteCache.map(c=>(c.date||'')+'__'+(c.st||'')));
+    // build existing key set for dedup: key = date__st__po
+    const existingKeys = new Set(_concreteCache.map(c=>(c.date||'')+'__'+(c.st||'')+'__'+(c.po||'')));
 
     const toAdd = [];
     let skipped = 0;
     for(const r of rows){
       const date = dateCol ? normalizeDateTH(r[dateCol]) : '';
       const st   = stCol   ? String(r[stCol]||'').trim()   : '';
-      const key  = date+'__'+st;
+      const po   = poCol   ? String(r[poCol]||'').trim()   : '';
+      const key  = date+'__'+st+'__'+po;
       // skip duplicate rows (check both existing cache and within this file)
       if(date && st && existingKeys.has(key)){ skipped++; continue; }
-      if(date && st) existingKeys.add(key); // mark so same-file dups are caught too
+      if(date && st) existingKeys.add(key);
 
       const unitPrice  = parseFloat(String(r[unitCol] ||'0').replace(/[^0-9.-]/g,''))||0;
       // totalPrice read directly from file column — never computed from vol×unit
       const totalPrice = parseFloat(String(r[totalCol]||'0').replace(/[^0-9.-]/g,''))||0;
 
       toAdd.push({
-        date, st,
+        date, st, po,
         vol:       parseFloat(String(r[volCol]||'0').replace(/[^0-9.-]/g,''))||0,
         pr:        prCol   ? String(r[prCol]||'').trim()   : '',
-        po:        poCol   ? String(r[poCol]||'').trim()   : '',
         unitPrice, totalPrice,
         shop:      shopCol ? String(r[shopCol]||'').trim() : '',
         job:       jobCol  ? String(r[jobCol]||'').trim()  : '',
