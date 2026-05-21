@@ -66,13 +66,83 @@ window.dispatchEvent(new Event('firebase-ready'));
   --radius-xs:5px;
   --shadow:0 1px 4px rgba(0,0,0,.07),0 0 0 1px rgba(0,0,0,.05);
   --shadow-md:0 6px 24px rgba(0,0,0,.11),0 0 0 1px rgba(0,0,0,.05);
-  --acc:#1A65B5;
-  --acc-bg:#E8F2FC;
-  --acc-light:#C5DCF5;
-  --acc-text:#0D3D72;
-  --nav-bg:#171614;
   --sidebar-w:240px;
+
+  /* ── Default Active Theme Variables ── */
+  --acc: #1A65B5;
+  --acc-bg: #E8F2FC;
+  --acc-light: #C5DCF5;
+  --acc-text: #0D3D72;
+  --nav-bg: #171614;
 }
+
+/* ── ธีม 1: ส.เขมราฐ (น้ำเงินกรมท่า - เหลือง) ── */
+body.theme-skr {
+  --acc: #1E2A4A;
+  --acc-bg: #EAEFF8;
+  --acc-light: #BDCDE5;
+  --acc-text: #1E2A4A;
+  --nav-bg: #111B33; /* ปรับ Sidebar เป็นสีกรมท่าเข้ม */
+}
+body.theme-skr .store-pill.on {
+  background: #F2B824 !important; /* ปุ่มที่เลือกเปลี่ยนเป็นสีเหลืองทองตัดสีกรมท่า */
+  color: #111B33 !important;
+}
+body.theme-skr .bottom-nav,
+body.theme-skr .store-sheet {
+  background: #111B33 !important; /* เปลี่ยนแถบล่างมือถือเป็นสีกรมท่า */
+}
+body.theme-skr .nav-item.active::before {
+  background: #F2B824 !important; /* ขีดไฮไลท์เมนูด้านข้างตามจุดสีทอง */
+}
+
+/* ── ธีม 2: ส.สิทธิโชค (เขียว - เหลือง) ── */
+body.theme-stc {
+  --acc: #0E5A36;
+  --acc-bg: #E6F3ED;
+  --acc-light: #BCE2CE;
+  --acc-text: #0E5A36;
+  --nav-bg: #083821; /* ปรับ Sidebar เป็นสีเขียวป่าไม้เข้ม */
+}
+body.theme-stc .store-pill.on {
+  background: #FFD200 !important; /* ปุ่มที่เลือกเปลี่ยนเป็นสีเหลือง Safety ตัดสีเขียว */
+  color: #083821 !important;
+}
+body.theme-stc .bottom-nav,
+body.theme-stc .store-sheet {
+  background: #083821 !important; /* เปลี่ยนแถบล่างมือถือเป็นสีเขียวป่าไม้เข้ม */
+}
+body.theme-stc .nav-item.active::before {
+  background: #FFD200 !important; /* ขีดไฮไลท์เมนูด้านข้างตามจุดสีเหลืองนิรภัย */
+}
+
+/* ── ธีม 3: ส.เขมราฐ ทรานสปอร์ต (ขาว - ฟ้าอ่อน) ── */
+body.theme-skrt {
+  --acc: #3A9AD9;
+  --acc-bg: #EBF5FB;
+  --acc-light: #AED6F1;
+  --acc-text: #21618C;
+  --nav-bg: #2C3E50; /* ปรับ Sidebar เป็นสีกรมท่าสว่างสไตล์ Transport */
+}
+body.theme-skrt .store-pill.on {
+  background: #3A9AD9 !important;
+  color: #fff !important;
+}
+body.theme-skrt .bottom-nav,
+body.theme-skrt .store-sheet {
+  background: #2C3E50 !important; /* เปลี่ยนแถบล่างมือถือเป็นสีสไตล์ขนส่ง */
+}
+body.theme-skrt .nav-item.active::before {
+  background: #3A9AD9 !important; /* ขีดไฮไลท์เมนูด้านข้างสีฟ้า */
+}
+
+/* ให้ปุ่มคลาส .fbtn.active สลับโทนสีหลักตามแบรนด์ที่กำลังเปิดใช้งานอย่างราบรื่น */
+.fbtn.active {
+  background: var(--acc) !important;
+  border-color: var(--acc) !important;
+  color: #fff !important;
+}
+
 *{box-sizing:border-box;margin:0;padding:0}
 body{
   font-family:'Sarabun',sans-serif;
@@ -81,6 +151,7 @@ body{
   font-size:15px;
   min-height:100vh;
   display:flex;
+  transition: background .3s ease, color .3s ease; /* เพิ่ม transition นุ่มๆ เวลาเปลี่ยนธีม */
 }
 
 /* ── SIDEBAR ── */
@@ -412,7 +483,7 @@ tr.row-cancel .td-po{color:var(--red-text)!important}
 .b-green{background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-light)} .d-green{background:#4B9E1A}
 .b-amber{background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber-light)} .d-amber{background:#C07F20}
 .b-blue{background:var(--blue-bg);color:var(--blue-text);border:1px solid var(--blue-light)}     .d-blue{background:#3A8FDD}
-.b-red{background:var(--red-bg);color:var(--red-text);border:1px solid var(--red-light)}         .d-red{background:#D04444}
+.b-red{background:var(--red-bg);color:var(--red-text);border:1px solid var(--red-light)}           .d-red{background:#D04444}
 
 .no-data{text-align:center;padding:3.5rem 2rem;color:var(--text3);font-size:14px}
 .no-data-icon{font-size:36px;margin-bottom:10px;opacity:.4}
@@ -623,6 +694,7 @@ tr.row-cancel .td-po{color:var(--red-text)!important}
   border-top:1px solid rgba(255,255,255,.07);
   z-index:400;
   align-items:stretch;
+  transition:background .35s ease; /* เพิ่ม transition ให้เปลี่ยนธีมแถบล่างนุ่มนวลขึ้น */
 }
 .bnav-item{
   flex:1;display:flex;flex-direction:column;
@@ -653,6 +725,7 @@ tr.row-cancel .td-po{color:var(--red-text)!important}
   border-top:1px solid rgba(255,255,255,.08);
   z-index:460;padding:16px;
   animation:sheetUp .22s ease;
+  transition:background .35s ease; /* เพิ่ม transition ให้เปลี่ยนธีมหน้าต่างเลือกแบรนด์นุ่มนวลขึ้น */
 }
 .store-sheet.open{display:block}
 @keyframes sheetUp{from{transform:translateY(100%)}to{transform:none}}
@@ -1254,9 +1327,46 @@ tr.row-cancel .td-po{color:var(--red-text)!important}
 
 <script>
 const STORES = [
-  { id: 'kemarat', name: 'ส.เขมราฐ', sk: 'po_rows_kemarat', sm: 'po_meta_kemarat', dot: '#4B9E1A', acc: '#2E6A0A', accBg: '#E6F3D9', accLight: '#C2E29A', accText: '#1C430A', navBg: '#122407' },
-  { id: 'sitthichoke', name: 'ส.สิทธิโชค', sk: 'po_rows_sitthi', sm: 'po_meta_sitthi', dot: '#1A65B5', acc: '#1A65B5', accBg: '#E8F2FC', accLight: '#C5DCF5', accText: '#0D3D72', navBg: '#091A2E' },
-  { id: 'transport', name: 'ส.ทรานสปอต', sk: 'po_rows_trans', sm: 'po_meta_trans', dot: '#7A4A08', acc: '#7A4A08', accBg: '#FBF0D8', accLight: '#F5D68A', accText: '#4E2E04', navBg: '#261703' }
+const STORES = [
+  { 
+    id: 'kemarat', 
+    name: 'ส.เขมราฐ', 
+    sk: 'po_rows_kemarat', 
+    sm: 'po_meta_kemarat', 
+    dot: '#F2B824',          // จุดไฟสถานะสีเหลืองทองตัดกรมท่า
+    acc: '#1E2A4A',          // สีน้ำเงินกรมท่า
+    accBg: '#EAEFF8',        // พื้นหลังอมฟ้าอ่อน
+    accLight: '#BDCDE5',     // สีไฮไลท์เส้นขอบ
+    accText: '#1E2A4A',      // สีตัวหนังสือกรมท่า
+    navBg: '#111B33',        // Sidebar สีกรมท่าเข้ม
+    themeClass: 'theme-skr'  // คลาสธีมสำหรับ CSS (.theme-skr)
+  },
+  { 
+    id: 'sitthichoke', 
+    name: 'ส.สิทธิโชค', 
+    sk: 'po_rows_sitthi', 
+    sm: 'po_meta_sitthi', 
+    dot: '#FFD200',          // จุดไฟสถานะสีเหลืองสว่าง Safety
+    acc: '#0E5A36',          // สีเขียวเข้มงานก่อสร้าง/ความปลอดภัย
+    accBg: '#E6F3ED',        // พื้นหลังอมเขียวบางๆ
+    accLight: '#BCE2CE',     // สีไฮไลท์เส้นขอบ
+    accText: '#0E5A36',      // สีตัวหนังสือเขียวเข้ม
+    navBg: '#083821',        // Sidebar สีเขียวป่าไม้เข้ม
+    themeClass: 'theme-stc'  // คลาสธีมสำหรับ CSS (.theme-stc)
+  },
+  { 
+    id: 'transport', 
+    name: 'ส.เขมราฐ ทรานสปอร์ต', 
+    sk: 'po_rows_trans', 
+    sm: 'po_meta_trans', 
+    dot: '#3A9AD9',          // จุดไฟสถานะสีฟ้าอ่อน
+    acc: '#3A9AD9',          // สีฟ้าสว่างโล่งตา ทันสมัย
+    accBg: '#EBF5FB',        // พื้นหลังสีไอซ์บลู
+    accLight: '#AED6F1',     // สีไฮไลท์เส้นขอบ
+    accText: '#21618C',      // สีตัวหนังสือสีน้ำเงินเข้มอ่านง่าย
+    navBg: '#2C3E50',        // Sidebar สีเทาเข้มอมน้ำเงินสไตล์ขนส่ง
+    themeClass: 'theme-skrt' // คลาสธีมสำหรับ CSS (.theme-skrt)
+  }
 ];
 
 const FILTERS = [
@@ -1788,19 +1898,41 @@ function openPage(pId) {
   }
 }
 
-function applyTheme() {
-  const t = ST(), root = document.documentElement;
+/* ─── APPLY THEME ─── */
+function applyTheme(){
+  const t = ST();
+  const root = document.documentElement;
+  
+  // 1. อัปเดต CSS Variables พื้นฐานในหน้าจอ
   root.style.setProperty('--acc', t.acc);
   root.style.setProperty('--acc-bg', t.accBg);
   root.style.setProperty('--acc-light', t.accLight);
   root.style.setProperty('--acc-text', t.accText);
   root.style.setProperty('--nav-bg', t.navBg);
-  document.getElementById('sidebar').style.background = t.navBg;
-  document.getElementById('topbarTitle').textContent = 'PO — ' + t.name;
-  document.getElementById('storeLbl').textContent = '📍 ' + t.name;
-  document.getElementById('tableTitle').textContent = 'รายการ PO — ' + t.name;
-  document.getElementById('pageHeadSub').textContent = 'สรุปภาพรวม Purchase Order — ' + t.name;
   
+  // 2. สลับคลาสธีมหลักที่ตัว <body> เพื่อเปลี่ยนสไตล์เจาะลึก
+  document.body.classList.remove('theme-skr', 'theme-stc', 'theme-skrt');
+  if (t.themeClass) {
+    document.body.classList.add(t.themeClass);
+  }
+  
+  // 3. เปลี่ยนแปลงข้อความและสไตล์ตามจุดต่าง ๆ
+  const sidebar = document.getElementById('sidebar');
+  if(sidebar) sidebar.style.background = t.navBg;
+  
+  const topbarTitle = document.getElementById('topbarTitle');
+  if(topbarTitle) topbarTitle.textContent = 'PO — ' + t.name;
+  
+  const storeLbl = document.getElementById('storeLbl');
+  if(storeLbl) storeLbl.textContent = '📍 ' + t.name;
+  
+  const tableTitle = document.getElementById('tableTitle');
+  if(tableTitle) tableTitle.textContent = 'รายการ PO — ' + t.name;
+  
+  const pageHeadSub = document.getElementById('pageHeadSub');
+  if(pageHeadSub) pageHeadSub.textContent = 'สรุปภาพรวม Purchase Order — ' + t.name;
+  
+  // ไฮไลท์ปุ่มเลือกสาขา (Store pills)
   document.querySelectorAll('.store-pill').forEach((p, i) => {
     p.classList.toggle('on', i === curStore);
   });
@@ -1816,32 +1948,40 @@ function buildStorePills() {
   }).join('');
 }
 
-function switchStore(idx) {
+/* ─── SWITCH STORE ─── */
+function switchStore(idx){
+  if(STORES[idx].isTransfer){
+    curStore = idx;
+    applyTheme();
+    buildStorePills();
+    updateBnavStore();
+    openPage('transfers');
+    return;
+  }
+  if(idx === curStore && currentPage !== 'transfers') return;
+  
+  const searchEl = document.getElementById('search');
+  if(searchEl) S().sv = searchEl.value;
+  
   curStore = idx;
+  
+  // ล้างค่าตัวเลือก Job ค้างเก่าของสาขาเดิมออก
+  S().jf = null; 
+  
   applyTheme();
   buildStorePills();
   updateBnavStore();
   
-  const activePage = document.querySelector('.page.active').id.replace('page-', '');
-  openPage(activePage);
-}
-
-function updateBnavStore() {
-  document.getElementById('lblBnavStore').textContent = STORES[curStore].name;
-}
-function openStoreSheet() {
-  const sheet = document.getElementById('storeSheet');
-  const overlay = document.getElementById('storeSheetOverlay');
-  document.getElementById('mobileStorePills').innerHTML = STORES.map((st, i) => `
-    <button class="store-pill${i === curStore ? ' on' : ''}" onclick="switchStore(${i}); closeStoreSheet();" style="margin-bottom:6px">
-      <span class="store-dot" style="background:${st.dot}"></span>
-      <span>${st.name}</span>
-    </button>
-  `).join('');
-  sheet.classList.add('open');
-  overlay.classList.add('open');
-}
-function closeStoreSheet() {
+  // เปลี่ยนหน้าจอกลับมาหน้าหลักหากเลือกสาขาใหม่
+  if(currentPage === 'transfers' || currentPage === 'concrete') {
+    openPage('dashboard');
+  } else {
+    renderAll();
+  }
+  
+  // ดึงข้อมูลและสร้างการเชื่อมต่อข้อมูลแบบ realtime ใหม่ตามสาขาที่เลือก
+  subscribeStore(idx);
+}function closeStoreSheet() {
   document.getElementById('storeSheet').classList.remove('open');
   document.getElementById('storeSheetOverlay').classList.remove('open');
 }
