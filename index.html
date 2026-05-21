@@ -1357,7 +1357,7 @@ function togglePw(btn){
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
             <div class="form-group" style="margin-bottom:0">
               <label class="form-label">วันที่</label>
-              <input type="date" class="form-input" id="ct-date">
+              <input type="text" class="form-input" id="ct-date" placeholder="เช่น 3/5/69">
             </div>
             <div class="form-group" style="margin-bottom:0">
               <label class="form-label">ST</label>
@@ -2988,7 +2988,6 @@ function openConcreteModal(fid){
     }
   } else {
     ['ct-date','ct-st','ct-vol','ct-pr','ct-po','ct-unit-price','ct-total-price','ct-shop','ct-job','ct-note'].forEach(id=>{ document.getElementById(id).value=''; });
-    document.getElementById('ct-date').value = new Date().toISOString().slice(0,10);
   }
   document.getElementById('concreteModal').classList.add('open');
 }
@@ -3159,11 +3158,7 @@ function renderConcreteSummary(){
 }
 
 function renderConcreteTable(){
-  const arr = [..._concreteCache].sort((a,b)=>{
-    const da = a.date ? new Date(a.date).getTime() : (a._ts||0);
-    const db = b.date ? new Date(b.date).getTime() : (b._ts||0);
-    return db - da;
-  });
+  const arr = [..._concreteCache].sort((a,b)=>(b._ts||0)-(a._ts||0));
   const q = (document.getElementById('concreteSearch')||{}).value||'';
   const filtered = q ? arr.filter(c=>
     [c.date,c.st,c.pr,c.po,c.shop,c.job,c.note].some(v=>String(v||'').toLowerCase().includes(q.toLowerCase()))
@@ -3175,12 +3170,11 @@ function renderConcreteTable(){
   nodata.style.display='none';
   tbody.innerHTML = filtered.map(c=>{
     const fid = c._fid||c.id;
-    const dateStr = c.date ? new Date(c.date).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'}) : '—';
     const vol = (parseFloat(c.vol)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
     const unitP = (parseFloat(c.unitPrice)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
     const totalP = (parseFloat(c.totalPrice)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
     return `<tr>
-      <td class="td-date">${dateStr}</td>
+      <td class="td-date">${esc(c.date||'—')}</td>
       <td class="td-transfer-no">${esc(c.st||'—')}</td>
       <td style="font-family:'IBM Plex Mono',monospace;font-size:12.5px">${vol}</td>
       <td class="td-muted">${esc(c.pr||'—')}</td>
@@ -3197,6 +3191,7 @@ function renderConcreteTable(){
         </div>
       </td>
     </tr>`;
+  }).join('');
   }).join('');
 }
 
