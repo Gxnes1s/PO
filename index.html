@@ -3016,7 +3016,7 @@ async function handleConcreteFile(file){
       return '';
     };
 
-    const dateCol  = findCol(['วันที่','date','delivery date','deliverydate','shipdate']);
+    const dateCol  = findCol(['วัน/เดือน/ปี','วันเดือนปี','วันที่','date','delivery date','deliverydate','shipdate','วัน']);
     const stCol    = findCol(['st','delivery slip','deliveryslip','delivery no','deliveryno','ใบส่ง','เลขส่ง','คอนกรีต','concrete','slip','สลิป']);
     const volCol   = findCol(['vol','คิว','m3','ม3','ลบ.ม','quantity','qty','ปริมาณ','volume','จำนวน']);
     const prCol    = findCol(['pr','purchase request','purchaserequest','ใบขอซื้อ','request no']);
@@ -3030,8 +3030,6 @@ async function handleConcreteFile(file){
     const noteCol  = findCol(['note','หมายเหตุ','remark','detail','comment']);
 
     console.log('📦 Concrete cols →',{dateCol,stCol,volCol,prCol,poCol,unitCol,totalCol,shopCol,jobCol,noteCol});
-    // DEBUG: แสดงค่าดิบของวันที่ row แรก
-    if(rows[0] && dateCol) alert('DEBUG date raw: ['+typeof rows[0][dateCol]+'] = '+JSON.stringify(rows[0][dateCol]));
 
     // build existing key set for dedup: key = date__st
     const existingKeys = new Set(_concreteCache.map(c=>(c.date||'')+'__'+(c.st||'')));
