@@ -2261,6 +2261,94 @@ async function removeVendorFile(vendorId, fileIdx){
   renderVendors();
 }
 
+
+/* ── Render vendor cards ── */
+function renderVendors(){
+  // PO stats from current store
+  const s=S(), poRows=s.rows;
+  const poByVendor={};
+  poRows.forEach(r=>{
+    const v=vendorOf(r); if(!v) return;
+    if(!poByVendor[v]) poByVendor[v]={count:0,amt:0,statuses:{confirm:0,received:0,invoiced:0,cancelled:0}};
+    poByVendor[v].count++;
+    poByVendor[v].amt+=amtOf(r);
+    const st=statusOf(r);
+    poByVendor[v].statuses[st]=(poByVendor[v].statuses[st]||0)+1;
+  });
+
+  const q=((document.getElementById('vendorSearch')||{}).value||'').toLowerCase();
+  const statusColors={confirm:'var(--green)',received:'var(--amber)',invoiced:'#1A65B5',cancelled:'var(--red)'};
+
+  // Stats bar
+  const withFiles=vendorDB.filter(v=>v.files&&v.files.length).length;
+  const withPO=vendorDB.filter(v=>poByVendor[v.name]).length;
+  document.getElementById('vendorStatsBar').innerHTML=`
+    <div style="padding:7px 13px;background:var(--surface);border:1px solid var(--border);border-radius:10px;font-size:12.5px;color:var(--text2)">
+      🏢 <strong style="color:var(--text)">${vendorDB.length}</strong> Vendor
+    </div>
+    ${withPO?`<div style="padding:7px 13px;background:var(--green-bg);border:1px solid var(--green-light);border-radius:10px;font-size:12.5px;color:var(--green-text)">
+      📦 มี PO: <strong>${withPO}</strong>
+    </div>`:''}
+    ${withFiles?`<div style="padding:7px 13px;background:var(--surface);border:1px solid var(--border);border-radius:10px;font-size:12.5px;color:var(--text2)">
+      📂 มีไฟล์: <strong style="color:var(--text)">${withFiles}</strong>
+    </div>`:''}
+  `;
+
+  const cards = vendorDB
+    .filter(v=>!q || v.name.toLowerCase().includes(q) || (v.code||'').toLowerCase().includes(q))
+    .map((vd,i)=>{
+      const po=poByVendor[vd.name]||{count:0,amt:0,statuses:{confirm:0,received:0,invoiced:0,cancelled:0}};
+      const initials=vd.name.replace(/บริษัท|จำกัด|co\.|ltd\./gi,'').trim().substring(0,2).toUpperCase()||'VD';
+      const fileCount=(vd.files||[]).length;
+      return `<div class="vd-card">
+        ${fileCount?`<div class="vd-file-badge">📂 ${fileCount} ไฟล์</div>`:''}
+        <div class="vd-card-top">
+          <div class="vd-avatar" style="background:${vd.color||VD_COLORS[i%VD_COLORS.length]}">${initials}</div>
+          <div style="flex:1;min-width:0">
+            <div class="vd-name">${esc(vd.name)}</div>
+            <div class="vd-code">${vd.code||'ไม่ระบุรหัส'}</div>
+          </div>
+        </div>
+        ${vd.phone||vd.taxid?`<div class="vd-meta">
+          ${vd.phone?`<span class="vd-tag">📞 ${esc(vd.phone)}</span>`:''}
+          ${vd.taxid?`<span class="vd-tag">🪪 ${esc(vd.taxid)}</span>`:''}
+        </div>`:''}
+        <div class="vd-stats-row">
+          <div class="vd-stat-box"><div class="vd-stat-num">${po.count||0}</div><div class="vd-stat-lbl">PO</div></div>
+          <div class="vd-stat-box"><div class="vd-stat-num">${po.amt>=1000?(po.amt/1000).toFixed(0)+'K':po.amt.toFixed(0)}</div><div class="vd-stat-lbl">บาท</div></div>
+          <div class="vd-stat-box"><div class="vd-stat-num">${fileCount}</div><div class="vd-stat-lbl">ไฟล์</div></div>
+        </div>
+        ${po.count?`<div class="vd-status-bar">
+          ${['confirm','received','invoiced','cancelled'].map(k=>`<div style="flex:${po.statuses[k]||0};background:${statusColors[k]};opacity:.8"></div>`).join('')}
+        </div>`:''}
+        ${fileCount?`<div style="margin-top:10px">
+          <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px">ไฟล์ที่อัปโหลด</div>
+          ${(vd.files||[]).map((f,fi)=>`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">
+            <span style="font-size:14px">📄</span>
+            <span style="flex:1;font-size:12px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(f.name)}">${esc(f.name)}</span>
+            <span style="font-size:11px;color:var(--text3);flex-shrink:0">${f.rowCount||''}แถว</span>
+            <button onclick="event.stopPropagation();removeVendorFile('${vd.id}',${fi})" style="background:none;border:none;cursor:pointer;color:var(--red-text);font-size:13px;padding:2px 4px">✕</button>
+          </div>`).join('')}
+        </div>`:''}
+        <div class="vd-actions">
+          <button class="vd-btn" onclick="openEditVendorModal('${vd.id}')">✏️ แก้ไข</button>
+          <button class="vd-btn danger" onclick="deleteVendor('${vd.id}')">🗑 ลบ</button>
+        </div>
+      </div>`;
+    });
+
+  const el=document.getElementById('vendorsContent');
+  if(!cards.length){
+    el.innerHTML=`<div class="vd-empty">
+      <div class="vd-empty-icon">🏢</div>
+      <div class="vd-empty-text">${q?'ไม่พบ Vendor ที่ค้นหา':'ยังไม่มีข้อมูล Vendor'}</div>
+      <div class="vd-empty-sub">${q?'ลองค้นหาด้วยคำอื่น':'อัปโหลดไฟล์จาก AX ด้านบน หรือกด เพิ่มเอง'}</div>
+    </div>`;
+    return;
+  }
+  el.innerHTML=`<div class="vd-grid">${cards.join('')}</div>`;
+}
+
 function openAddVendorFromPO(name){
   openAddVendorModal();
   document.getElementById('vm-name').value=name;
