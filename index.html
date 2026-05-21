@@ -3421,45 +3421,41 @@ function closeStoreSheet(){
 </nav>
 
 
+
+
+
 <!-- TODAY PO CARD -->
 <script>
-function renderTodayPOCard(count){
-  setTimeout(()=>{
-    const bento = document.getElementById('bento');
-    if(!bento) return;
+function normalizeDateValue(val){
+  if(!val) return null;
 
-    let card = document.getElementById('todayPOCard');
+  // Excel serial date
+  if(typeof val === 'number'){
+    const excelEpoch = new Date((val - 25569) * 86400 * 1000);
+    return excelEpoch;
+  }
 
-    if(!card){
-      card = document.createElement('div');
-      card.id = 'todayPOCard';
-      card.className = 'bento-card bento-stat strip-blue';
+  // dd/mm/yyyy
+  if(typeof val === 'string'){
+    let s = val.trim();
 
-      card.innerHTML = `
-        <div class="stat-top">
-          <div class="stat-icon bg-blue">📅</div>
-        </div>
-
-        <div class="stat-label">PO วันนี้</div>
-        <div class="stat-val c-blue" id="todayPOValue">0</div>
-
-        <div class="stat-bar">
-          <div class="stat-bar-fill bg-blue" style="width:100%"></div>
-        </div>
-      `;
-
-      bento.appendChild(card);
+    const th = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if(th){
+      return new Date(`${th[3]}-${th[2]}-${th[1]}`);
     }
 
-    const val = document.getElementById('todayPOValue');
-    if(val){
-      val.textContent = Number(count || 0).toLocaleString();
-    }
-  },100);
+    const d = new Date(s);
+    if(!isNaN(d)) return d;
+  }
+
+  return null;
 }
 
 function calculateTodayPO(rows=[]){
-  const today = new Date().toLocaleDateString('en-CA');
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = now.getMonth();
+  const d = now.getDate();
 
   return rows.filter(r=>{
     const raw =
@@ -3471,28 +3467,77 @@ function calculateTodayPO(rows=[]){
       r.CreatedDate ||
       r['PO Date'] ||
       r['Document Date'] ||
-      r['วันที่'];
+      r['Posting Date'] ||
+      r['วันที่'] ||
+      r['Date Requested'];
 
-    if(!raw) return false;
+    const dt = normalizeDateValue(raw);
 
-    const d = new Date(raw);
-    if(isNaN(d)) return false;
+    if(!dt || isNaN(dt)) return false;
 
-    return d.toLocaleDateString('en-CA') === today;
+    return (
+      dt.getFullYear() === y &&
+      dt.getMonth() === m &&
+      dt.getDate() === d
+    );
   }).length;
 }
 
-window.addEventListener('load',()=>{
-  setInterval(()=>{
-    try{
-      const rows =
-        (window.S && typeof window.S === 'function' && S().rows)
-        || window.rows
-        || [];
+function createTodayCard(targetId){
+  const target = document.getElementById(targetId);
+  if(!target) return;
 
-      renderTodayPOCard(calculateTodayPO(rows));
-    }catch(e){}
-  },1000);
+  let card = target.querySelector('.today-po-card');
+
+  if(!card){
+    card = document.createElement('div');
+    card.className = 'bento-card bento-stat strip-blue today-po-card';
+
+    card.innerHTML = `
+      <div class="stat-top">
+        <div class="stat-icon bg-blue">📅</div>
+      </div>
+
+      <div class="stat-label">PO วันนี้</div>
+      <div class="stat-val c-blue">0</div>
+
+      <div class="stat-bar">
+        <div class="stat-bar-fill bg-blue" style="width:100%"></div>
+      </div>
+    `;
+
+    target.appendChild(card);
+  }
+
+  return card;
+}
+
+function renderTodayPOEverywhere(){
+  try{
+    const rows =
+      (window.S && typeof window.S === 'function' && S().rows)
+      || window.rows
+      || [];
+
+    const total = calculateTodayPO(rows);
+
+    ['bento','concreteBento','transferSummary'].forEach(id=>{
+      const card = createTodayCard(id);
+      if(card){
+        const val = card.querySelector('.stat-val');
+        if(val){
+          val.textContent = total.toLocaleString();
+        }
+      }
+    });
+
+  }catch(err){
+    console.error(err);
+  }
+}
+
+window.addEventListener('load',()=>{
+  setInterval(renderTodayPOEverywhere,1200);
 });
 </script>
 
