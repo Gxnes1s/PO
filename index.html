@@ -3035,14 +3035,13 @@ async function handleConcreteFile(file){
     const existingKeys = new Set(_concreteCache.map(c=>(c.date||'')+'__'+(c.st||'')+'__'+(c.po||'')));
 
     const toAdd = [];
-    let skipped = 0;
+    const skippedRows = [];
     for(const r of rows){
       const date = dateCol ? normalizeDateTH(r[dateCol]) : '';
       const st   = stCol   ? String(r[stCol]||'').trim()   : '';
       const po   = poCol   ? String(r[poCol]||'').trim()   : '';
       const key  = date+'__'+st+'__'+po;
-      // skip duplicate rows (check both existing cache and within this file)
-      if(date && st && existingKeys.has(key)){ skipped++; continue; }
+      if(date && st && existingKeys.has(key)){ skippedRows.push({date,st,po}); continue; }
       if(date && st) existingKeys.add(key);
 
       const unitPrice  = parseFloat(String(r[unitCol] ||'0').replace(/[^0-9.-]/g,''))||0;
@@ -3076,8 +3075,12 @@ async function handleConcreteFile(file){
     }
 
     renderConcreteSummary(); renderConcreteTable();
-    const skipMsg = skipped ? ` (ข้ามซ้ำ ${skipped} รายการ)` : '';
-    alert(`✅ นำเข้าสำเร็จ ${added} รายการ${skipMsg}`);
+    if(skippedRows.length){
+      const lines = skippedRows.map(r=>`• ${r.date||'?'} | ST:${r.st||'?'} | PO:${r.po||'?'}`).join('\n');
+      alert(`✅ นำเข้าสำเร็จ ${added} รายการ\n⚠️ ข้ามซ้ำ ${skippedRows.length} รายการ:\n\n${lines}`);
+    } else {
+      alert(`✅ นำเข้าสำเร็จ ${added} รายการ`);
+    }
   } catch(e){
     console.error(e);
     alert('อ่านไฟล์ไม่ได้: '+e.message);
