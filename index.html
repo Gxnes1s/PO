@@ -486,22 +486,6 @@ tr.row-cancel .td-po{color:var(--red-text)!important}
 .vc-status-bar{margin-top:10px;display:flex;gap:4px;height:4px;border-radius:2px;overflow:hidden}
 .vc-status-seg{height:100%;transition:flex .6s ease}
 
-/* ── REPORTS PAGE ── */
-.reports-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.report-card{
-  background:var(--surface);border-radius:16px;border:1px solid var(--border);
-  box-shadow:var(--shadow);padding:1.3rem 1.4rem;
-}
-.report-card h3{font-size:14px;font-weight:700;margin-bottom:.6rem}
-.report-card p{font-size:13px;color:var(--text2);line-height:1.6}
-.report-card-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1rem}
-.report-ico{font-size:22px}
-.report-table{width:100%;font-size:12.5px;border-collapse:collapse}
-.report-table th{background:var(--surface3);color:var(--text3);font-size:10px;text-transform:uppercase;letter-spacing:.07em;padding:8px 10px;text-align:left;border-bottom:1px solid var(--border)}
-.report-table td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
-.report-table tr:last-child td{border-bottom:none}
-.report-wide{grid-column:1 / -1}
-.no-data-small{padding:2rem;text-align:center;color:var(--text3);font-size:13px}
 
 /* ── SETTINGS PAGE ── */
 .settings-layout{display:grid;grid-template-columns:220px 1fr;gap:18px}
@@ -985,17 +969,14 @@ function togglePw(btn){
 
   <div class="sidebar-nav">
     <div class="sidebar-nav-label">เมนู</div>
+    <button class="nav-item" data-page="concrete" onclick="openPage('concrete')">
+      <span class="nav-icon">🏗️</span><span>คอนกรีต</span>
+    </button>
     <button class="nav-item active" data-page="dashboard" onclick="openPage('dashboard')">
       <span class="nav-icon">📋</span><span>Dashboard</span>
     </button>
     <button class="nav-item" data-page="analytics" onclick="openPage('analytics')">
       <span class="nav-icon">📈</span><span>Analytics</span>
-    </button>
-    <button class="nav-item" data-page="concrete" onclick="openPage('concrete')">
-      <span class="nav-icon">🏗️</span><span>คอนกรีต</span>
-    </button>
-    <button class="nav-item" data-page="reports" onclick="openPage('reports')">
-      <span class="nav-icon">📑</span><span>Reports</span>
     </button>
     <button class="nav-item" data-page="settings" onclick="openPage('settings')">
       <span class="nav-icon">⚙️</span><span>Settings</span>
@@ -1197,17 +1178,6 @@ function togglePw(btn){
           <button class="btn" onclick="closeVendorModal()">ยกเลิก</button>
           <button class="btn-primary" onclick="saveVendorModal()" id="vm-save-btn">บันทึก</button>
         </div>
-      </div>
-    </div>
-
-    <!-- ── REPORTS PAGE ── -->
-    <div class="page" id="page-reports">
-      <div class="page-head">
-        <div class="page-head-title">Reports</div>
-        <div class="page-head-sub">รายงานสรุปตามสถานะ</div>
-      </div>
-      <div id="reportsContent">
-        <div class="no-data-small">⬅ กรุณาโหลดข้อมูลจาก Dashboard ก่อน</div>
       </div>
     </div>
 
@@ -1763,7 +1733,7 @@ function openPage(page){
   if(nav) nav.classList.add('active');
   document.getElementById('topbarBreadcrumb').textContent='/ '+{
     dashboard:'Dashboard',analytics:'Analytics',
-    concrete:'คอนกรีต',reports:'Reports',settings:'Settings',transfers:'รายการโอน'
+    concrete:'คอนกรีต',settings:'Settings',transfers:'รายการโอน'
   }[page]||page;
   refreshPageContent(page);
 }
@@ -1773,7 +1743,6 @@ function refreshPageContent(page){
   if(page==='concrete'){ renderConcretePage(); return; }
   if(!S().rows.length) return;
   if(page==='analytics') renderAnalytics();
-  if(page==='reports')   renderReports();
   if(page==='settings')  renderSettings(currentSettingsTab);
 }
 
@@ -2512,49 +2481,6 @@ function renderVendors(){
 function openAddVendorFromPO(name){
   openAddVendorModal();
   document.getElementById('vm-name').value=name;
-}
-
-/* ─── REPORTS ─── */
-function renderReports(){
-  const s=S(),rows=s.rows;
-  if(!rows.length){ document.getElementById('reportsContent').innerHTML='<div class="no-data-small">ไม่มีข้อมูล</div>'; return; }
-  const statuses=['confirm','received','invoiced','cancelled'];
-  const stateNames={confirm:'Confirm ✅',received:'Received 📦',invoiced:'Invoiced 🧾',cancelled:'Cancel 🚫'};
-  const stateColors={confirm:'var(--green)',received:'var(--amber)',invoiced:'#1A65B5',cancelled:'var(--red)'};
-  document.getElementById('reportsContent').innerHTML=`
-    <div class="reports-grid">
-      ${statuses.map(st=>{
-        const filtered=rows.filter(r=>statusOf(r)===st);
-        const totalAmt=filtered.reduce((a,r)=>a+amtOf(r),0);
-        const sample=filtered.slice(0,5);
-        const poCols=s.colMap.po||'PO';
-        const vdCol=s.colMap.vendor||'Vendor';
-        const amtCol=s.colMap.amount||'Amount';
-        return `<div class="report-card">
-          <div class="report-card-header">
-            <div>
-              <div style="font-size:15px;font-weight:700;color:${stateColors[st]}">${stateNames[st]}</div>
-              <div style="font-size:12px;color:var(--text3);margin-top:2px">${filtered.length.toLocaleString()} รายการ · ${(totalAmt/1000).toFixed(1)}K บาท</div>
-            </div>
-            <button class="btn btn-sm" onclick="S().af='${st}';openPage('dashboard')">ดูทั้งหมด →</button>
-          </div>
-          ${sample.length?`
-          <table class="report-table">
-            <thead><tr><th>PO</th><th>Vendor</th><th style="text-align:right">มูลค่า</th></tr></thead>
-            <tbody>
-              ${sample.map(r=>`<tr>
-                <td class="td-po">${esc(r[poCols]||'—')}</td>
-                <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(r[vdCol]||'')}">${esc(r[vdCol]||'—')}</td>
-                <td style="text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12px">${fmtAmt(r[amtCol]||0)}</td>
-              </tr>`).join('')}
-            </tbody>
-          </table>
-          ${filtered.length>5?`<div style="font-size:11.5px;color:var(--text3);text-align:right;margin-top:7px">และอีก ${(filtered.length-5).toLocaleString()} รายการ</div>`:''}
-          `:`<div class="no-data-small" style="padding:1.5rem">ไม่มีข้อมูล</div>`}
-        </div>`;
-      }).join('')}
-    </div>
-  `;
 }
 
 /* ─── SETTINGS ─── */
@@ -3356,6 +3282,10 @@ function closeStoreSheet(){
 
 <!-- ── BOTTOM NAV ── -->
 <nav class="bottom-nav" id="bottomNav">
+  <button class="bnav-item" data-page="concrete" onclick="openPage('concrete')">
+    <span style="font-size:18px;line-height:1;display:block!important">🏗️</span>
+    <span style="font-size:10px;font-weight:700;display:block!important;visibility:visible!important;opacity:1!important">คอนกรีต</span>
+  </button>
   <button class="bnav-item active" data-page="dashboard" onclick="openPage('dashboard')">
     <span style="font-size:18px;line-height:1;display:block!important">📋</span>
     <span style="font-size:10px;font-weight:700;display:block!important;visibility:visible!important;opacity:1!important">Dashboard</span>
@@ -3363,14 +3293,6 @@ function closeStoreSheet(){
   <button class="bnav-item" data-page="analytics" onclick="openPage('analytics')">
     <span style="font-size:18px;line-height:1;display:block!important">📈</span>
     <span style="font-size:10px;font-weight:700;display:block!important;visibility:visible!important;opacity:1!important">Analytics</span>
-  </button>
-  <button class="bnav-item" data-page="reports" onclick="openPage('reports')">
-    <span style="font-size:18px;line-height:1;display:block!important">📑</span>
-    <span style="font-size:10px;font-weight:700;display:block!important;visibility:visible!important;opacity:1!important">Reports</span>
-  </button>
-  <button class="bnav-item" data-page="concrete" onclick="openPage('concrete')">
-    <span style="font-size:18px;line-height:1;display:block!important">🏗️</span>
-    <span style="font-size:10px;font-weight:700;display:block!important;visibility:visible!important;opacity:1!important">คอนกรีต</span>
   </button>
   <button class="bnav-item" data-page="transfers" onclick="switchStore(3)">
     <span style="font-size:18px;line-height:1;display:block!important">🔄</span>
