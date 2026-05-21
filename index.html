@@ -2993,8 +2993,8 @@ async function handleConcreteFile(file){
   if(!file) return;
   try {
     const ab = await file.arrayBuffer();
-    const wb = XLSX.read(ab,{type:'array',raw:false});
-    const rows = wb.SheetNames.flatMap(sn => XLSX.utils.sheet_to_json(wb.Sheets[sn],{defval:'',raw:false}));
+    const wb = XLSX.read(ab,{type:'array',raw:true});
+    const rows = wb.SheetNames.flatMap(sn => XLSX.utils.sheet_to_json(wb.Sheets[sn],{defval:'',raw:true}));
     if(!rows.length){ alert('ไม่พบข้อมูลในไฟล์'); return; }
 
     const hdrs = Object.keys(rows[0]);
@@ -3037,7 +3037,7 @@ async function handleConcreteFile(file){
     const toAdd = [];
     let skipped = 0;
     for(const r of rows){
-      const date = dateCol ? String(r[dateCol]||'').trim() : '';
+      const date = dateCol ? normalizeDateTH(r[dateCol]) : '';
       const st   = stCol   ? String(r[stCol]||'').trim()   : '';
       const key  = date+'__'+st;
       // skip duplicate rows (check both existing cache and within this file)
@@ -3121,6 +3121,42 @@ function renderConcreteSummary(){
   document.getElementById('csm-amount').textContent = '฿'+amount.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
   document.getElementById('csm-vol').textContent = vol.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
   document.getElementById('csm-shops').textContent = shops;
+}
+
+// แปลงวันที่จากทุกรูปแบบ → d/m/yy (พ.ศ. ย่อ) เช่น 4/5/69
+function normalizeDateTH(raw){
+  if(!raw && raw!==0) return '';
+  const s = String(raw).trim();
+  // Excel serial number (pure number)
+  if(/^\d{4,6}$/.test(s)){
+    const serial = parseInt(s);
+    // Excel epoch: 1 Jan 1900 = serial 1 (with leap year bug)
+    const ms = (serial - 25569) * 86400000; // convert to Unix ms (UTC)
+    const dt = new Date(ms);
+    if(isNaN(dt)) return s;
+    const d = dt.getUTCDate();
+    const m = dt.getUTCMonth()+1;
+    const y = (dt.getUTCFullYear()+543) % 100; // พ.ศ. 2 หลัก
+    return `${d}/${m}/${y}`;
+  }
+  // Already d/m/yy or d/m/yyyy — keep as-is (just normalize year to 2-digit พ.ศ.)
+  const p = s.split('/');
+  if(p.length===3){
+    let [d,m,y] = p.map(Number);
+    if(!isNaN(d)&&!isNaN(m)&&!isNaN(y)){
+      if(y>=100 && y<=2400) y = (y+543)%100; // ค.ศ. 4 หลัก → พ.ศ. 2 หลัก
+      else if(y>2400) y = y%100;             // พ.ศ. 4 หลัก → 2 หลัก
+      return `${d}/${m}/${y}`;
+    }
+  }
+  // ISO yyyy-mm-dd
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(iso){
+    const d=parseInt(iso[3]), m=parseInt(iso[2]);
+    const y = (parseInt(iso[1])+543)%100;
+    return `${d}/${m}/${y}`;
+  }
+  return s; // fallback: return as-is
 }
 
 function parseDateTH(str){
