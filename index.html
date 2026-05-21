@@ -7,7 +7,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, setDoc, doc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, setDoc, doc, getDoc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -27,7 +27,7 @@ const auth = getAuth(app);
 window._db = db;
 window._auth = auth;
 window._authLib = { signInWithEmailAndPassword, signOut, onAuthStateChanged };
-window._fsLib = { collection, getDocs, addDoc, updateDoc, deleteDoc, setDoc, doc, query, orderBy, onSnapshot };
+window._fsLib = { collection, getDocs, addDoc, updateDoc, deleteDoc, setDoc, doc, getDoc, query, orderBy, onSnapshot };
 window._firebaseReady = true;
 window.dispatchEvent(new Event('firebase-ready'));
 </script>
@@ -663,6 +663,50 @@ tr.row-cancel .td-po{color:var(--red-text)!important}
 .store-sheet-pill.on{background:var(--acc);color:#fff}
 .store-sheet-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
 
+
+/* ── VENDOR PAGE ── */
+.vd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.vd-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:16px;
+  padding:18px;cursor:pointer;transition:all .18s;position:relative;overflow:hidden;
+}
+.vd-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px);border-color:var(--acc)}
+.vd-card-top{display:flex;align-items:flex-start;gap:13px;margin-bottom:14px}
+.vd-avatar{
+  width:46px;height:46px;border-radius:14px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:15px;font-weight:700;color:#fff;letter-spacing:-.01em;
+}
+.vd-name{font-size:14.5px;font-weight:700;color:var(--text);line-height:1.3;margin-bottom:2px}
+.vd-code{font-size:11.5px;color:var(--text3);font-family:'IBM Plex Mono',monospace}
+.vd-meta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.vd-tag{padding:3px 9px;border-radius:99px;font-size:11.5px;background:var(--surface2);color:var(--text2);border:1px solid var(--border)}
+.vd-stats-row{display:flex;gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.vd-stat-box{flex:1;padding:8px 10px;text-align:center;border-right:1px solid var(--border)}
+.vd-stat-box:last-child{border-right:none}
+.vd-stat-num{font-size:15px;font-weight:700;color:var(--text);font-family:'IBM Plex Mono',monospace}
+.vd-stat-lbl{font-size:10.5px;color:var(--text3);margin-top:1px}
+.vd-status-bar{display:flex;height:4px;border-radius:99px;overflow:hidden;margin-top:12px;gap:1px}
+.vd-file-badge{
+  position:absolute;top:13px;right:13px;
+  padding:3px 8px;border-radius:99px;font-size:10.5px;font-weight:700;
+  background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-light);
+  display:flex;align-items:center;gap:4px;
+}
+.vd-actions{display:flex;gap:6px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+.vd-btn{
+  flex:1;padding:6px 0;border-radius:8px;border:1px solid var(--border);
+  background:var(--surface2);color:var(--text2);font-size:12px;font-weight:600;
+  cursor:pointer;transition:all .15s;font-family:'Sarabun',sans-serif;
+}
+.vd-btn:hover{background:var(--surface3);color:var(--text)}
+.vd-btn.danger:hover{background:var(--red-bg);color:var(--red-text);border-color:var(--red-light)}
+.vd-empty{
+  grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text3);
+}
+.vd-empty-icon{font-size:40px;margin-bottom:12px}
+.vd-empty-text{font-size:14px;font-weight:600;color:var(--text2);margin-bottom:6px}
+.vd-empty-sub{font-size:13px}
 </style>
 </head>
 <body>
@@ -786,8 +830,8 @@ tr.row-cancel .td-po{color:var(--red-text)!important}
       </div>
     </div>
     <div class="lo-hero">
-      <div class="lo-hero-title">จัดการ Purchase Order<br><span>ทุกบริษัท ที่เดียว</span></div>
-      <div class="lo-hero-sub">ติดตามสถานะ PO แบบ Realtime เชื่อมข้อมูลทุกบริษัทพร้อมกัน วิเคราะห์และออกรายงานได้ทันที</div>
+      <div class="lo-hero-title">จัดการ Purchase Order<br><span>ทุกสาขา ที่เดียว</span></div>
+      <div class="lo-hero-sub">ติดตามสถานะ PO แบบ Realtime เชื่อมข้อมูลทุกสาขาพร้อมกัน วิเคราะห์และออกรายงานได้ทันที</div>
     </div>
     <div class="lo-pills">
       <div class="lo-pill">📍 ส.เขมราฐ</div>
@@ -925,7 +969,7 @@ function togglePw(btn){
   </div>
 
   <div class="sidebar-stores">
-    <div class="sidebar-stores-label">บริษัท</div>
+    <div class="sidebar-stores-label">สาขา</div>
     <div class="store-pill-list" id="storePills"></div>
   </div>
 
@@ -957,7 +1001,7 @@ function togglePw(btn){
 <div class="main-wrap">
   <div class="topbar">
     <span class="topbar-title" id="topbarTitle">PO Dashboard</span>
-    <span class="topbar-breadcrumb" id="topbarBreadcrumb">— เลือกบริษัทด้านซ้าย</span>
+    <span class="topbar-breadcrumb" id="topbarBreadcrumb">— เลือกสาขาด้านซ้าย</span>
     <div class="topbar-right">
       <span id="globalFbStatus" style="font-size:11px;padding:3px 10px;border-radius:99px;background:var(--surface2);color:var(--text3);font-weight:600;display:inline-flex;align-items:center;gap:5px;transition:background .3s,color .3s">⏳ กำลังเชื่อมต่อ...</span>
       <span class="topbar-time" id="topbarTime">—</span>
@@ -979,7 +1023,7 @@ function togglePw(btn){
       <div class="upload-zone" id="uploadZone">
         <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" multiple style="display:none">
         <div class="upload-icon">📂</div>
-        <div class="store-label" id="storeLbl">📍 เลือกบริษัท</div>
+        <div class="store-label" id="storeLbl">📍 เลือกสาขา</div>
         <div class="upload-title">ลากไฟล์ Excel มาวางที่นี่ หรือคลิกเพื่อเลือก</div>
         <div class="upload-sub">Export จาก AX แล้ววางได้เลย — ระบบจะ<strong>จับ column อัตโนมัติ</strong><br>รองรับหลายไฟล์พร้อมกัน และ 3,000+ rows ไม่มีปัญหา</div>
         <div class="upload-tags">
@@ -1065,12 +1109,85 @@ function togglePw(btn){
 
     <!-- ── VENDORS PAGE ── -->
     <div class="page" id="page-vendors">
-      <div class="page-head">
-        <div class="page-head-title">Vendors</div>
-        <div class="page-head-sub">รายชื่อผู้ขายทั้งหมด</div>
+      <div class="page-head" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div>
+          <div class="page-head-title">Vendors</div>
+          <div class="page-head-sub">รายชื่อบริษัทผู้ขาย — อัปโหลดไฟล์ข้อมูลแต่ละบริษัทได้</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <input type="text" id="vendorSearch" placeholder="🔍 ค้นหา vendor..." style="padding:7px 12px;border:1px solid var(--border);border-radius:9px;font-size:13px;background:var(--surface);color:var(--text);outline:none;width:200px" oninput="renderVendors()">
+          <button class="btn-primary" onclick="openAddVendorModal()" style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:16px">＋</span> เพิ่ม Vendor
+          </button>
+        </div>
       </div>
+
+      <!-- Upload zone for vendor files -->
+      <div id="vendorUploadZone" style="display:none;margin-bottom:16px">
+        <div class="table-card" style="border:2px dashed var(--border);background:var(--surface2)">
+          <div style="padding:20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+            <div style="font-size:28px">📂</div>
+            <div style="flex:1">
+              <div style="font-size:14px;font-weight:700;color:var(--text)" id="vendorUploadLabel">อัปโหลดไฟล์ข้อมูลบริษัท</div>
+              <div style="font-size:12px;color:var(--text3);margin-top:2px">รองรับ .xlsx, .xls, .csv — ระบบจะดึงชื่อ Vendor อัตโนมัติ</div>
+            </div>
+            <input type="file" id="vendorFileInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleVendorFile(this)">
+            <button class="btn-primary" onclick="document.getElementById('vendorFileInput').click()">เลือกไฟล์</button>
+            <button class="btn" onclick="closeVendorUpload()">ยกเลิก</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats bar -->
+      <div id="vendorStatsBar" style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap"></div>
+
+      <!-- Vendor cards grid -->
       <div id="vendorsContent">
-        <div class="no-data-small">⬅ กรุณาโหลดข้อมูลจาก Dashboard ก่อน</div>
+        <div class="no-data-small">กด <strong>เพิ่ม Vendor</strong> เพื่อเริ่มต้น</div>
+      </div>
+    </div>
+
+    <!-- ── VENDOR MODAL ── -->
+    <div id="vendorModal" style="display:none;position:fixed;inset:0;z-index:1200;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:16px">
+      <div style="background:var(--surface);border-radius:20px;width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,.25);border:1px solid var(--border);overflow:hidden">
+        <div style="padding:22px 24px 0">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+            <div style="font-size:17px;font-weight:700;color:var(--text)" id="vendorModalTitle">เพิ่ม Vendor ใหม่</div>
+            <button onclick="closeVendorModal()" style="background:none;border:none;font-size:20px;color:var(--text3);cursor:pointer;line-height:1">✕</button>
+          </div>
+          <div style="display:grid;gap:14px">
+            <div>
+              <label style="font-size:11.5px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">ชื่อบริษัท *</label>
+              <input id="vm-name" type="text" placeholder="เช่น บริษัท ABC จำกัด" class="form-input" style="width:100%;box-sizing:border-box">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div>
+                <label style="font-size:11.5px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Vendor Code</label>
+                <input id="vm-code" type="text" placeholder="เช่น V001" class="form-input" style="width:100%;box-sizing:border-box">
+              </div>
+              <div>
+                <label style="font-size:11.5px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">เบอร์โทร</label>
+                <input id="vm-phone" type="text" placeholder="081-xxx-xxxx" class="form-input" style="width:100%;box-sizing:border-box">
+              </div>
+            </div>
+            <div>
+              <label style="font-size:11.5px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">เลขประจำตัวผู้เสียภาษี</label>
+              <input id="vm-taxid" type="text" placeholder="13 หลัก" class="form-input" style="width:100%;box-sizing:border-box">
+            </div>
+            <div>
+              <label style="font-size:11.5px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">ที่อยู่</label>
+              <textarea id="vm-address" placeholder="ที่อยู่บริษัท" class="form-input" rows="2" style="width:100%;box-sizing:border-box;resize:vertical"></textarea>
+            </div>
+            <div>
+              <label style="font-size:11.5px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">หมายเหตุ</label>
+              <input id="vm-note" type="text" placeholder="ข้อมูลเพิ่มเติม" class="form-input" style="width:100%;box-sizing:border-box">
+            </div>
+          </div>
+        </div>
+        <div style="padding:18px 24px;display:flex;gap:10px;justify-content:flex-end;border-top:1px solid var(--border);margin-top:20px">
+          <button class="btn" onclick="closeVendorModal()">ยกเลิก</button>
+          <button class="btn-primary" onclick="saveVendorModal()" id="vm-save-btn">บันทึก</button>
+        </div>
       </div>
     </div>
 
@@ -1250,7 +1367,7 @@ function togglePw(btn){
       <div class="settings-layout">
         <div class="settings-nav" id="settingsNav">
           <button class="settings-nav-item active" onclick="openSettingsTab('general',this)">ทั่วไป</button>
-          <button class="settings-nav-item" onclick="openSettingsTab('stores',this)">บริษัท</button>
+          <button class="settings-nav-item" onclick="openSettingsTab('stores',this)">สาขา</button>
           <button class="settings-nav-item" onclick="openSettingsTab('columns',this)">Columns</button>
           <button class="settings-nav-item" onclick="openSettingsTab('data',this)">ข้อมูล</button>
         </div>
@@ -1932,46 +2049,300 @@ function renderAnalytics(){
 }
 
 /* ─── VENDORS ─── */
-function renderVendors(){
-  const s=S(),rows=s.rows;
-  if(!rows.length){ document.getElementById('vendorsContent').innerHTML='<div class="no-data-small">ไม่มีข้อมูล</div>'; return; }
-  const vendorMap={};
-  rows.forEach(r=>{
-    const v=vendorOf(r); if(!v) return;
-    if(!vendorMap[v]) vendorMap[v]={count:0,amt:0,statuses:{confirm:0,received:0,invoiced:0,cancelled:0}};
-    vendorMap[v].count++;
-    vendorMap[v].amt+=amtOf(r);
-    const st=statusOf(r);
-    vendorMap[v].statuses[st]=(vendorMap[v].statuses[st]||0)+1;
+/* ─── VENDOR DATA STORE ─── */
+// vendorDB: array of { id, name, code, phone, taxid, address, note, color, files:[], poCount, poAmt }
+let vendorDB = [];
+let _vendorEditId = null;
+const VD_COLORS = ['#3B82F6','#8B5CF6','#10B981','#F59E0B','#EF4444','#EC4899','#06B6D4','#84CC16'];
+
+async function loadVendorDB(){
+  try{
+    if(!window._firebaseReady) return;
+    const {doc,getDoc} = window._fsLib;
+    // store vendor list in Firestore doc "vendor_meta/list"
+    const snap = await window._fsLib.getDoc(window._fsLib.doc(window._db,'vendor_meta','list'));
+    if(snap.exists()) vendorDB = snap.data().vendors || [];
+  }catch(e){ console.warn('loadVendorDB',e); }
+  renderVendors();
+}
+
+async function saveVendorDB(){
+  try{
+    if(!window._firebaseReady) return;
+    await window._fsLib.setDoc(window._fsLib.doc(window._db,'vendor_meta','list'), {vendors: vendorDB});
+  }catch(e){ console.warn('saveVendorDB',e); }
+}
+
+function openAddVendorModal(){
+  _vendorEditId = null;
+  document.getElementById('vendorModalTitle').textContent = 'เพิ่ม Vendor ใหม่';
+  document.getElementById('vm-save-btn').textContent = 'เพิ่ม Vendor';
+  ['vm-name','vm-code','vm-phone','vm-taxid','vm-address','vm-note'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
   });
-  const vendors=Object.entries(vendorMap).sort((a,b)=>b[1].count-a[1].count);
-  const statusColors={confirm:'var(--green)',received:'var(--amber)',invoiced:'#1A65B5',cancelled:'var(--red)'};
-  document.getElementById('vendorsContent').innerHTML=`
-    <div style="margin-bottom:12px;font-size:13px;color:var(--text3)">พบ <strong style="color:var(--text)">${vendors.length.toLocaleString()}</strong> Vendor</div>
-    <div class="vendor-grid">
-      ${vendors.slice(0,48).map(([name,d],i)=>{
-        const initials=name.substring(0,2).toUpperCase();
-        const tot2=d.count||1;
-        return `<div class="vendor-card">
-          <div class="vc-top">
-            <div class="vc-avatar" style="font-size:13px">${initials}</div>
-            <div>
-              <div class="vc-name">${esc(name)}</div>
-              <div class="vc-id">#${String(i+1).padStart(3,'0')}</div>
-            </div>
-          </div>
-          <div class="vc-stats">
-            <div class="vc-stat"><div class="vc-stat-label">จำนวน PO</div><div class="vc-stat-val">${d.count.toLocaleString()}</div></div>
-            <div class="vc-stat"><div class="vc-stat-label">มูลค่า</div><div class="vc-stat-val">${(d.amt/1000).toFixed(0)}K</div></div>
-          </div>
-          <div class="vc-status-bar">
-            ${['confirm','received','invoiced','cancelled'].map(k=>`<div class="vc-status-seg" style="flex:${d.statuses[k]||0};background:${statusColors[k]};opacity:.75"></div>`).join('')}
-          </div>
-        </div>`;
-      }).join('')}
+  document.getElementById('vendorModal').style.display='flex';
+}
+
+function openEditVendorModal(id){
+  const vd = vendorDB.find(v=>v.id===id); if(!vd) return;
+  _vendorEditId = id;
+  document.getElementById('vendorModalTitle').textContent = 'แก้ไข Vendor';
+  document.getElementById('vm-save-btn').textContent = 'บันทึกการแก้ไข';
+  document.getElementById('vm-name').value = vd.name||'';
+  document.getElementById('vm-code').value = vd.code||'';
+  document.getElementById('vm-phone').value = vd.phone||'';
+  document.getElementById('vm-taxid').value = vd.taxid||'';
+  document.getElementById('vm-address').value = vd.address||'';
+  document.getElementById('vm-note').value = vd.note||'';
+  document.getElementById('vendorModal').style.display='flex';
+}
+
+function closeVendorModal(){
+  document.getElementById('vendorModal').style.display='none';
+}
+
+async function saveVendorModal(){
+  const name = document.getElementById('vm-name').value.trim();
+  if(!name){ alert('กรุณาใส่ชื่อบริษัท'); return; }
+  const btn = document.getElementById('vm-save-btn');
+  btn.disabled=true; btn.textContent='กำลังบันทึก...';
+  if(_vendorEditId){
+    const idx = vendorDB.findIndex(v=>v.id===_vendorEditId);
+    if(idx>=0){
+      vendorDB[idx] = {...vendorDB[idx],
+        name, code:document.getElementById('vm-code').value.trim(),
+        phone:document.getElementById('vm-phone').value.trim(),
+        taxid:document.getElementById('vm-taxid').value.trim(),
+        address:document.getElementById('vm-address').value.trim(),
+        note:document.getElementById('vm-note').value.trim(),
+      };
+    }
+  } else {
+    vendorDB.push({
+      id: 'vd_'+Date.now(),
+      name, code:document.getElementById('vm-code').value.trim(),
+      phone:document.getElementById('vm-phone').value.trim(),
+      taxid:document.getElementById('vm-taxid').value.trim(),
+      address:document.getElementById('vm-address').value.trim(),
+      note:document.getElementById('vm-note').value.trim(),
+      color: VD_COLORS[vendorDB.length % VD_COLORS.length],
+      files:[],
+    });
+  }
+  await saveVendorDB();
+  btn.disabled=false;
+  closeVendorModal();
+  renderVendors();
+}
+
+async function deleteVendor(id){
+  if(!confirm('ลบ Vendor นี้?')) return;
+  vendorDB = vendorDB.filter(v=>v.id!==id);
+  await saveVendorDB();
+  renderVendors();
+}
+
+/* ── File upload per vendor ── */
+let _uploadingVendorId = null;
+function openVendorUpload(id){
+  _uploadingVendorId = id;
+  const vd = vendorDB.find(v=>v.id===id);
+  document.getElementById('vendorUploadLabel').textContent = 'อัปโหลดไฟล์ข้อมูล: ' + (vd?vd.name:'');
+  document.getElementById('vendorUploadZone').style.display='block';
+  document.getElementById('vendorFileInput').value='';
+  document.getElementById('vendorUploadZone').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function closeVendorUpload(){
+  document.getElementById('vendorUploadZone').style.display='none';
+  _uploadingVendorId=null;
+}
+
+async function handleVendorFile(input){
+  const file = input.files[0]; if(!file||!_uploadingVendorId) return;
+  const vd = vendorDB.find(v=>v.id===_uploadingVendorId); if(!vd) return;
+  const btn = document.querySelector('#vendorUploadZone .btn-primary');
+  if(btn){btn.textContent='⏳ กำลังอ่านไฟล์...';btn.disabled=true;}
+
+  try{
+    const ab = await file.arrayBuffer();
+    const wb = XLSX.read(ab,{type:'array'});
+    const rows = wb.SheetNames.flatMap(sn=>XLSX.utils.sheet_to_json(wb.Sheets[sn],{defval:'',raw:false}));
+    if(!rows.length){ alert('ไม่พบข้อมูลในไฟล์'); return; }
+    const hdrs = Object.keys(rows[0]);
+
+    // Try to detect vendor name column
+    const nameHints=['vendor name','vendor','ชื่อ vendor','ชื่อผู้ขาย','name','บริษัท','company'];
+    const nameCol = hdrs.find(h=>nameHints.some(k=>h.toLowerCase().includes(k))) || hdrs[0];
+
+    // Extract unique vendor names from file
+    const namesFromFile = [...new Set(rows.map(r=>String(r[nameCol]||'').trim()).filter(Boolean))];
+
+    // Store file info
+    if(!vd.files) vd.files = [];
+    vd.files.push({
+      name: file.name,
+      uploadedAt: new Date().toISOString(),
+      rowCount: rows.length,
+      vendorNames: namesFromFile.slice(0,20), // store up to 20 names
+      hdrs,
+    });
+
+    await saveVendorDB();
+    closeVendorUpload();
+    renderVendors();
+  }catch(e){
+    alert('อ่านไฟล์ไม่ได้: '+e.message);
+  }finally{
+    if(btn){btn.textContent='เลือกไฟล์';btn.disabled=false;}
+  }
+}
+
+async function removeVendorFile(vendorId, fileIdx){
+  if(!confirm('ลบไฟล์นี้?')) return;
+  const vd=vendorDB.find(v=>v.id===vendorId); if(!vd) return;
+  vd.files.splice(fileIdx,1);
+  await saveVendorDB();
+  renderVendors();
+}
+
+/* ── Main render ── */
+function renderVendors(){
+  // Build PO stats from current store data
+  const s=S(), poRows=s.rows;
+  const poByVendor={};
+  poRows.forEach(r=>{
+    const v=vendorOf(r); if(!v) return;
+    if(!poByVendor[v]) poByVendor[v]={count:0,amt:0,statuses:{confirm:0,received:0,invoiced:0,cancelled:0}};
+    poByVendor[v].count++;
+    poByVendor[v].amt+=amtOf(r);
+    const st=statusOf(r);
+    poByVendor[v].statuses[st]=(poByVendor[v].statuses[st]||0)+1;
+  });
+
+  const q=(document.getElementById('vendorSearch')||{}).value||'';
+  const ql=q.toLowerCase();
+
+  // Merge vendorDB with PO data + add vendors from PO that aren't in DB
+  const poVendorNames=Object.keys(poByVendor);
+  const dbNames=vendorDB.map(v=>v.name.toLowerCase());
+  const extraFromPO=poVendorNames.filter(n=>!dbNames.includes(n.toLowerCase()));
+
+  // Stats bar
+  const totalVendors = vendorDB.length + extraFromPO.length;
+  const withFiles = vendorDB.filter(v=>v.files&&v.files.length).length;
+  const withPO = vendorDB.filter(v=>poByVendor[v.name]).length + extraFromPO.length;
+  document.getElementById('vendorStatsBar').innerHTML=`
+    <div style="padding:8px 14px;background:var(--surface);border:1px solid var(--border);border-radius:10px;font-size:12.5px;color:var(--text2)">
+      🏢 <strong style="color:var(--text)">${totalVendors}</strong> Vendor
     </div>
-    ${vendors.length>48?`<div style="text-align:center;margin-top:14px;font-size:12.5px;color:var(--text3)">แสดง 48 จากทั้งหมด ${vendors.length.toLocaleString()} Vendor</div>`:''}
+    <div style="padding:8px 14px;background:var(--green-bg);border:1px solid var(--green-light);border-radius:10px;font-size:12.5px;color:var(--green-text)">
+      📦 มี PO: <strong>${withPO}</strong>
+    </div>
+    <div style="padding:8px 14px;background:var(--surface);border:1px solid var(--border);border-radius:10px;font-size:12.5px;color:var(--text2)">
+      📂 มีไฟล์: <strong style="color:var(--text)">${withFiles}</strong>
+    </div>
   `;
+
+  const statusColors={confirm:'var(--green)',received:'var(--amber)',invoiced:'#1A65B5',cancelled:'var(--red)'};
+
+  // Render DB vendors
+  const dbCards = vendorDB
+    .filter(v=>!ql||v.name.toLowerCase().includes(ql)||v.code.toLowerCase().includes(ql)||
+      (v.files||[]).some(f=>f.vendorNames&&f.vendorNames.some(n=>n.toLowerCase().includes(ql))))
+    .map((vd,i)=>{
+      const po=poByVendor[vd.name]||{count:0,amt:0,statuses:{confirm:0,received:0,invoiced:0,cancelled:0}};
+      const initials=vd.name.replace(/บริษัท|จำกัด|co\.|ltd\./gi,'').trim().substring(0,2).toUpperCase()||'VD';
+      const fileCount=(vd.files||[]).length;
+      // All vendor names from files
+      const allFileNames=[...new Set((vd.files||[]).flatMap(f=>f.vendorNames||[]))];
+      return `<div class="vd-card">
+        ${fileCount>0?`<div class="vd-file-badge">📂 ${fileCount} ไฟล์</div>`:''}
+        <div class="vd-card-top">
+          <div class="vd-avatar" style="background:${vd.color||VD_COLORS[i%VD_COLORS.length]}">${initials}</div>
+          <div style="flex:1;min-width:0">
+            <div class="vd-name">${esc(vd.name)}</div>
+            <div class="vd-code">${vd.code||'ไม่ระบุรหัส'}</div>
+          </div>
+        </div>
+        ${vd.phone||vd.taxid?`<div class="vd-meta">
+          ${vd.phone?`<span class="vd-tag">📞 ${esc(vd.phone)}</span>`:''}
+          ${vd.taxid?`<span class="vd-tag">🪪 ${esc(vd.taxid)}</span>`:''}
+        </div>`:''}
+        ${allFileNames.length?`<div style="margin-bottom:10px">
+          <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px">Vendor ในไฟล์</div>
+          <div style="display:flex;flex-wrap:wrap;gap:5px">
+            ${allFileNames.slice(0,6).map(n=>`<span style="padding:2px 8px;border-radius:6px;font-size:11.5px;background:var(--surface2);border:1px solid var(--border);color:var(--text2)">${esc(n)}</span>`).join('')}
+            ${allFileNames.length>6?`<span style="font-size:11.5px;color:var(--text3)">+${allFileNames.length-6}</span>`:''}
+          </div>
+        </div>`:''}
+        <div class="vd-stats-row">
+          <div class="vd-stat-box"><div class="vd-stat-num">${po.count||0}</div><div class="vd-stat-lbl">PO</div></div>
+          <div class="vd-stat-box"><div class="vd-stat-num">${po.amt>=1000?(po.amt/1000).toFixed(0)+'K':po.amt.toFixed(0)}</div><div class="vd-stat-lbl">บาท</div></div>
+          <div class="vd-stat-box"><div class="vd-stat-num">${fileCount}</div><div class="vd-stat-lbl">ไฟล์</div></div>
+        </div>
+        ${po.count?`<div class="vd-status-bar">
+          ${['confirm','received','invoiced','cancelled'].map(k=>`<div style="flex:${po.statuses[k]||0};background:${statusColors[k]};opacity:.8"></div>`).join('')}
+        </div>`:''}
+        ${fileCount?`<div style="margin-top:10px">
+          <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px">ไฟล์ที่อัปโหลด</div>
+          ${(vd.files||[]).map((f,fi)=>`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">
+            <span style="font-size:14px">📄</span>
+            <span style="flex:1;font-size:12px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(f.name)}</span>
+            <span style="font-size:11px;color:var(--text3)">${f.rowCount}แถว</span>
+            <button onclick="event.stopPropagation();removeVendorFile('${vd.id}',${fi})" style="background:none;border:none;cursor:pointer;color:var(--red-text);font-size:13px;padding:2px 4px">✕</button>
+          </div>`).join('')}
+        </div>`:''}
+        <div class="vd-actions">
+          <button class="vd-btn" onclick="openVendorUpload('${vd.id}')">📂 อัปโหลดไฟล์</button>
+          <button class="vd-btn" onclick="openEditVendorModal('${vd.id}')">✏️ แก้ไข</button>
+          <button class="vd-btn danger" onclick="deleteVendor('${vd.id}')">🗑</button>
+        </div>
+      </div>`;
+    });
+
+  // Extra PO vendors not in DB
+  const extraCards = extraFromPO
+    .filter(n=>!ql||n.toLowerCase().includes(ql))
+    .map((name,i)=>{
+      const po=poByVendor[name];
+      const initials=name.substring(0,2).toUpperCase();
+      return `<div class="vd-card" style="border-style:dashed;opacity:.8">
+        <div class="vd-card-top">
+          <div class="vd-avatar" style="background:var(--surface3);color:var(--text2)">${initials}</div>
+          <div style="flex:1;min-width:0">
+            <div class="vd-name">${esc(name)}</div>
+            <div class="vd-code" style="color:var(--amber-text)">⚠ ยังไม่ได้เพิ่มในระบบ</div>
+          </div>
+        </div>
+        <div class="vd-stats-row">
+          <div class="vd-stat-box"><div class="vd-stat-num">${po.count}</div><div class="vd-stat-lbl">PO</div></div>
+          <div class="vd-stat-box"><div class="vd-stat-num">${po.amt>=1000?(po.amt/1000).toFixed(0)+'K':po.amt.toFixed(0)}</div><div class="vd-stat-lbl">บาท</div></div>
+        </div>
+        <div class="vd-status-bar">
+          ${['confirm','received','invoiced','cancelled'].map(k=>`<div style="flex:${po.statuses[k]||0};background:${statusColors[k]};opacity:.8"></div>`).join('')}
+        </div>
+        <div class="vd-actions">
+          <button class="vd-btn" onclick="openAddVendorFromPO('${esc(name).replace(/'/g,"\'")}')">＋ เพิ่มเข้าระบบ</button>
+        </div>
+      </div>`;
+    });
+
+  const allCards=[...dbCards,...extraCards];
+  const el=document.getElementById('vendorsContent');
+  if(!allCards.length){
+    el.innerHTML=`<div class="vd-empty">
+      <div class="vd-empty-icon">🏢</div>
+      <div class="vd-empty-text">ยังไม่มี Vendor</div>
+      <div class="vd-empty-sub">กด <strong>เพิ่ม Vendor</strong> เพื่อเริ่มต้น หรือโหลดข้อมูล PO ที่ Dashboard</div>
+    </div>`;
+    return;
+  }
+  el.innerHTML=`<div class="vd-grid">${allCards.join('')}</div>`;
+}
+
+function openAddVendorFromPO(name){
+  openAddVendorModal();
+  document.getElementById('vm-name').value=name;
 }
 
 /* ─── REPORTS ─── */
@@ -2030,9 +2401,9 @@ function renderSettings(tab){
   const panels={
     general:`
       <div class="settings-section">
-        <div class="settings-section-title">บริษัทปัจจุบัน</div>
+        <div class="settings-section-title">สาขาปัจจุบัน</div>
         <div class="setting-row">
-          <div><div class="setting-label">ชื่อบริษัท</div></div>
+          <div><div class="setting-label">ชื่อสาขา</div></div>
           <span class="setting-val">${t.name}</span>
         </div>
         <div class="setting-row">
@@ -2054,7 +2425,7 @@ function renderSettings(tab){
     `,
     stores:`
       <div class="settings-section">
-        <div class="settings-section-title">บริษัททั้งหมด</div>
+        <div class="settings-section-title">สาขาทั้งหมด</div>
         ${STORES.map((st,i)=>{
           const cnt=state[i].rows.length;
           return `<div class="setting-row">
@@ -2091,7 +2462,7 @@ function renderSettings(tab){
       <div class="settings-section">
         <div class="settings-section-title">จัดการข้อมูล</div>
         <div class="setting-row">
-          <div><div class="setting-label">ล้างข้อมูลบริษัทนี้</div><div class="setting-desc">ลบ ${s.rows.length.toLocaleString()} PO ของ ${t.name}</div></div>
+          <div><div class="setting-label">ล้างข้อมูลสาขานี้</div><div class="setting-desc">ลบ ${s.rows.length.toLocaleString()} PO ของ ${t.name}</div></div>
           <button class="btn btn-sm btn-danger" onclick="clearAll()">🗑 ล้างข้อมูล</button>
         </div>
         <div class="setting-row">
@@ -2100,10 +2471,10 @@ function renderSettings(tab){
         </div>
       </div>
       <div class="settings-section">
-        <div class="settings-section-title">ล้างทุกบริษัท</div>
+        <div class="settings-section-title">ล้างทุกสาขา</div>
         <div class="setting-row">
-          <div><div class="setting-label">ล้างข้อมูลทั้งหมด</div><div class="setting-desc">ลบข้อมูลทุกบริษัทออกจาก Local Storage</div></div>
-          <button class="btn btn-sm btn-danger" onclick="if(confirm('ยืนยันลบทุกบริษัท?')){STORES.forEach((_,i)=>{curStore=i;wipeStore();state[i].rows=[]});curStore=0;applyTheme();document.getElementById('mainSection').style.display='none';document.getElementById('uploadZone').style.display='block';renderSettings('data')}">🗑 ล้างทั้งหมด</button>
+          <div><div class="setting-label">ล้างข้อมูลทั้งหมด</div><div class="setting-desc">ลบข้อมูลทุกสาขาออกจาก Local Storage</div></div>
+          <button class="btn btn-sm btn-danger" onclick="if(confirm('ยืนยันลบทุกสาขา?')){STORES.forEach((_,i)=>{curStore=i;wipeStore();state[i].rows=[]});curStore=0;applyTheme();document.getElementById('mainSection').style.display='none';document.getElementById('uploadZone').style.display='block';renderSettings('data')}">🗑 ล้างทั้งหมด</button>
         </div>
       </div>
     `
@@ -2431,6 +2802,7 @@ async function doLogout(){
 function initApp(){
   buildStorePills();
   STORES.forEach((_,i)=>loadStore(i));
+  loadVendorDB();
   applyTheme();
   const has=S().rows.length>0;
   document.getElementById('uploadZone').style.display=has?'none':'block';
@@ -2533,7 +2905,7 @@ function closeStoreSheet(){
 <!-- ── STORE BOTTOM SHEET ── -->
 <div class="store-sheet" id="storeSheet">
   <div class="store-sheet-handle"></div>
-  <div class="store-sheet-title">เลือกบริษัท</div>
+  <div class="store-sheet-title">เลือกสาขา</div>
   <div id="storeSheetPills"></div>
 </div>
 
@@ -2557,7 +2929,7 @@ function closeStoreSheet(){
   </button>
   <button class="bnav-item" id="bnavStore" onclick="toggleStoreSheet()">
     <span style="font-size:18px;line-height:1;display:block!important">🏪</span>
-    <span style="font-size:10px;font-weight:700;display:block!important;visibility:visible!important;opacity:1!important">บริษัท</span>
+    <span style="font-size:10px;font-weight:700;display:block!important;visibility:visible!important;opacity:1!important">สาขา</span>
   </button>
 </nav>
 
