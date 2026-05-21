@@ -1112,28 +1112,37 @@ function togglePw(btn){
       <div class="page-head" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
         <div>
           <div class="page-head-title">Vendors</div>
-          <div class="page-head-sub">รายชื่อบริษัทผู้ขาย — อัปโหลดไฟล์ข้อมูลแต่ละบริษัทได้</div>
+          <div class="page-head-sub">รายชื่อบริษัทผู้ขาย — เพิ่ม และอัปโหลดไฟล์ข้อมูลแต่ละบริษัทได้</div>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <input type="text" id="vendorSearch" placeholder="🔍 ค้นหา vendor..." style="padding:7px 12px;border:1px solid var(--border);border-radius:9px;font-size:13px;background:var(--surface);color:var(--text);outline:none;width:200px" oninput="renderVendors()">
-          <button class="btn-primary" onclick="openAddVendorModal()" style="display:flex;align-items:center;gap:6px">
-            <span style="font-size:16px">＋</span> เพิ่ม Vendor
+          <button class="btn" onclick="openAddVendorModal()" style="display:flex;align-items:center;gap:6px">
+            <span>＋</span> เพิ่ม Vendor
+          </button>
+          <button class="btn-primary" onclick="openVendorUploadDirect()" style="display:flex;align-items:center;gap:6px">
+            📂 อัปโหลดไฟล์ Vendor
           </button>
         </div>
       </div>
 
       <!-- Upload zone for vendor files -->
       <div id="vendorUploadZone" style="display:none;margin-bottom:16px">
-        <div class="table-card" style="border:2px dashed var(--border);background:var(--surface2)">
-          <div style="padding:20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-            <div style="font-size:28px">📂</div>
-            <div style="flex:1">
-              <div style="font-size:14px;font-weight:700;color:var(--text)" id="vendorUploadLabel">อัปโหลดไฟล์ข้อมูลบริษัท</div>
-              <div style="font-size:12px;color:var(--text3);margin-top:2px">รองรับ .xlsx, .xls, .csv — ระบบจะดึงชื่อ Vendor อัตโนมัติ</div>
+        <div style="border:2px dashed var(--acc);border-radius:16px;background:var(--surface2);padding:24px 22px">
+          <div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap">
+            <div style="font-size:32px;line-height:1">📂</div>
+            <div style="flex:1;min-width:200px">
+              <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:3px" id="vendorUploadLabel">อัปโหลดไฟล์ข้อมูล Vendor</div>
+              <div style="font-size:12.5px;color:var(--text3);margin-bottom:14px">รองรับ .xlsx, .xls, .csv — ระบบจะดึงชื่อ Vendor ออกมาแสดงอัตโนมัติ</div>
+              <div id="vendorUploadTarget" style="font-size:12.5px;color:var(--acc);font-weight:600;margin-bottom:12px"></div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                <input type="file" id="vendorFileInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleVendorFile(this)">
+                <button class="btn-primary" onclick="document.getElementById('vendorFileInput').click()" id="vendorFileBtn">
+                  📎 เลือกไฟล์
+                </button>
+                <button class="btn" onclick="closeVendorUpload()">ยกเลิก</button>
+                <span style="font-size:12px;color:var(--text3)">.xlsx / .xls / .csv</span>
+              </div>
             </div>
-            <input type="file" id="vendorFileInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleVendorFile(this)">
-            <button class="btn-primary" onclick="document.getElementById('vendorFileInput').click()">เลือกไฟล์</button>
-            <button class="btn" onclick="closeVendorUpload()">ยกเลิก</button>
           </div>
         </div>
       </div>
@@ -2144,23 +2153,59 @@ async function deleteVendor(id){
 
 /* ── File upload per vendor ── */
 let _uploadingVendorId = null;
+
+function openVendorUploadDirect(){
+  // Open upload zone without a specific vendor — user selects from dropdown or creates new
+  _uploadingVendorId = null;
+  const targetEl = document.getElementById('vendorUploadTarget');
+  const labelEl  = document.getElementById('vendorUploadLabel');
+  labelEl.textContent = 'อัปโหลดไฟล์ข้อมูล Vendor';
+  if(targetEl){
+    if(vendorDB.length){
+      targetEl.innerHTML = 'เลือก Vendor ที่ต้องการแนบไฟล์: ' +
+        vendorDB.map(v=>`<button onclick="openVendorUpload('${v.id}')" style="margin:2px 4px;padding:3px 10px;border-radius:8px;border:1px solid var(--acc);background:var(--surface);color:var(--acc);font-size:12px;cursor:pointer;font-family:inherit">${v.name}</button>`).join('');
+    } else {
+      targetEl.textContent = 'กรุณาเพิ่ม Vendor ก่อน แล้วค่อยอัปโหลดไฟล์';
+    }
+  }
+  document.getElementById('vendorUploadZone').style.display='block';
+  document.getElementById('vendorFileInput').value='';
+  document.getElementById('vendorUploadZone').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
 function openVendorUpload(id){
   _uploadingVendorId = id;
   const vd = vendorDB.find(v=>v.id===id);
-  document.getElementById('vendorUploadLabel').textContent = 'อัปโหลดไฟล์ข้อมูล: ' + (vd?vd.name:'');
+  const labelEl  = document.getElementById('vendorUploadLabel');
+  const targetEl = document.getElementById('vendorUploadTarget');
+  if(labelEl) labelEl.textContent = 'อัปโหลดไฟล์ข้อมูลบริษัท';
+  if(targetEl) targetEl.innerHTML = vd
+    ? `<span style="padding:3px 10px;border-radius:8px;background:var(--acc);color:#fff;font-size:12.5px">📌 ${vd.name}</span>`
+    : '';
   document.getElementById('vendorUploadZone').style.display='block';
   document.getElementById('vendorFileInput').value='';
   document.getElementById('vendorUploadZone').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
+
 function closeVendorUpload(){
   document.getElementById('vendorUploadZone').style.display='none';
   _uploadingVendorId=null;
 }
 
 async function handleVendorFile(input){
-  const file = input.files[0]; if(!file||!_uploadingVendorId) return;
+  const file = input.files[0]; if(!file) return;
+  if(!_uploadingVendorId){
+    if(!vendorDB.length){ alert('กรุณาเพิ่ม Vendor ก่อน'); return; }
+    // auto-assign to first vendor or let user pick
+    const names = vendorDB.map((v,i)=>`${i+1}. ${v.name}`).join('\n');
+    const pick = prompt('เลือกหมายเลข Vendor ที่ต้องการแนบไฟล์:\n'+names);
+    if(!pick) return;
+    const idx = parseInt(pick)-1;
+    if(isNaN(idx)||idx<0||idx>=vendorDB.length){ alert('เลือกไม่ถูกต้อง'); return; }
+    _uploadingVendorId = vendorDB[idx].id;
+  }
   const vd = vendorDB.find(v=>v.id===_uploadingVendorId); if(!vd) return;
-  const btn = document.querySelector('#vendorUploadZone .btn-primary');
+  const btn = document.getElementById('vendorFileBtn');
   if(btn){btn.textContent='⏳ กำลังอ่านไฟล์...';btn.disabled=true;}
 
   try{
@@ -2193,7 +2238,7 @@ async function handleVendorFile(input){
   }catch(e){
     alert('อ่านไฟล์ไม่ได้: '+e.message);
   }finally{
-    if(btn){btn.textContent='เลือกไฟล์';btn.disabled=false;}
+    if(btn){btn.textContent='📎 เลือกไฟล์';btn.disabled=false;}
   }
 }
 
@@ -2722,7 +2767,11 @@ function renderTransferSummary(){
 }
 
 function renderTransferTable(){
-  const arr = _transfersCache;
+  const arr = [..._transfersCache].sort((a,b)=>{
+    const da = a.date ? new Date(a.date).getTime() : (a._ts||0);
+    const db = b.date ? new Date(b.date).getTime() : (b._ts||0);
+    return db - da;
+  });
   const q = (document.getElementById('transferSearch')||{}).value||'';
   const filtered = q ? arr.filter(t=>
     [t.date,t.no,t.po,t.job,t.shop,t.detail].some(v=>String(v||'').toLowerCase().includes(q.toLowerCase()))
