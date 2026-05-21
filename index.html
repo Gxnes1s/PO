@@ -601,6 +601,16 @@ tr.row-cancel .td-po{color:var(--red-text)!important}
   .bottom-nav{display:flex}
   .store-sheet{display:flex}
   #bottomNav span{display:block!important;visibility:visible!important}
+  /* modal full-screen on mobile */
+  .modal-overlay{align-items:flex-end;padding:0}
+  .modal{border-radius:20px 20px 0 0;max-width:100%!important;width:100%!important;max-height:92vh;overflow-y:auto}
+  .form-grid{grid-template-columns:1fr!important}
+  /* concrete modal rows → 1 col on mobile */
+  #concreteModal [style*="grid-template-columns:1fr 1fr"],
+  #concreteModal [style*="grid-template-columns:1fr 1fr 1fr"],
+  #concreteModal [style*="grid-template-columns:1fr 2fr"]{
+    grid-template-columns:1fr 1fr!important
+  }
 }
 
 /* ── BOTTOM NAV (mobile) ── */
@@ -1284,7 +1294,7 @@ function togglePw(btn){
           <div class="tsm-val" id="csm-vol">0</div>
         </div>
         <div class="tsm-card">
-          <div class="tsm-label">จำนวนร้านค้า</div>
+          <div class="tsm-label">จำนวนร้าน</div>
           <div class="tsm-val" id="csm-shops">0</div>
         </div>
       </div>
@@ -1293,12 +1303,13 @@ function togglePw(btn){
       <div class="transfer-toolbar">
         <div class="transfer-search-wrap">
           <span class="transfer-search-icon">🔍</span>
-          <input type="text" id="concreteSearch" placeholder="ค้นหา ST, PO, JOB, ร้านค้า..." oninput="renderConcreteTable()">
+          <input type="text" id="concreteSearch" placeholder="ค้นหา ST, PO, JOB, ร้าน..." oninput="renderConcreteTable()">
         </div>
         <label class="btn" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:9px 16px;font-size:13px;font-weight:600;border-radius:10px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text2)">
           📤 อัพไฟล์
           <input type="file" id="concreteFileInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleConcreteFile(this.files[0]);this.value=''">
         </label>
+        <button class="btn btn-danger" onclick="clearAllConcrete()" style="font-size:13px;font-weight:600;padding:9px 16px;border-radius:10px">🗑 ลบทั้งหมด</button>
         <button class="btn-primary" onclick="openConcreteModal()">＋ เพิ่มคอนกรีต</button>
       </div>
 
@@ -1318,8 +1329,8 @@ function togglePw(btn){
                 <th>PR</th>
                 <th>PO</th>
                 <th style="text-align:right">ราคา/หน่วย</th>
-                <th style="text-align:right">ราคารวม</th>
-                <th>ร้านค้า</th>
+                <th style="text-align:right">ราคา</th>
+                <th>ร้าน</th>
                 <th>JOB</th>
                 <th>หมายเหตุ</th>
                 <th></th>
@@ -1336,53 +1347,63 @@ function togglePw(btn){
 
     <!-- ── CONCRETE MODAL ── -->
     <div class="modal-overlay" id="concreteModal">
-      <div class="modal" style="max-width:600px">
+      <div class="modal" style="max-width:620px">
         <div class="modal-head">
           <span class="modal-title" id="concreteModalTitle">เพิ่มรายการคอนกรีต</span>
           <button class="modal-close" onclick="closeConcreteModal()">✕</button>
         </div>
-        <div class="modal-body">
-          <div class="form-grid">
-            <div class="form-group">
+        <div class="modal-body" style="padding:1rem 1.2rem">
+          <!-- Row 1: วันที่ + ST -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+            <div class="form-group" style="margin-bottom:0">
               <label class="form-label">วันที่</label>
               <input type="date" class="form-input" id="ct-date">
             </div>
-            <div class="form-group">
+            <div class="form-group" style="margin-bottom:0">
               <label class="form-label">ST</label>
               <input type="text" class="form-input" id="ct-st" placeholder="เลขที่ ST">
             </div>
-            <div class="form-group">
+          </div>
+          <!-- Row 2: คิว + PR + PO -->
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">
+            <div class="form-group" style="margin-bottom:0">
               <label class="form-label">คิว (ม³)</label>
               <input type="number" class="form-input" id="ct-vol" placeholder="0.00" step="0.01" oninput="calcConcreteTotal()">
             </div>
-            <div class="form-group">
+            <div class="form-group" style="margin-bottom:0">
               <label class="form-label">PR</label>
               <input type="text" class="form-input" id="ct-pr" placeholder="เลขที่ PR">
             </div>
-            <div class="form-group">
+            <div class="form-group" style="margin-bottom:0">
               <label class="form-label">PO</label>
               <input type="text" class="form-input" id="ct-po" placeholder="เลขที่ PO">
             </div>
-            <div class="form-group">
-              <label class="form-label">ราคาต่อหน่วย (บาท)</label>
+          </div>
+          <!-- Row 3: ราคา/หน่วย + ราคา + ร้าน -->
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">ราคา/หน่วย</label>
               <input type="number" class="form-input" id="ct-unit-price" placeholder="0.00" step="0.01" oninput="calcConcreteTotal()">
             </div>
-            <div class="form-group">
-              <label class="form-label">ราคารวม (บาท)</label>
-              <input type="number" class="form-input" id="ct-total-price" placeholder="0.00" step="0.01" style="background:var(--surface2)">
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">ราคา (บาท)</label>
+              <input type="number" class="form-input" id="ct-total-price" placeholder="คำนวณอัตโนมัติ" step="0.01" style="background:var(--surface2)">
             </div>
-            <div class="form-group">
-              <label class="form-label">ร้านค้า</label>
-              <input type="text" class="form-input" id="ct-shop" placeholder="ชื่อร้านค้า">
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">ร้าน</label>
+              <input type="text" class="form-input" id="ct-shop" placeholder="ชื่อร้าน">
             </div>
-            <div class="form-group">
+          </div>
+          <!-- Row 4: JOB + หมายเหตุ -->
+          <div style="display:grid;grid-template-columns:1fr 2fr;gap:10px;margin-bottom:0">
+            <div class="form-group" style="margin-bottom:0">
               <label class="form-label">JOB</label>
               <input type="text" class="form-input" id="ct-job" placeholder="รหัส Job">
             </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">หมายเหตุ</label>
-            <textarea class="form-textarea" id="ct-note" placeholder="หมายเหตุเพิ่มเติม..."></textarea>
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">หมายเหตุ</label>
+              <input type="text" class="form-input" id="ct-note" placeholder="หมายเหตุเพิ่มเติม">
+            </div>
           </div>
         </div>
         <div class="modal-footer">
@@ -3053,16 +3074,16 @@ async function handleConcreteFile(file){
     const hdrs = Object.keys(rows[0]);
     const findCol = hints => hdrs.find(h=>hints.some(k=>h.toLowerCase().replace(/\s/g,'').includes(k.replace(/\s/g,'')))) || '';
 
-    const dateCol  = findCol(['date','วันที่','วัน']);
-    const stCol    = findCol(['st','slip','ใบส่ง']);
-    const volCol   = findCol(['vol','คิว','m3','ม3','quantity','qty','ปริมาณ']);
-    const prCol    = findCol(['pr','purchase request','ใบขอซื้อ']);
-    const poCol    = findCol(['po','purchase order','เลขpo']);
-    const unitCol  = findCol(['unit price','unitprice','ราคา/หน่วย','ราคาต่อหน่วย','unit']);
-    const totalCol = findCol(['total','ราคารวม','amount','รวม']);
-    const shopCol  = findCol(['shop','vendor','ร้านค้า','supplier','บริษัท']);
-    const jobCol   = findCol(['job','งาน','project']);
-    const noteCol  = findCol(['note','หมายเหตุ','remark','detail']);
+    const dateCol  = findCol(['date','วันที่','วัน','delivery date','deliverydate','shipdate']);
+    const stCol    = findCol(['st','คอนกรีต','concrete','slip','สลิป','delivery slip','delivery no','deliveryno','ใบส่ง','เลขส่ง']);
+    const volCol   = findCol(['vol','คิว','m3','ม3','ลบ.ม','quantity','qty','ปริมาณ','volume','จำนวน']);
+    const prCol    = findCol(['pr','purchase request','purchaserequest','ใบขอซื้อ','request no']);
+    const poCol    = findCol(['po','purchase order','purchaseorder','เลขpo','po no','pono']);
+    const unitCol  = findCol(['unit price','unitprice','ราคา/หน่วย','ราคาต่อหน่วย','price per unit','unit cost','unitcost']);
+    const totalCol = findCol(['ราคา','total','amount','รวม','ราคารวม','net amount','netamount','price','cost']);
+    const shopCol  = findCol(['ร้าน','shop','vendor','supplier','บริษัท','store','ร้านค้า']);
+    const jobCol   = findCol(['job','jobid','job id','job no','งาน','project','proj']);
+    const noteCol  = findCol(['note','หมายเหตุ','remark','detail','comment']);
 
     let added = 0;
     const payloads = rows.map(r => ({
@@ -3095,6 +3116,27 @@ async function handleConcreteFile(file){
   } catch(e){
     console.error(e);
     alert('อ่านไฟล์ไม่ได้: '+e.message);
+  }
+}
+
+async function clearAllConcrete(){
+  const count = _concreteCache.length;
+  if(!count){ alert('ไม่มีข้อมูลคอนกรีต'); return; }
+  if(!confirm(`ยืนยันลบข้อมูลคอนกรีตทั้งหมด ${count.toLocaleString()} รายการ?\n\nการกระทำนี้ไม่สามารถยกเลิกได้`)) return;
+
+  try {
+    if(!window._firebaseReady) throw new Error('Firebase not ready');
+    const { deleteDoc, doc } = window._fsLib;
+    for(const c of _concreteCache){
+      const fid = c._fid||c.id;
+      if(fid) await deleteDoc(doc(window._db,'concrete',fid));
+    }
+  } catch(err){
+    console.warn('Firestore clearAll concrete failed, clearing localStorage:', err);
+    localStorage.removeItem('concrete_data');
+    _concreteCache = [];
+    renderConcreteSummary();
+    renderConcreteTable();
   }
 }
 
