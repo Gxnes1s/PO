@@ -3030,6 +3030,8 @@ async function handleConcreteFile(file){
     const noteCol  = findCol(['note','หมายเหตุ','remark','detail','comment']);
 
     console.log('📦 Concrete cols →',{dateCol,stCol,volCol,prCol,poCol,unitCol,totalCol,shopCol,jobCol,noteCol});
+    // DEBUG: แสดงค่าดิบของวันที่ row แรก
+    if(rows[0] && dateCol) alert('DEBUG date raw: ['+typeof rows[0][dateCol]+'] = '+JSON.stringify(rows[0][dateCol]));
 
     // build existing key set for dedup: key = date__st
     const existingKeys = new Set(_concreteCache.map(c=>(c.date||'')+'__'+(c.st||'')));
@@ -3125,30 +3127,43 @@ function renderConcreteSummary(){
 
 // แปลงวันที่จากทุกรูปแบบ → d/m/yy (พ.ศ. ย่อ) เช่น 4/5/69
 function normalizeDateTH(raw){
-  if(!raw && raw!==0) return '';
+  if(raw===null||raw===undefined||raw==='') return '';
+
+  // XLSX raw:true ส่งมาเป็น JS Date object
+  if(raw instanceof Date){
+    if(isNaN(raw)) return '';
+    const d = raw.getDate();
+    const m = raw.getMonth()+1;
+    const y = (raw.getFullYear()+543)%100;
+    return `${d}/${m}/${y}`;
+  }
+
   const s = String(raw).trim();
-  // Excel serial number (pure number)
+  if(!s) return '';
+
+  // Excel serial number (pure integer)
   if(/^\d{4,6}$/.test(s)){
     const serial = parseInt(s);
-    // Excel epoch: 1 Jan 1900 = serial 1 (with leap year bug)
-    const ms = (serial - 25569) * 86400000; // convert to Unix ms (UTC)
+    const ms = (serial - 25569) * 86400000;
     const dt = new Date(ms);
     if(isNaN(dt)) return s;
     const d = dt.getUTCDate();
     const m = dt.getUTCMonth()+1;
-    const y = (dt.getUTCFullYear()+543) % 100; // พ.ศ. 2 หลัก
+    const y = (dt.getUTCFullYear()+543)%100;
     return `${d}/${m}/${y}`;
   }
-  // Already d/m/yy or d/m/yyyy — keep as-is (just normalize year to 2-digit พ.ศ.)
+
+  // d/m/yy หรือ d/m/yyyy
   const p = s.split('/');
   if(p.length===3){
     let [d,m,y] = p.map(Number);
     if(!isNaN(d)&&!isNaN(m)&&!isNaN(y)){
-      if(y>=100 && y<=2400) y = (y+543)%100; // ค.ศ. 4 หลัก → พ.ศ. 2 หลัก
-      else if(y>2400) y = y%100;             // พ.ศ. 4 หลัก → 2 หลัก
+      if(y>=100 && y<=2400) y = (y+543)%100; // ค.ศ. → พ.ศ. 2 หลัก
+      else if(y>2400) y = y%100;
       return `${d}/${m}/${y}`;
     }
   }
+
   // ISO yyyy-mm-dd
   const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
   if(iso){
@@ -3156,7 +3171,8 @@ function normalizeDateTH(raw){
     const y = (parseInt(iso[1])+543)%100;
     return `${d}/${m}/${y}`;
   }
-  return s; // fallback: return as-is
+
+  return s;
 }
 
 function parseDateTH(str){
