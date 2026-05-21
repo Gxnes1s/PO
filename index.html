@@ -981,8 +981,8 @@ function togglePw(btn){
     <button class="nav-item" data-page="analytics" onclick="openPage('analytics')">
       <span class="nav-icon">📈</span><span>Analytics</span>
     </button>
-    <button class="nav-item" data-page="vendors" onclick="openPage('vendors')">
-      <span class="nav-icon">🏢</span><span>Vendors</span>
+    <button class="nav-item" data-page="concrete" onclick="openPage('concrete')">
+      <span class="nav-icon">🏗️</span><span>คอนกรีต</span>
     </button>
     <button class="nav-item" data-page="reports" onclick="openPage('reports')">
       <span class="nav-icon">📑</span><span>Reports</span>
@@ -1258,6 +1258,136 @@ function togglePw(btn){
           <div class="no-data" id="transferNodata" style="display:none">
             <div class="no-data-icon">🔄</div>ไม่พบรายการโอน
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CONCRETE PAGE ── -->
+    <div class="page" id="page-concrete">
+      <div class="page-head">
+        <div class="page-head-title">คอนกรีต</div>
+        <div class="page-head-sub">จัดการรายการคอนกรีต — เพิ่ม แก้ไข ลบ &nbsp;<span id="concreteFbStatus" style="font-size:11px;padding:2px 9px;border-radius:99px;background:var(--surface2);color:var(--text3)">⏳ กำลังเชื่อมต่อ...</span></div>
+      </div>
+
+      <!-- Summary cards -->
+      <div class="transfer-summary" id="concreteSummary">
+        <div class="tsm-card">
+          <div class="tsm-label">รายการทั้งหมด</div>
+          <div class="tsm-val" id="csm-total">0</div>
+        </div>
+        <div class="tsm-card">
+          <div class="tsm-label">ราคารวมทั้งหมด (บาท)</div>
+          <div class="tsm-val" id="csm-amount" style="color:var(--green)">฿0</div>
+        </div>
+        <div class="tsm-card">
+          <div class="tsm-label">ปริมาณ (คิว)</div>
+          <div class="tsm-val" id="csm-vol">0</div>
+        </div>
+        <div class="tsm-card">
+          <div class="tsm-label">จำนวนร้านค้า</div>
+          <div class="tsm-val" id="csm-shops">0</div>
+        </div>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="transfer-toolbar">
+        <div class="transfer-search-wrap">
+          <span class="transfer-search-icon">🔍</span>
+          <input type="text" id="concreteSearch" placeholder="ค้นหา ST, PO, JOB, ร้านค้า..." oninput="renderConcreteTable()">
+        </div>
+        <label class="btn" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:9px 16px;font-size:13px;font-weight:600;border-radius:10px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text2)">
+          📤 อัพไฟล์
+          <input type="file" id="concreteFileInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleConcreteFile(this.files[0]);this.value=''">
+        </label>
+        <button class="btn-primary" onclick="openConcreteModal()">＋ เพิ่มคอนกรีต</button>
+      </div>
+
+      <!-- Table -->
+      <div class="table-card">
+        <div class="table-header">
+          <span class="table-header-title">รายการคอนกรีต</span>
+          <span class="table-count" id="concreteTableCount">0 รายการ</span>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>วันที่</th>
+                <th>ST</th>
+                <th>คิว</th>
+                <th>PR</th>
+                <th>PO</th>
+                <th style="text-align:right">ราคา/หน่วย</th>
+                <th style="text-align:right">ราคารวม</th>
+                <th>ร้านค้า</th>
+                <th>JOB</th>
+                <th>หมายเหตุ</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="concreteTbody"></tbody>
+          </table>
+          <div class="no-data" id="concreteNodata" style="display:none">
+            <div class="no-data-icon">🏗️</div>ไม่พบรายการคอนกรีต
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CONCRETE MODAL ── -->
+    <div class="modal-overlay" id="concreteModal">
+      <div class="modal" style="max-width:600px">
+        <div class="modal-head">
+          <span class="modal-title" id="concreteModalTitle">เพิ่มรายการคอนกรีต</span>
+          <button class="modal-close" onclick="closeConcreteModal()">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">วันที่</label>
+              <input type="date" class="form-input" id="ct-date">
+            </div>
+            <div class="form-group">
+              <label class="form-label">ST</label>
+              <input type="text" class="form-input" id="ct-st" placeholder="เลขที่ ST">
+            </div>
+            <div class="form-group">
+              <label class="form-label">คิว (ม³)</label>
+              <input type="number" class="form-input" id="ct-vol" placeholder="0.00" step="0.01" oninput="calcConcreteTotal()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">PR</label>
+              <input type="text" class="form-input" id="ct-pr" placeholder="เลขที่ PR">
+            </div>
+            <div class="form-group">
+              <label class="form-label">PO</label>
+              <input type="text" class="form-input" id="ct-po" placeholder="เลขที่ PO">
+            </div>
+            <div class="form-group">
+              <label class="form-label">ราคาต่อหน่วย (บาท)</label>
+              <input type="number" class="form-input" id="ct-unit-price" placeholder="0.00" step="0.01" oninput="calcConcreteTotal()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">ราคารวม (บาท)</label>
+              <input type="number" class="form-input" id="ct-total-price" placeholder="0.00" step="0.01" style="background:var(--surface2)">
+            </div>
+            <div class="form-group">
+              <label class="form-label">ร้านค้า</label>
+              <input type="text" class="form-input" id="ct-shop" placeholder="ชื่อร้านค้า">
+            </div>
+            <div class="form-group">
+              <label class="form-label">JOB</label>
+              <input type="text" class="form-input" id="ct-job" placeholder="รหัส Job">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">หมายเหตุ</label>
+            <textarea class="form-textarea" id="ct-note" placeholder="หมายเหตุเพิ่มเติม..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn" onclick="closeConcreteModal()">ยกเลิก</button>
+          <button class="btn-primary" onclick="saveConcrete()">💾 บันทึก</button>
         </div>
       </div>
     </div>
@@ -1612,16 +1742,16 @@ function openPage(page){
   if(nav) nav.classList.add('active');
   document.getElementById('topbarBreadcrumb').textContent='/ '+{
     dashboard:'Dashboard',analytics:'Analytics',
-    vendors:'Vendors',reports:'Reports',settings:'Settings',transfers:'รายการโอน'
+    concrete:'คอนกรีต',reports:'Reports',settings:'Settings',transfers:'รายการโอน'
   }[page]||page;
   refreshPageContent(page);
 }
 
 function refreshPageContent(page){
   if(page==='transfers'){ renderTransferPage(); return; }
+  if(page==='concrete'){ renderConcretePage(); return; }
   if(!S().rows.length) return;
   if(page==='analytics') renderAnalytics();
-  if(page==='vendors')   renderVendors();
   if(page==='reports')   renderReports();
   if(page==='settings')  renderSettings(currentSettingsTab);
 }
@@ -2776,6 +2906,258 @@ function renderTransferTable(){
   }).join('');
 }
 
+/* ─── CONCRETE (Firestore) ─── */
+let concreteEditId = null;
+let _concreteCache = [];
+let _concreteUnsubscribe = null;
+
+function _fsConcreteCol(){ return window._fsLib.collection(window._db, 'concrete'); }
+
+function setConcreteFbStatus(s){
+  const el = document.getElementById('concreteFbStatus'); if(!el) return;
+  const map = { online:['🟢 Online','color:var(--green-text);background:var(--green-bg)'], offline:['🔴 Offline','color:var(--red-text);background:var(--red-bg)'], connecting:['⏳ กำลังเชื่อมต่อ...','color:var(--text3);background:var(--surface2)'] };
+  const [txt,style] = map[s]||map.connecting; el.textContent=txt; el.style.cssText=`font-size:11px;padding:2px 9px;border-radius:99px;${style}`;
+}
+
+function subscribeConcretes(){
+  if(!window._firebaseReady){ window.addEventListener('firebase-ready', subscribeConcretes, {once:true}); return; }
+  if(_concreteUnsubscribe) _concreteUnsubscribe();
+  setConcreteFbStatus('connecting');
+  const { onSnapshot, query, orderBy } = window._fsLib;
+  const q = query(_fsConcreteCol(), orderBy('_ts','desc'));
+  _concreteUnsubscribe = onSnapshot(q, snap => {
+    _concreteCache = snap.docs.map(d => ({...d.data(), _fid: d.id}));
+    setConcreteFbStatus('online');
+    if(document.getElementById('page-concrete').classList.contains('active')){
+      renderConcreteSummary();
+      renderConcreteTable();
+    }
+  }, err => {
+    console.warn('Firestore concrete error:', err);
+    setConcreteFbStatus('offline');
+    try{ _concreteCache = JSON.parse(localStorage.getItem('concrete_data')||'[]'); }catch(e){}
+    renderConcreteSummary(); renderConcreteTable();
+  });
+}
+
+function calcConcreteTotal(){
+  const vol = parseFloat(document.getElementById('ct-vol').value)||0;
+  const unitPrice = parseFloat(document.getElementById('ct-unit-price').value)||0;
+  if(vol && unitPrice){
+    document.getElementById('ct-total-price').value = (vol * unitPrice).toFixed(2);
+  }
+}
+
+function openConcreteModal(fid){
+  concreteEditId = fid||null;
+  document.getElementById('concreteModalTitle').textContent = fid ? '✏️ แก้ไขรายการคอนกรีต' : '＋ เพิ่มรายการคอนกรีต';
+  if(fid){
+    const c = _concreteCache.find(x=>x._fid===fid);
+    if(c){
+      document.getElementById('ct-date').value = c.date||'';
+      document.getElementById('ct-st').value = c.st||'';
+      document.getElementById('ct-vol').value = c.vol||'';
+      document.getElementById('ct-pr').value = c.pr||'';
+      document.getElementById('ct-po').value = c.po||'';
+      document.getElementById('ct-unit-price').value = c.unitPrice||'';
+      document.getElementById('ct-total-price').value = c.totalPrice||'';
+      document.getElementById('ct-shop').value = c.shop||'';
+      document.getElementById('ct-job').value = c.job||'';
+      document.getElementById('ct-note').value = c.note||'';
+    }
+  } else {
+    ['ct-date','ct-st','ct-vol','ct-pr','ct-po','ct-unit-price','ct-total-price','ct-shop','ct-job','ct-note'].forEach(id=>{ document.getElementById(id).value=''; });
+    document.getElementById('ct-date').value = new Date().toISOString().slice(0,10);
+  }
+  document.getElementById('concreteModal').classList.add('open');
+}
+
+function closeConcreteModal(){
+  document.getElementById('concreteModal').classList.remove('open');
+  concreteEditId = null;
+}
+
+async function saveConcrete(){
+  const date = document.getElementById('ct-date').value;
+  const st   = document.getElementById('ct-st').value.trim();
+  if(!date){ alert('กรุณากรอกวันที่'); return; }
+
+  const saveBtn = document.querySelector('#concreteModal .btn-primary');
+  saveBtn.textContent = '⏳ กำลังบันทึก...'; saveBtn.disabled = true;
+
+  const vol = parseFloat(document.getElementById('ct-vol').value)||0;
+  const unitPrice = parseFloat(document.getElementById('ct-unit-price').value)||0;
+  const totalPriceInput = parseFloat(document.getElementById('ct-total-price').value)||0;
+  const totalPrice = totalPriceInput || (vol * unitPrice);
+
+  const payload = {
+    date, st,
+    vol, pr: document.getElementById('ct-pr').value.trim(),
+    po: document.getElementById('ct-po').value.trim(),
+    unitPrice, totalPrice,
+    shop: document.getElementById('ct-shop').value.trim(),
+    job: document.getElementById('ct-job').value.trim(),
+    note: document.getElementById('ct-note').value.trim(),
+    _ts: Date.now()
+  };
+
+  try {
+    if(!window._firebaseReady) throw new Error('Firebase not ready');
+    const { addDoc, updateDoc, doc } = window._fsLib;
+    if(concreteEditId){
+      await updateDoc(doc(window._db,'concrete',concreteEditId), payload);
+    } else {
+      await addDoc(_fsConcreteCol(), payload);
+    }
+  } catch(err){
+    console.warn('Firestore concrete save failed, using localStorage:', err);
+    const arr = JSON.parse(localStorage.getItem('concrete_data')||'[]');
+    if(concreteEditId){
+      const idx = arr.findIndex(x=>x.id===concreteEditId||x._fid===concreteEditId);
+      if(idx>-1) arr[idx] = {...arr[idx],...payload};
+    } else {
+      arr.unshift({...payload, id:'ct_'+Date.now()});
+    }
+    localStorage.setItem('concrete_data', JSON.stringify(arr));
+    _concreteCache = arr;
+    renderConcreteSummary(); renderConcreteTable();
+  }
+
+  saveBtn.textContent = '💾 บันทึก'; saveBtn.disabled = false;
+  closeConcreteModal();
+}
+
+async function deleteConcrete(fid){
+  if(!confirm('ยืนยันลบรายการคอนกรีตนี้?')) return;
+  try {
+    if(!window._firebaseReady) throw new Error('Firebase not ready');
+    const { deleteDoc, doc } = window._fsLib;
+    await deleteDoc(doc(window._db,'concrete',fid));
+  } catch(err){
+    console.warn('Firestore concrete delete failed, using localStorage:', err);
+    const arr = JSON.parse(localStorage.getItem('concrete_data')||'[]').filter(x=>(x.id||x._fid)!==fid);
+    localStorage.setItem('concrete_data', JSON.stringify(arr));
+    _concreteCache = arr;
+    renderConcreteSummary(); renderConcreteTable();
+  }
+}
+
+async function handleConcreteFile(file){
+  if(!file) return;
+  try {
+    const ab = await file.arrayBuffer();
+    const wb = XLSX.read(ab,{type:'array'});
+    const rows = wb.SheetNames.flatMap(sn => XLSX.utils.sheet_to_json(wb.Sheets[sn],{defval:'',raw:false}));
+    if(!rows.length){ alert('ไม่พบข้อมูลในไฟล์'); return; }
+
+    const hdrs = Object.keys(rows[0]);
+    const findCol = hints => hdrs.find(h=>hints.some(k=>h.toLowerCase().replace(/\s/g,'').includes(k.replace(/\s/g,'')))) || '';
+
+    const dateCol  = findCol(['date','วันที่','วัน']);
+    const stCol    = findCol(['st','slip','ใบส่ง']);
+    const volCol   = findCol(['vol','คิว','m3','ม3','quantity','qty','ปริมาณ']);
+    const prCol    = findCol(['pr','purchase request','ใบขอซื้อ']);
+    const poCol    = findCol(['po','purchase order','เลขpo']);
+    const unitCol  = findCol(['unit price','unitprice','ราคา/หน่วย','ราคาต่อหน่วย','unit']);
+    const totalCol = findCol(['total','ราคารวม','amount','รวม']);
+    const shopCol  = findCol(['shop','vendor','ร้านค้า','supplier','บริษัท']);
+    const jobCol   = findCol(['job','งาน','project']);
+    const noteCol  = findCol(['note','หมายเหตุ','remark','detail']);
+
+    let added = 0;
+    const payloads = rows.map(r => ({
+      date:      dateCol  ? String(r[dateCol]||'').trim()  : '',
+      st:        stCol    ? String(r[stCol]||'').trim()    : '',
+      vol:       parseFloat(String(r[volCol]||'0').replace(/[^0-9.-]/g,''))||0,
+      pr:        prCol    ? String(r[prCol]||'').trim()    : '',
+      po:        poCol    ? String(r[poCol]||'').trim()    : '',
+      unitPrice: parseFloat(String(r[unitCol]||'0').replace(/[^0-9.-]/g,''))||0,
+      totalPrice:parseFloat(String(r[totalCol]||'0').replace(/[^0-9.-]/g,''))||0,
+      shop:      shopCol  ? String(r[shopCol]||'').trim()  : '',
+      job:       jobCol   ? String(r[jobCol]||'').trim()   : '',
+      note:      noteCol  ? String(r[noteCol]||'').trim()  : '',
+      _ts: Date.now()
+    }));
+
+    try {
+      if(!window._firebaseReady) throw new Error('Firebase not ready');
+      const { addDoc } = window._fsLib;
+      for(const p of payloads){ await addDoc(_fsConcreteCol(), p); added++; }
+    } catch(err){
+      const arr = JSON.parse(localStorage.getItem('concrete_data')||'[]');
+      payloads.forEach(p=>{ arr.unshift({...p, id:'ct_'+Date.now()+'_'+Math.random().toString(36).slice(2,5)}); added++; });
+      localStorage.setItem('concrete_data', JSON.stringify(arr));
+      _concreteCache = arr;
+    }
+
+    renderConcreteSummary(); renderConcreteTable();
+    alert(`✅ นำเข้าสำเร็จ ${added} รายการ`);
+  } catch(e){
+    console.error(e);
+    alert('อ่านไฟล์ไม่ได้: '+e.message);
+  }
+}
+
+function renderConcretePage(){
+  renderConcreteSummary();
+  renderConcreteTable();
+  subscribeConcretes();
+}
+
+function renderConcreteSummary(){
+  const arr = _concreteCache;
+  const total = arr.length;
+  const amount = arr.reduce((s,c)=>s+(parseFloat(c.totalPrice)||0), 0);
+  const vol = arr.reduce((s,c)=>s+(parseFloat(c.vol)||0), 0);
+  const shops = new Set(arr.map(c=>c.shop).filter(Boolean)).size;
+  document.getElementById('csm-total').textContent = total.toLocaleString();
+  document.getElementById('csm-amount').textContent = '฿'+amount.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('csm-vol').textContent = vol.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('csm-shops').textContent = shops;
+}
+
+function renderConcreteTable(){
+  const arr = [..._concreteCache].sort((a,b)=>{
+    const da = a.date ? new Date(a.date).getTime() : (a._ts||0);
+    const db = b.date ? new Date(b.date).getTime() : (b._ts||0);
+    return db - da;
+  });
+  const q = (document.getElementById('concreteSearch')||{}).value||'';
+  const filtered = q ? arr.filter(c=>
+    [c.date,c.st,c.pr,c.po,c.shop,c.job,c.note].some(v=>String(v||'').toLowerCase().includes(q.toLowerCase()))
+  ) : arr;
+  const tbody = document.getElementById('concreteTbody');
+  const nodata = document.getElementById('concreteNodata');
+  document.getElementById('concreteTableCount').textContent = filtered.length.toLocaleString()+' รายการ';
+  if(!filtered.length){ tbody.innerHTML=''; nodata.style.display='block'; return; }
+  nodata.style.display='none';
+  tbody.innerHTML = filtered.map(c=>{
+    const fid = c._fid||c.id;
+    const dateStr = c.date ? new Date(c.date).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'}) : '—';
+    const vol = (parseFloat(c.vol)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+    const unitP = (parseFloat(c.unitPrice)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+    const totalP = (parseFloat(c.totalPrice)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+    return `<tr>
+      <td class="td-date">${dateStr}</td>
+      <td class="td-transfer-no">${esc(c.st||'—')}</td>
+      <td style="font-family:'IBM Plex Mono',monospace;font-size:12.5px">${vol}</td>
+      <td class="td-muted">${esc(c.pr||'—')}</td>
+      <td class="td-po">${esc(c.po||'—')}</td>
+      <td style="text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12.5px">฿${unitP}</td>
+      <td class="td-amt-tr" style="text-align:right">฿${totalP}</td>
+      <td class="td-vendor">${esc(c.shop||'—')}</td>
+      <td class="td-muted">${esc(c.job||'—')}</td>
+      <td class="td-muted" style="max-width:160px;overflow:hidden;text-overflow:ellipsis;font-size:12px">${esc(c.note||'—')}</td>
+      <td>
+        <div class="tr-actions">
+          <button class="tr-btn tr-btn-edit" onclick="openConcreteModal('${fid}')">✏️ แก้ไข</button>
+          <button class="tr-btn tr-btn-del" onclick="deleteConcrete('${fid}')">🗑</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
 /* ─── AUTH ─── */
 function doLogin(){
   const email = document.getElementById('loginEmail').value.trim();
@@ -2876,6 +3258,10 @@ document.getElementById('transferModal').addEventListener('click',function(e){
   if(e.target===this) closeTransferModal();
 });
 
+document.getElementById('concreteModal').addEventListener('click',function(e){
+  if(e.target===this) closeConcreteModal();
+});
+
 function syncBottomNav(page){
   document.querySelectorAll('#bottomNav .bnav-item[data-page]').forEach(b=>{
     b.classList.toggle('active', b.dataset.page===page);
@@ -2944,6 +3330,10 @@ function closeStoreSheet(){
   <button class="bnav-item" data-page="reports" onclick="openPage('reports')">
     <span style="font-size:18px;line-height:1;display:block!important">📑</span>
     <span style="font-size:10px;font-weight:700;display:block!important;visibility:visible!important;opacity:1!important">Reports</span>
+  </button>
+  <button class="bnav-item" data-page="concrete" onclick="openPage('concrete')">
+    <span style="font-size:18px;line-height:1;display:block!important">🏗️</span>
+    <span style="font-size:10px;font-weight:700;display:block!important;visibility:visible!important;opacity:1!important">คอนกรีต</span>
   </button>
   <button class="bnav-item" data-page="transfers" onclick="switchStore(3)">
     <span style="font-size:18px;line-height:1;display:block!important">🔄</span>
