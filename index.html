@@ -1605,6 +1605,14 @@ function togglePw(btn){
         <div class="tsm-label">รายการทั้งหมด</div>
         <div class="tsm-val" id="ism-total">0</div>
       </div>
+      <div class="tsm-card" style="border:1.5px solid var(--green-light);background:var(--green-bg)">
+        <div class="tsm-label" style="color:var(--green-text)">🛒 สั่งซื้อ</div>
+        <div class="tsm-val" id="ism-order" style="color:var(--green)">0</div>
+      </div>
+      <div class="tsm-card" style="border:1.5px solid var(--amber-light);background:var(--amber-bg)">
+        <div class="tsm-label" style="color:var(--amber-text)">↩️ คืนสินค้า</div>
+        <div class="tsm-val" id="ism-return" style="color:var(--amber)">0</div>
+      </div>
       <div class="tsm-card" style="border:1.5px solid var(--blue-light);background:var(--blue-bg)">
         <div class="tsm-label" style="color:var(--blue-text)">📅 วันนี้</div>
         <div class="tsm-val" id="ism-today" style="color:var(--blue)">0</div>
@@ -1613,17 +1621,13 @@ function togglePw(btn){
         <div class="tsm-label">โครงการ</div>
         <div class="tsm-val" id="ism-proj">0</div>
       </div>
-      <div class="tsm-card">
-        <div class="tsm-label">ที่มีรูป</div>
-        <div class="tsm-val" id="ism-photos">0</div>
-      </div>
     </div>
 
     <!-- Toolbar -->
     <div class="transfer-toolbar">
       <div class="transfer-search-wrap">
         <span class="transfer-search-icon">🔍</span>
-        <input type="text" id="issueSearch" placeholder="ค้นหา เล่มที่ เลขที่ รหัสโครงการ ชื่อ ผรม. ..." oninput="renderIssueTable()">
+        <input type="text" id="issueSearch" placeholder="ค้นหา เล่มที่ เลขที่ รหัสโครงการ ชื่อผู้รับเหมา ..." oninput="renderIssueTable()">
       </div>
       <button class="btn-primary" onclick="openIssueModal()">＋ เพิ่มใบออก</button>
     </div>
@@ -1639,12 +1643,14 @@ function togglePw(btn){
           <thead>
             <tr>
               <th>วันที่</th>
+              <th>ประเภท</th>
               <th>เล่มที่</th>
               <th>เลขที่</th>
               <th>รหัสโครงการ</th>
-              <th>ชื่อ ผรม.</th>
+              <th>ชื่อผู้รับเหมา</th>
               <th>รายการ</th>
               <th style="text-align:right">จำนวน</th>
+              <th>หน่วย</th>
               <th>รูป</th>
               <th></th>
             </tr>
@@ -1690,19 +1696,45 @@ function togglePw(btn){
           <input type="date" class="form-input" id="is-date">
         </div>
       </div>
-      <!-- Row 2: รหัสโครงการ ชื่อ ผรม. -->
+      <!-- Row 1b: ประเภทรายการ -->
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="form-label">ประเภทรายการ</label>
+        <div style="display:flex;gap:8px;margin-top:4px">
+          <label id="is-type-order-lbl" style="flex:1;display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;border:2px solid var(--acc);background:var(--acc-bg);cursor:pointer;transition:all .15s;user-select:none">
+            <input type="radio" name="is-type" id="is-type-order" value="order" checked style="display:none">
+            <span style="width:18px;height:18px;border-radius:50%;border:2px solid var(--acc);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s" id="is-type-order-dot">
+              <span style="width:9px;height:9px;border-radius:50%;background:var(--acc);display:block"></span>
+            </span>
+            <div>
+              <div style="font-size:13.5px;font-weight:700;color:var(--acc-text)">🛒 สั่งซื้อสินค้า</div>
+              <div style="font-size:11px;color:var(--text3)">ออกใบเพื่อสั่งซื้อ</div>
+            </div>
+          </label>
+          <label id="is-type-return-lbl" style="flex:1;display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;border:2px solid var(--border-strong);background:var(--surface2);cursor:pointer;transition:all .15s;user-select:none">
+            <input type="radio" name="is-type" id="is-type-return" value="return" style="display:none">
+            <span style="width:18px;height:18px;border-radius:50%;border:2px solid var(--border-strong);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s" id="is-type-return-dot">
+              <span style="width:9px;height:9px;border-radius:50%;background:transparent;display:block"></span>
+            </span>
+            <div>
+              <div style="font-size:13.5px;font-weight:700;color:var(--text2)">↩️ คืนสินค้า</div>
+              <div style="font-size:11px;color:var(--text3)">ออกใบเพื่อคืนสินค้า</div>
+            </div>
+          </label>
+        </div>
+      </div>
+      <!-- Row 2: รหัสโครงการ ชื่อผู้รับเหมา -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
         <div class="form-group" style="margin-bottom:0">
           <label class="form-label">รหัสโครงการ</label>
           <input type="text" class="form-input" id="is-proj" placeholder="เช่น PRJ-001">
         </div>
         <div class="form-group" style="margin-bottom:0">
-          <label class="form-label">ชื่อ ผรม. (ผู้รับมอบ)</label>
-          <input type="text" class="form-input" id="is-contractor" placeholder="ชื่อผู้รับมอบ">
+          <label class="form-label">ชื่อผู้รับเหมา (ผรม.)</label>
+          <input type="text" class="form-input" id="is-contractor" placeholder="ชื่อผู้รับเหมา">
         </div>
       </div>
-      <!-- Row 3: รายการ จำนวน -->
-      <div style="display:grid;grid-template-columns:1fr 120px;gap:10px;margin-bottom:10px">
+      <!-- Row 3: รายการ จำนวน หน่วย -->
+      <div style="display:grid;grid-template-columns:1fr 100px 100px;gap:10px;margin-bottom:10px">
         <div class="form-group" style="margin-bottom:0">
           <label class="form-label">รายการ</label>
           <input type="text" class="form-input" id="is-item" placeholder="รายการสินค้า / วัสดุ">
@@ -1710,6 +1742,10 @@ function togglePw(btn){
         <div class="form-group" style="margin-bottom:0">
           <label class="form-label">จำนวน</label>
           <input type="number" class="form-input" id="is-qty" placeholder="0" step="any">
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">หน่วย</label>
+          <input type="text" class="form-input" id="is-unit" placeholder="ก้อน / ถุง / ม้วน">
         </div>
       </div>
       <!-- Row 4: หมายเหตุ -->
@@ -3684,6 +3720,19 @@ document.getElementById('concreteModal').addEventListener('click',function(e){
 document.addEventListener('DOMContentLoaded',function(){
   const issueModal = document.getElementById('issueModal');
   if(issueModal) issueModal.addEventListener('click',function(e){ if(e.target===this) closeIssueModal(); });
+  // Type radio toggle visual
+  ['is-type-order','is-type-return'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.addEventListener('change', function(){ if(this.checked) _setIssueType(this.value); });
+  });
+  // Also handle label click (since inputs are hidden)
+  ['is-type-order-lbl','is-type-return-lbl'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.addEventListener('click', function(){
+      const inp = this.querySelector('input[type="radio"]');
+      if(inp){ inp.checked=true; _setIssueType(inp.value); }
+    });
+  });
 });
 
 /* ─── ISSUE SLIPS (ใบออก — Firestore) ─── */
@@ -3732,7 +3781,8 @@ function renderIssueSummary(){
   const arr = _issueCache;
   const total = arr.length;
   const projs = new Set(arr.map(t=>t.proj).filter(Boolean)).size;
-  const withPhotos = arr.filter(t=>t.images&&t.images.length).length;
+  const orderCount = arr.filter(t=>(!t.type||t.type==='order')).length;
+  const returnCount = arr.filter(t=>t.type==='return').length;
   const today = new Date();
   const todayCount = arr.filter(t=>{
     if(!t.date) return false;
@@ -3740,9 +3790,10 @@ function renderIssueSummary(){
     return d.getFullYear()===today.getFullYear()&&d.getMonth()===today.getMonth()&&d.getDate()===today.getDate();
   }).length;
   document.getElementById('ism-total').textContent = total.toLocaleString();
+  document.getElementById('ism-order').textContent = orderCount.toLocaleString();
+  document.getElementById('ism-return').textContent = returnCount.toLocaleString();
   document.getElementById('ism-today').textContent = todayCount.toLocaleString();
   document.getElementById('ism-proj').textContent = projs.toLocaleString();
-  document.getElementById('ism-photos').textContent = withPhotos.toLocaleString();
 }
 
 function renderIssueTable(){
@@ -3775,14 +3826,19 @@ function renderIssueTable(){
           `<img class="issue-thumb" src="${src}" alt="รูป ${i+1}" onclick="openIssueLightbox('${src}')" title="คลิกขยาย">`
         ).join('')}</div>`
       : '<span style="color:var(--text3);font-size:12px">—</span>';
+    const typeBadge = (t.type==='return')
+      ? `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:99px;font-size:11.5px;font-weight:700;background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber-light)">↩️ คืน</span>`
+      : `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:99px;font-size:11.5px;font-weight:700;background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-light)">🛒 สั่งซื้อ</span>`;
     return `<tr${isToday?' class="row-today"':''}>
       <td class="td-date">${dateStr}${isToday?'<span class="today-badge-inline">วันนี้</span>':''}</td>
+      <td>${typeBadge}</td>
       <td style="font-family:'IBM Plex Mono',monospace;font-size:12.5px">${esc(t.book||'—')}</td>
       <td style="font-family:'IBM Plex Mono',monospace;font-size:12.5px">${esc(t.no||'—')}</td>
       <td>${esc(t.proj||'—')}</td>
       <td>${esc(t.contractor||'—')}</td>
       <td style="max-width:200px">${esc(t.item||'—')}</td>
       <td style="text-align:right;font-family:'IBM Plex Mono',monospace">${(t.qty!=null&&t.qty!=='')?Number(t.qty).toLocaleString('th-TH'):'—'}</td>
+      <td style="color:var(--text2);font-size:13px">${esc(t.unit||'—')}</td>
       <td style="min-width:80px">${thumbsHtml}</td>
       <td><div class="tr-actions">
         <button class="tr-btn tr-btn-edit" onclick="openIssueModal('${fid}')">✏️ แก้ไข</button>
@@ -3814,6 +3870,31 @@ function handleIssueImgFiles(files){
 }
 function handleIssueImgDrop(files){ handleIssueImgFiles(files); }
 
+function _setIssueType(val){
+  const isOrder = val!=='return';
+  document.getElementById('is-type-order').checked = isOrder;
+  document.getElementById('is-type-return').checked = !isOrder;
+  const orderLbl = document.getElementById('is-type-order-lbl');
+  const returnLbl = document.getElementById('is-type-return-lbl');
+  const orderDot = document.getElementById('is-type-order-dot');
+  const returnDot = document.getElementById('is-type-return-dot');
+  if(isOrder){
+    orderLbl.style.borderColor='var(--acc)'; orderLbl.style.background='var(--acc-bg)';
+    orderDot.innerHTML='<span style="width:9px;height:9px;border-radius:50%;background:var(--acc);display:block"></span>';
+    orderDot.style.borderColor='var(--acc)';
+    returnLbl.style.borderColor='var(--border-strong)'; returnLbl.style.background='var(--surface2)';
+    returnDot.innerHTML='<span style="width:9px;height:9px;border-radius:50%;background:transparent;display:block"></span>';
+    returnDot.style.borderColor='var(--border-strong)';
+  } else {
+    returnLbl.style.borderColor='var(--amber)'; returnLbl.style.background='var(--amber-bg)';
+    returnDot.innerHTML='<span style="width:9px;height:9px;border-radius:50%;background:var(--amber);display:block"></span>';
+    returnDot.style.borderColor='var(--amber)';
+    orderLbl.style.borderColor='var(--border-strong)'; orderLbl.style.background='var(--surface2)';
+    orderDot.innerHTML='<span style="width:9px;height:9px;border-radius:50%;background:transparent;display:block"></span>';
+    orderDot.style.borderColor='var(--border-strong)';
+  }
+}
+
 function openIssueModal(fid){
   issueEditId = fid||null;
   _issueImgPending = [];
@@ -3828,13 +3909,16 @@ function openIssueModal(fid){
       document.getElementById('is-contractor').value = t.contractor||'';
       document.getElementById('is-item').value = t.item||'';
       document.getElementById('is-qty').value = t.qty!=null?t.qty:'';
+      document.getElementById('is-unit').value = t.unit||'';
       document.getElementById('is-note').value = t.note||'';
+      _setIssueType(t.type||'order');
       // load existing images into pending
       (t.images||[]).forEach((src,i)=>_issueImgPending.push({dataUrl:src, name:'img_'+i}));
     }
   } else {
-    ['is-book','is-no','is-proj','is-contractor','is-item','is-qty','is-note'].forEach(id=>{ document.getElementById(id).value=''; });
+    ['is-book','is-no','is-proj','is-contractor','is-item','is-qty','is-unit','is-note'].forEach(id=>{ document.getElementById(id).value=''; });
     document.getElementById('is-date').value = new Date().toISOString().slice(0,10);
+    _setIssueType('order');
   }
   _renderIssueImgPreview();
   document.getElementById('issueModal').classList.add('open');
@@ -3856,12 +3940,15 @@ async function saveIssue(){
   saveBtn.textContent = '⏳ กำลังบันทึก...'; saveBtn.disabled = true;
 
   const images = _issueImgPending.map(x=>x.dataUrl);
+  const typeVal = document.querySelector('input[name="is-type"]:checked');
   const payload = {
     book, no, date,
+    type: typeVal ? typeVal.value : 'order',
     proj: document.getElementById('is-proj').value.trim(),
     contractor: document.getElementById('is-contractor').value.trim(),
     item: document.getElementById('is-item').value.trim(),
     qty: document.getElementById('is-qty').value!=='' ? parseFloat(document.getElementById('is-qty').value) : '',
+    unit: document.getElementById('is-unit').value.trim(),
     note: document.getElementById('is-note').value.trim(),
     images,
     _ts: Date.now()
