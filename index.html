@@ -835,6 +835,103 @@ tr.row-today .td-date {
   border:1px solid rgba(200,168,90,.3);
 }
 
+
+/* ── RESPONSIVE IMPROVEMENTS ── */
+img,table{max-width:100%}
+
+@media (max-width:1024px){
+  .content{
+    padding:1rem;
+  }
+  .transfer-summary,
+  .bento{
+    gap:10px;
+  }
+  .table-scroll{
+    max-height:none;
+  }
+}
+
+@media (max-width:768px){
+  body{
+    overflow-x:hidden;
+  }
+  .main-wrap{
+    width:100%;
+    margin-left:0;
+  }
+  .content{
+    padding:.8rem .75rem 5rem;
+  }
+  .topbar{
+    padding:.7rem .8rem;
+    height:auto;
+    min-height:58px;
+    flex-wrap:wrap;
+  }
+  .topbar-title{
+    font-size:13px;
+  }
+  .page-head-title{
+    font-size:19px;
+  }
+  .page-head-sub{
+    font-size:12px;
+  }
+  .toolbar,
+  .transfer-toolbar{
+    flex-direction:column;
+    align-items:stretch;
+  }
+  .search-wrap,
+  .transfer-search-wrap{
+    min-width:100%;
+  }
+  .bento,
+  .transfer-summary,
+  .analytics-bento,
+  .vendor-grid,
+  .vd-grid{
+    grid-template-columns:1fr !important;
+  }
+  .table-card{
+    border-radius:14px;
+  }
+  table{
+    min-width:780px;
+  }
+  th,td{
+    padding:10px 12px;
+    font-size:12px;
+  }
+  .modal-body{
+    padding:1rem;
+  }
+}
+
+@media (max-width:560px){
+  .content{
+    padding:.7rem .65rem 5.3rem;
+  }
+  .upload-zone{
+    padding:2rem 1rem;
+  }
+  .upload-title{
+    font-size:15px;
+  }
+  .table-header{
+    padding:10px 12px;
+  }
+  .table-header-title{
+    font-size:12px;
+  }
+  th,td{
+    padding:9px 10px;
+    font-size:11.5px;
+  }
+}
+
+
 /* upload zone */
 .upload-zone{
   border:2px dashed rgba(13,27,62,.12);
@@ -4051,6 +4148,32 @@ function subscribeIssues(){
   });
 }
 
+
+function parseIssueDate(val){
+  if(!val) return 0;
+  if(typeof val === 'number') return val;
+
+  const str = String(val).trim();
+
+  // yyyy-mm-dd
+  if(/^\d{4}-\d{2}-\d{2}/.test(str)){
+    const t = new Date(str).getTime();
+    return isNaN(t) ? 0 : t;
+  }
+
+  // dd/mm/yyyy or dd-mm-yyyy
+  const m = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+  if(m){
+    let year = parseInt(m[3],10);
+    if(year < 100) year += 2000;
+    const dt = new Date(year, parseInt(m[2],10)-1, parseInt(m[1],10));
+    return dt.getTime();
+  }
+
+  const t = new Date(str).getTime();
+  return isNaN(t) ? 0 : t;
+}
+
 function renderIssuePage(){
   renderIssueSummary();
   renderIssueTable();
@@ -4087,8 +4210,8 @@ function renderIssueTable(){
 
   // sort by date desc first, then by _ts desc as tiebreaker
   let arr = [..._issueCache].sort((a,b)=>{
-    const da = a.date ? new Date(a.date).getTime() : 0;
-    const db = b.date ? new Date(b.date).getTime() : 0;
+    const da = parseIssueDate(a.date);
+    const db = parseIssueDate(b.date);
     if(db!==da) return db-da;
     return (b._ts||0)-(a._ts||0);
   });
@@ -4102,7 +4225,7 @@ function renderIssueTable(){
   if(fromTs||toTs!==Infinity){
     arr = arr.filter(t=>{
       if(!t.date) return false;
-      const dt = new Date(t.date).getTime();
+      const dt = parseIssueDate(t.date);
       return dt>=fromTs && dt<=toTs;
     });
   }
