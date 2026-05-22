@@ -994,6 +994,9 @@ function togglePw(btn){
     <button class="nav-item" data-page="transfers" onclick="openPage('transfers')">
       <span class="nav-icon">🔄</span><span>รายการโอน</span>
     </button>
+    <button class="nav-item" data-page="issue" onclick="openPage('issue')">
+      <span class="nav-icon">📄</span><span>ใบออก</span>
+    </button>
     <button class="nav-item" data-page="dashboard" onclick="openPage('dashboard')">
       <span class="nav-icon">📋</span><span>Dashboard</span>
     </button>
@@ -1530,6 +1533,219 @@ function togglePw(btn){
   </div><!-- /content -->
 </div><!-- /main-wrap -->
 
+<!-- ══════════════════════════════════════
+     ISSUE PAGE  (ใบออก)
+══════════════════════════════════════ -->
+<style>
+/* Issue page extras */
+.issue-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:1.25rem}
+.issue-thumb-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.issue-thumb{
+  width:64px;height:64px;object-fit:cover;border-radius:8px;
+  border:1px solid var(--border);cursor:pointer;transition:.15s;
+}
+.issue-thumb:hover{transform:scale(1.08);box-shadow:var(--shadow-md)}
+.issue-lightbox{
+  display:none;position:fixed;inset:0;z-index:2000;
+  background:rgba(0,0,0,.85);backdrop-filter:blur(8px);
+  align-items:center;justify-content:center;
+}
+.issue-lightbox.open{display:flex}
+.issue-lightbox img{max-width:92vw;max-height:88vh;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.issue-lightbox-close{
+  position:absolute;top:18px;right:22px;
+  background:rgba(255,255,255,.12);border:none;color:#fff;
+  font-size:22px;width:40px;height:40px;border-radius:50%;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:.15s;
+}
+.issue-lightbox-close:hover{background:rgba(255,255,255,.25)}
+/* upload zone inside modal */
+.issue-img-drop{
+  border:2px dashed var(--border-strong);border-radius:12px;
+  padding:22px;text-align:center;cursor:pointer;
+  transition:all .2s;background:var(--surface3);
+}
+.issue-img-drop:hover,.issue-img-drop.drag{border-color:var(--acc);background:var(--acc-bg)}
+.issue-img-preview{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.issue-img-preview-item{
+  position:relative;width:72px;height:72px;
+}
+.issue-img-preview-item img{
+  width:100%;height:100%;object-fit:cover;border-radius:8px;
+  border:1px solid var(--border);
+}
+.issue-img-preview-item .rm-img{
+  position:absolute;top:-5px;right:-5px;
+  width:18px;height:18px;border-radius:50%;
+  background:var(--red);color:#fff;border:none;
+  font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  line-height:1;
+}
+</style>
+
+<!-- Issue Page -->
+<div style="display:none" id="_issue_page_mount"></div>
+<script>
+/* Inject issue page HTML into .content after the settings page */
+(function(){
+  const issuePagesHTML = `
+  <!-- ── ISSUE PAGE ── -->
+  <div class="page" id="page-issue">
+    <div class="page-head" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <div>
+        <div class="page-head-title">ใบออก</div>
+        <div class="page-head-sub">จัดการใบออก — เพิ่ม แก้ไข ลบ &nbsp;<span id="issueFbStatus" style="font-size:11px;padding:2px 9px;border-radius:99px;background:var(--surface2);color:var(--text3)">⏳ กำลังเชื่อมต่อ...</span></div>
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="issue-summary" id="issueSummary">
+      <div class="tsm-card">
+        <div class="tsm-label">รายการทั้งหมด</div>
+        <div class="tsm-val" id="ism-total">0</div>
+      </div>
+      <div class="tsm-card" style="border:1.5px solid var(--blue-light);background:var(--blue-bg)">
+        <div class="tsm-label" style="color:var(--blue-text)">📅 วันนี้</div>
+        <div class="tsm-val" id="ism-today" style="color:var(--blue)">0</div>
+      </div>
+      <div class="tsm-card">
+        <div class="tsm-label">โครงการ</div>
+        <div class="tsm-val" id="ism-proj">0</div>
+      </div>
+      <div class="tsm-card">
+        <div class="tsm-label">ที่มีรูป</div>
+        <div class="tsm-val" id="ism-photos">0</div>
+      </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="transfer-toolbar">
+      <div class="transfer-search-wrap">
+        <span class="transfer-search-icon">🔍</span>
+        <input type="text" id="issueSearch" placeholder="ค้นหา เล่มที่ เลขที่ รหัสโครงการ ชื่อ ผรม. ..." oninput="renderIssueTable()">
+      </div>
+      <button class="btn-primary" onclick="openIssueModal()">＋ เพิ่มใบออก</button>
+    </div>
+
+    <!-- Table -->
+    <div class="table-card">
+      <div class="table-header">
+        <span class="table-header-title">รายการใบออก</span>
+        <span class="table-count" id="issueTableCount">0 รายการ</span>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>วันที่</th>
+              <th>เล่มที่</th>
+              <th>เลขที่</th>
+              <th>รหัสโครงการ</th>
+              <th>ชื่อ ผรม.</th>
+              <th>รายการ</th>
+              <th style="text-align:right">จำนวน</th>
+              <th>รูป</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="issueTbody"></tbody>
+        </table>
+        <div class="no-data" id="issueNodata" style="display:none">
+          <div class="no-data-icon">📄</div>ไม่พบรายการใบออก
+        </div>
+      </div>
+    </div>
+  </div>
+  `;
+
+  // Inject before </div><!-- /content -->
+  const content = document.querySelector('.content');
+  if(content){
+    content.insertAdjacentHTML('beforeend', issuePagesHTML);
+  }
+})();
+</script>
+
+<!-- Issue Modal -->
+<div class="modal-overlay" id="issueModal">
+  <div class="modal" style="max-width:680px">
+    <div class="modal-head">
+      <span class="modal-title" id="issueModalTitle">เพิ่มใบออก</span>
+      <button class="modal-close" onclick="closeIssueModal()">✕</button>
+    </div>
+    <div class="modal-body" style="padding:1rem 1.2rem;max-height:80vh;overflow-y:auto">
+      <!-- Row 1: เล่มที่ เลขที่ วันที่ -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">เล่มที่</label>
+          <input type="text" class="form-input" id="is-book" placeholder="เช่น 01">
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">เลขที่</label>
+          <input type="text" class="form-input" id="is-no" placeholder="เช่น 001">
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">วันที่</label>
+          <input type="date" class="form-input" id="is-date">
+        </div>
+      </div>
+      <!-- Row 2: รหัสโครงการ ชื่อ ผรม. -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">รหัสโครงการ</label>
+          <input type="text" class="form-input" id="is-proj" placeholder="เช่น PRJ-001">
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">ชื่อ ผรม. (ผู้รับมอบ)</label>
+          <input type="text" class="form-input" id="is-contractor" placeholder="ชื่อผู้รับมอบ">
+        </div>
+      </div>
+      <!-- Row 3: รายการ จำนวน -->
+      <div style="display:grid;grid-template-columns:1fr 120px;gap:10px;margin-bottom:10px">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">รายการ</label>
+          <input type="text" class="form-input" id="is-item" placeholder="รายการสินค้า / วัสดุ">
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">จำนวน</label>
+          <input type="number" class="form-input" id="is-qty" placeholder="0" step="any">
+        </div>
+      </div>
+      <!-- Row 4: หมายเหตุ -->
+      <div class="form-group" style="margin-bottom:12px">
+        <label class="form-label">หมายเหตุ</label>
+        <textarea class="form-textarea" id="is-note" placeholder="หมายเหตุเพิ่มเติม..." rows="2"></textarea>
+      </div>
+      <!-- Row 5: แนบรูป -->
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">รูปภาพแนบ</label>
+        <div class="issue-img-drop" id="issueImgDrop"
+          onclick="document.getElementById('issueImgInput').click()"
+          ondragover="event.preventDefault();this.classList.add('drag')"
+          ondragleave="this.classList.remove('drag')"
+          ondrop="event.preventDefault();this.classList.remove('drag');handleIssueImgDrop(event.dataTransfer.files)">
+          <div style="font-size:28px;margin-bottom:6px">📷</div>
+          <div style="font-size:13px;font-weight:600;color:var(--text2)">คลิกหรือลากรูปมาวาง</div>
+          <div style="font-size:11.5px;color:var(--text3);margin-top:3px">รองรับ JPG, PNG, WEBP — หลายรูปพร้อมกันได้</div>
+          <input type="file" id="issueImgInput" accept="image/*" multiple style="display:none" onchange="handleIssueImgFiles(this.files);this.value=''">
+        </div>
+        <div class="issue-img-preview" id="issueImgPreview"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeIssueModal()">ยกเลิก</button>
+      <button class="btn-primary" onclick="saveIssue()">💾 บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- Image Lightbox -->
+<div class="issue-lightbox" id="issueLightbox" onclick="if(event.target===this)closeIssueLightbox()">
+  <button class="issue-lightbox-close" onclick="closeIssueLightbox()">✕</button>
+  <img id="issueLightboxImg" src="" alt="รูปแนบ">
+</div>
+
 <script>
 /* ─── CONFIG ─── */
 const STORES = [
@@ -1761,7 +1977,7 @@ function openPage(page){
   if(nav) nav.classList.add('active');
   document.getElementById('topbarBreadcrumb').textContent='/ '+{
     dashboard:'Dashboard',analytics:'Analytics',
-    concrete:'คอนกรีต',settings:'Settings',transfers:'รายการโอน'
+    concrete:'คอนกรีต',settings:'Settings',transfers:'รายการโอน',issue:'ใบออก'
   }[page]||page;
   refreshPageContent(page);
 }
@@ -1769,6 +1985,7 @@ function openPage(page){
 function refreshPageContent(page){
   if(page==='transfers'){ renderTransferPage(); return; }
   if(page==='concrete'){ renderConcretePage(); return; }
+  if(page==='issue'){ renderIssuePage(); return; }
   if(!S().rows.length) return;
   if(page==='analytics') renderAnalytics();
   if(page==='settings')  renderSettings(currentSettingsTab);
@@ -3464,6 +3681,245 @@ document.getElementById('concreteModal').addEventListener('click',function(e){
   if(e.target===this) closeConcreteModal();
 });
 
+document.addEventListener('DOMContentLoaded',function(){
+  const issueModal = document.getElementById('issueModal');
+  if(issueModal) issueModal.addEventListener('click',function(e){ if(e.target===this) closeIssueModal(); });
+});
+
+/* ─── ISSUE SLIPS (ใบออก — Firestore) ─── */
+let issueEditId = null;
+let _issueCache = [];
+let _issueUnsubscribe = null;
+let _issueImgPending = []; // [{dataUrl, name}] for new images being added
+
+function _fsIssueCol(){ return window._fsLib.collection(window._db, 'issues'); }
+
+function setIssueFbStatus(s){
+  const el=document.getElementById('issueFbStatus');
+  if(!el) return;
+  if(s==='connecting'){ el.textContent='⏳ กำลังเชื่อมต่อ...'; el.style.background='var(--amber-bg)'; el.style.color='var(--amber-text)'; }
+  else if(s==='online'){ el.innerHTML='<span style="width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block"></span> เชื่อมต่อแล้ว'; el.style.background='var(--green-bg)'; el.style.color='var(--green-text)'; }
+  else if(s==='offline'){ el.innerHTML='⚠️ ออฟไลน์'; el.style.background='var(--red-bg)'; el.style.color='var(--red-text)'; }
+}
+
+function subscribeIssues(){
+  if(!window._firebaseReady){ window.addEventListener('firebase-ready', subscribeIssues, {once:true}); return; }
+  if(_issueUnsubscribe) _issueUnsubscribe();
+  setIssueFbStatus('connecting');
+  const { onSnapshot, query, orderBy } = window._fsLib;
+  const q = query(_fsIssueCol(), orderBy('_ts','desc'));
+  _issueUnsubscribe = onSnapshot(q, snap => {
+    _issueCache = snap.docs.map(d => ({...d.data(), _fid: d.id}));
+    setIssueFbStatus('online');
+    if(document.getElementById('page-issue') && document.getElementById('page-issue').classList.contains('active')){
+      renderIssueSummary(); renderIssueTable();
+    }
+  }, err => {
+    console.warn('Firestore issue error:', err);
+    setIssueFbStatus('offline');
+    try{ _issueCache = JSON.parse(localStorage.getItem('issues_data')||'[]'); }catch(e){}
+    renderIssueSummary(); renderIssueTable();
+  });
+}
+
+function renderIssuePage(){
+  renderIssueSummary();
+  renderIssueTable();
+  subscribeIssues();
+}
+
+function renderIssueSummary(){
+  const arr = _issueCache;
+  const total = arr.length;
+  const projs = new Set(arr.map(t=>t.proj).filter(Boolean)).size;
+  const withPhotos = arr.filter(t=>t.images&&t.images.length).length;
+  const today = new Date();
+  const todayCount = arr.filter(t=>{
+    if(!t.date) return false;
+    const d = new Date(t.date);
+    return d.getFullYear()===today.getFullYear()&&d.getMonth()===today.getMonth()&&d.getDate()===today.getDate();
+  }).length;
+  document.getElementById('ism-total').textContent = total.toLocaleString();
+  document.getElementById('ism-today').textContent = todayCount.toLocaleString();
+  document.getElementById('ism-proj').textContent = projs.toLocaleString();
+  document.getElementById('ism-photos').textContent = withPhotos.toLocaleString();
+}
+
+function renderIssueTable(){
+  const q = (document.getElementById('issueSearch')||{}).value||'';
+  let arr = [..._issueCache].sort((a,b)=>(b._ts||0)-(a._ts||0));
+  if(q){
+    const lq = q.toLowerCase();
+    arr = arr.filter(t=>
+      [t.book,t.no,t.date,t.proj,t.contractor,t.item,t.note].some(v=>String(v||'').toLowerCase().includes(lq))
+    );
+  }
+  const tbody = document.getElementById('issueTbody');
+  const nodata = document.getElementById('issueNodata');
+  document.getElementById('issueTableCount').textContent = arr.length.toLocaleString()+' รายการ';
+  if(!arr.length){ tbody.innerHTML=''; nodata.style.display='block'; return; }
+  nodata.style.display='none';
+  const today = new Date();
+  tbody.innerHTML = arr.map(t=>{
+    const fid = t._fid||t.id;
+    let isToday = false;
+    let dateStr = '—';
+    if(t.date){
+      const d = new Date(t.date);
+      isToday = d.getFullYear()===today.getFullYear()&&d.getMonth()===today.getMonth()&&d.getDate()===today.getDate();
+      dateStr = d.toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'});
+    }
+    const imgs = t.images||[];
+    const thumbsHtml = imgs.length
+      ? `<div class="issue-thumb-wrap">${imgs.map((src,i)=>
+          `<img class="issue-thumb" src="${src}" alt="รูป ${i+1}" onclick="openIssueLightbox('${src}')" title="คลิกขยาย">`
+        ).join('')}</div>`
+      : '<span style="color:var(--text3);font-size:12px">—</span>';
+    return `<tr${isToday?' class="row-today"':''}>
+      <td class="td-date">${dateStr}${isToday?'<span class="today-badge-inline">วันนี้</span>':''}</td>
+      <td style="font-family:'IBM Plex Mono',monospace;font-size:12.5px">${esc(t.book||'—')}</td>
+      <td style="font-family:'IBM Plex Mono',monospace;font-size:12.5px">${esc(t.no||'—')}</td>
+      <td>${esc(t.proj||'—')}</td>
+      <td>${esc(t.contractor||'—')}</td>
+      <td style="max-width:200px">${esc(t.item||'—')}</td>
+      <td style="text-align:right;font-family:'IBM Plex Mono',monospace">${(t.qty!=null&&t.qty!=='')?Number(t.qty).toLocaleString('th-TH'):'—'}</td>
+      <td style="min-width:80px">${thumbsHtml}</td>
+      <td><div class="tr-actions">
+        <button class="tr-btn tr-btn-edit" onclick="openIssueModal('${fid}')">✏️ แก้ไข</button>
+        <button class="tr-btn tr-btn-del" onclick="deleteIssue('${fid}')">🗑</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+/* ─ Modal helpers ─ */
+function _renderIssueImgPreview(){
+  const wrap = document.getElementById('issueImgPreview');
+  if(!wrap) return;
+  wrap.innerHTML = _issueImgPending.map((img,i)=>`
+    <div class="issue-img-preview-item">
+      <img src="${img.dataUrl}" alt="${img.name}">
+      <button class="rm-img" onclick="_removeIssueImg(${i})">✕</button>
+    </div>
+  `).join('');
+}
+function _removeIssueImg(i){ _issueImgPending.splice(i,1); _renderIssueImgPreview(); }
+
+function handleIssueImgFiles(files){
+  Array.from(files).forEach(f=>{
+    const reader = new FileReader();
+    reader.onload = e=>{ _issueImgPending.push({dataUrl:e.target.result, name:f.name}); _renderIssueImgPreview(); };
+    reader.readAsDataURL(f);
+  });
+}
+function handleIssueImgDrop(files){ handleIssueImgFiles(files); }
+
+function openIssueModal(fid){
+  issueEditId = fid||null;
+  _issueImgPending = [];
+  document.getElementById('issueModalTitle').textContent = fid ? '✏️ แก้ไขใบออก' : '＋ เพิ่มใบออก';
+  if(fid){
+    const t = _issueCache.find(x=>x._fid===fid);
+    if(t){
+      document.getElementById('is-book').value = t.book||'';
+      document.getElementById('is-no').value = t.no||'';
+      document.getElementById('is-date').value = t.date||'';
+      document.getElementById('is-proj').value = t.proj||'';
+      document.getElementById('is-contractor').value = t.contractor||'';
+      document.getElementById('is-item').value = t.item||'';
+      document.getElementById('is-qty').value = t.qty!=null?t.qty:'';
+      document.getElementById('is-note').value = t.note||'';
+      // load existing images into pending
+      (t.images||[]).forEach((src,i)=>_issueImgPending.push({dataUrl:src, name:'img_'+i}));
+    }
+  } else {
+    ['is-book','is-no','is-proj','is-contractor','is-item','is-qty','is-note'].forEach(id=>{ document.getElementById(id).value=''; });
+    document.getElementById('is-date').value = new Date().toISOString().slice(0,10);
+  }
+  _renderIssueImgPreview();
+  document.getElementById('issueModal').classList.add('open');
+}
+
+function closeIssueModal(){
+  document.getElementById('issueModal').classList.remove('open');
+  issueEditId = null;
+  _issueImgPending = [];
+}
+
+async function saveIssue(){
+  const book = document.getElementById('is-book').value.trim();
+  const no   = document.getElementById('is-no').value.trim();
+  const date = document.getElementById('is-date').value;
+  if(!date){ alert('กรุณาเลือกวันที่'); return; }
+
+  const saveBtn = document.querySelector('#issueModal .btn-primary');
+  saveBtn.textContent = '⏳ กำลังบันทึก...'; saveBtn.disabled = true;
+
+  const images = _issueImgPending.map(x=>x.dataUrl);
+  const payload = {
+    book, no, date,
+    proj: document.getElementById('is-proj').value.trim(),
+    contractor: document.getElementById('is-contractor').value.trim(),
+    item: document.getElementById('is-item').value.trim(),
+    qty: document.getElementById('is-qty').value!=='' ? parseFloat(document.getElementById('is-qty').value) : '',
+    note: document.getElementById('is-note').value.trim(),
+    images,
+    _ts: Date.now()
+  };
+
+  try {
+    if(!window._firebaseReady) throw new Error('Firebase not ready');
+    const { addDoc, updateDoc, doc } = window._fsLib;
+    if(issueEditId){
+      await updateDoc(doc(window._db,'issues',issueEditId), payload);
+    } else {
+      await addDoc(_fsIssueCol(), payload);
+    }
+  } catch(err){
+    console.warn('Firestore issue save failed, using localStorage:', err);
+    const arr = JSON.parse(localStorage.getItem('issues_data')||'[]');
+    if(issueEditId){
+      const idx = arr.findIndex(x=>x.id===issueEditId||x._fid===issueEditId);
+      if(idx>-1) arr[idx] = {...arr[idx],...payload};
+    } else {
+      arr.unshift({...payload, id:'is_'+Date.now()});
+    }
+    localStorage.setItem('issues_data', JSON.stringify(arr));
+    _issueCache = arr;
+    renderIssueSummary(); renderIssueTable();
+  }
+
+  saveBtn.textContent = '💾 บันทึก'; saveBtn.disabled = false;
+  closeIssueModal();
+}
+
+async function deleteIssue(fid){
+  if(!confirm('ยืนยันลบรายการใบออกนี้?')) return;
+  try {
+    if(!window._firebaseReady) throw new Error('Firebase not ready');
+    const { deleteDoc, doc } = window._fsLib;
+    await deleteDoc(doc(window._db,'issues',fid));
+  } catch(err){
+    console.warn('Firestore issue delete failed, using localStorage:', err);
+    const arr = JSON.parse(localStorage.getItem('issues_data')||'[]').filter(x=>(x.id||x._fid)!==fid);
+    localStorage.setItem('issues_data', JSON.stringify(arr));
+    _issueCache = arr;
+    renderIssueSummary(); renderIssueTable();
+  }
+}
+
+function openIssueLightbox(src){
+  document.getElementById('issueLightboxImg').src = src;
+  document.getElementById('issueLightbox').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeIssueLightbox(){
+  document.getElementById('issueLightbox').classList.remove('open');
+  document.body.style.overflow='';
+}
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeIssueLightbox(); });
+
+/* ─────────────────────────── */
 function syncBottomNav(page){
   document.querySelectorAll('#bottomNav .bnav-item[data-page]').forEach(b=>{
     b.classList.toggle('active', b.dataset.page===page);
@@ -3528,6 +3984,10 @@ function closeStoreSheet(){
   <button class="bnav-item" data-page="transfers" onclick="openPage('transfers')">
     <span style="font-size:18px;line-height:1;display:block!important">🔄</span>
     <span style="font-size:10px;font-weight:700;display:block!important;visibility:visible!important;opacity:1!important">โอน</span>
+  </button>
+  <button class="bnav-item" data-page="issue" onclick="openPage('issue')">
+    <span style="font-size:18px;line-height:1;display:block!important">📄</span>
+    <span style="font-size:10px;font-weight:700;display:block!important;visibility:visible!important;opacity:1!important">ใบออก</span>
   </button>
   <button class="bnav-item" data-page="dashboard" onclick="openPage('dashboard')">
     <span style="font-size:18px;line-height:1;display:block!important">📋</span>
