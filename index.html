@@ -981,13 +981,7 @@ function togglePw(btn){
     </div>
   </div>
 
-  <div class="sidebar-stores">
-    <div class="sidebar-stores-label">บริษัท</div>
-    <div class="store-pill-list" id="storePills"></div>
-  </div>
-
   <div class="sidebar-nav">
-    <div class="sidebar-nav-label">เมนู</div>
     <button class="nav-item active" data-page="concrete" onclick="openPage('concrete')">
       <span class="nav-icon">🏗️</span><span>คอนกรีต</span>
     </button>
@@ -997,14 +991,8 @@ function togglePw(btn){
     <button class="nav-item" data-page="issue" onclick="openPage('issue')">
       <span class="nav-icon">📄</span><span>ใบออก</span>
     </button>
-    <button class="nav-item" data-page="dashboard" onclick="openPage('dashboard')">
-      <span class="nav-icon">📋</span><span>Dashboard</span>
-    </button>
-    <button class="nav-item" data-page="analytics" onclick="openPage('analytics')">
-      <span class="nav-icon">📈</span><span>Analytics</span>
-    </button>
     <button class="nav-item" data-page="settings" onclick="openPage('settings')">
-      <span class="nav-icon">⚙️</span><span>Settings</span>
+      <span class="nav-icon">⚙️</span><span>ตั้งค่า</span>
     </button>
   </div>
 
@@ -1016,14 +1004,13 @@ function togglePw(btn){
 <!-- ── MAIN ── -->
 <div class="main-wrap">
   <div class="topbar">
-    <span class="topbar-title" id="topbarTitle">PO Dashboard</span>
-    <span class="topbar-breadcrumb" id="topbarBreadcrumb">— เลือกบริษัทด้านซ้าย</span>
+    <span class="topbar-title" id="topbarTitle">PO Management</span>
+    <span class="topbar-breadcrumb" id="topbarBreadcrumb"></span>
     <div class="topbar-right">
       <span id="globalFbStatus" style="font-size:11px;padding:3px 10px;border-radius:99px;background:var(--surface2);color:var(--text3);font-weight:600;display:inline-flex;align-items:center;gap:5px;transition:background .3s,color .3s">⏳ กำลังเชื่อมต่อ...</span>
       <span class="topbar-time" id="topbarTime">—</span>
       <span id="topbarUser" style="font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;padding:4px 10px;background:var(--surface2);border-radius:99px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
       <button class="btn-topbar show" id="logoutBtn" onclick="doLogout()" style="color:var(--red-text);border-color:var(--red-light)">⏏ ออกจากระบบ</button>
-      <button class="btn-topbar" id="resetBtn" onclick="resetAll()">⟳ เปลี่ยนไฟล์</button>
     </div>
   </div>
 
@@ -2017,8 +2004,7 @@ function openPage(page){
   const nav=document.querySelector(`.sidebar [data-page="${page}"]`);
   if(nav) nav.classList.add('active');
   document.getElementById('topbarBreadcrumb').textContent='/ '+{
-    dashboard:'Dashboard',analytics:'Analytics',
-    concrete:'คอนกรีต',settings:'Settings',transfers:'รายการโอน',issue:'ใบออก'
+    concrete:'คอนกรีต', transfers:'รายการโอน', issue:'ใบออก', settings:'ตั้งค่า'
   }[page]||page;
   refreshPageContent(page);
 }
@@ -2027,9 +2013,7 @@ function refreshPageContent(page){
   if(page==='transfers'){ renderTransferPage(); return; }
   if(page==='concrete'){ renderConcretePage(); return; }
   if(page==='issue'){ renderIssuePage(); return; }
-  if(!S().rows.length) return;
-  if(page==='analytics') renderAnalytics();
-  if(page==='settings')  renderSettings(currentSettingsTab);
+  if(page==='settings') renderSettings(currentSettingsTab);
 }
 
 /* ─── COLUMN GUESS ─── */
@@ -3664,15 +3648,6 @@ async function doLogout(){
   await signOut(window._auth);
 }
 function initApp(){
-  buildStorePills();
-  STORES.forEach((_,i)=>loadStore(i));
-  loadVendorDB();
-  applyTheme();
-  const has=S().rows.length>0;
-  document.getElementById('uploadZone').style.display=has?'none':'block';
-  document.getElementById('mainSection').style.display=has?'block':'none';
-  document.getElementById('resetBtn').classList.toggle('show',has);
-  if(has){ showInfoLoaded(); renderAll(); }
   openPage('concrete');
   renderSettings('general');
 }
@@ -4120,16 +4095,6 @@ function closeStoreSheet(){
 }
 </script>
 
-<!-- ── STORE SHEET OVERLAY ── -->
-<div class="store-sheet-overlay" id="storeSheetOverlay" onclick="closeStoreSheet()"></div>
-
-<!-- ── STORE BOTTOM SHEET ── -->
-<div class="store-sheet" id="storeSheet">
-  <div class="store-sheet-handle"></div>
-  <div class="store-sheet-title">เลือกบริษัท</div>
-  <div id="storeSheetPills"></div>
-</div>
-
 <!-- ── BOTTOM NAV ── -->
 <nav class="bottom-nav" id="bottomNav">
   <button class="bnav-item active" data-page="concrete" onclick="openPage('concrete')">
@@ -4144,17 +4109,9 @@ function closeStoreSheet(){
     <span style="font-size:18px;line-height:1;display:block!important">📄</span>
     <span style="font-size:10px;font-weight:700;display:block!important;visibility:visible!important;opacity:1!important">ใบออก</span>
   </button>
-  <button class="bnav-item" data-page="dashboard" onclick="openPage('dashboard')">
-    <span style="font-size:18px;line-height:1;display:block!important">📋</span>
-    <span style="font-size:10px;font-weight:700;display:block!important;visibility:visible!important;opacity:1!important">Dashboard</span>
-  </button>
-  <button class="bnav-item" data-page="analytics" onclick="openPage('analytics')">
-    <span style="font-size:18px;line-height:1;display:block!important">📈</span>
-    <span style="font-size:10px;font-weight:700;display:block!important;visibility:visible!important;opacity:1!important">Analytics</span>
-  </button>
-  <button class="bnav-item" id="bnavStore" onclick="toggleStoreSheet()">
-    <span style="font-size:18px;line-height:1;display:block!important">🏪</span>
-    <span style="font-size:10px;font-weight:700;display:block!important;visibility:visible!important;opacity:1!important">บริษัท</span>
+  <button class="bnav-item" data-page="settings" onclick="openPage('settings')">
+    <span style="font-size:18px;line-height:1;display:block!important">⚙️</span>
+    <span style="font-size:10px;font-weight:700;display:block!important;visibility:visible!important;opacity:1!important">ตั้งค่า</span>
   </button>
 </nav>
 
