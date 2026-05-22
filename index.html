@@ -1647,10 +1647,9 @@ function togglePw(btn){
               <th>เล่มที่</th>
               <th>เลขที่</th>
               <th>รหัสโครงการ</th>
+              <th>รหัส ผรม.</th>
               <th>ชื่อผู้รับเหมา</th>
               <th>รายการ</th>
-              <th style="text-align:right">จำนวน</th>
-              <th>หน่วย</th>
               <th>รูป</th>
               <th></th>
             </tr>
@@ -1722,31 +1721,37 @@ function togglePw(btn){
           </label>
         </div>
       </div>
-      <!-- Row 2: รหัสโครงการ ชื่อผู้รับเหมา -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <!-- Row 2: รหัสโครงการ + รหัส ผรม. + ชื่อผู้รับเหมา -->
+      <div style="display:grid;grid-template-columns:1fr 140px 1fr;gap:10px;margin-bottom:10px">
         <div class="form-group" style="margin-bottom:0">
           <label class="form-label">รหัสโครงการ</label>
           <input type="text" class="form-input" id="is-proj" placeholder="เช่น PRJ-001">
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">รหัส ผรม.</label>
+          <input type="text" class="form-input" id="is-contractor-code" placeholder="เช่น C-001">
         </div>
         <div class="form-group" style="margin-bottom:0">
           <label class="form-label">ชื่อผู้รับเหมา (ผรม.)</label>
           <input type="text" class="form-input" id="is-contractor" placeholder="ชื่อผู้รับเหมา">
         </div>
       </div>
-      <!-- Row 3: รายการ จำนวน หน่วย -->
-      <div style="display:grid;grid-template-columns:1fr 100px 100px;gap:10px;margin-bottom:10px">
-        <div class="form-group" style="margin-bottom:0">
-          <label class="form-label">รายการ</label>
-          <input type="text" class="form-input" id="is-item" placeholder="รายการสินค้า / วัสดุ">
+      <!-- รายการ (multi-line) -->
+      <div class="form-group" style="margin-bottom:10px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <label class="form-label" style="margin-bottom:0">รายการสินค้า</label>
+          <button type="button" onclick="addIssueLine()" style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:8px;border:1px dashed var(--acc);background:var(--acc-bg);color:var(--acc-text);font-size:12px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;transition:.15s">
+            ＋ เพิ่มรายการ
+          </button>
         </div>
-        <div class="form-group" style="margin-bottom:0">
-          <label class="form-label">จำนวน</label>
-          <input type="number" class="form-input" id="is-qty" placeholder="0" step="any">
+        <!-- header row -->
+        <div style="display:grid;grid-template-columns:1fr 90px 90px 32px;gap:6px;padding:0 4px;margin-bottom:4px">
+          <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">ชื่อรายการ / สินค้า</div>
+          <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">จำนวน</div>
+          <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">หน่วย</div>
+          <div></div>
         </div>
-        <div class="form-group" style="margin-bottom:0">
-          <label class="form-label">หน่วย</label>
-          <input type="text" class="form-input" id="is-unit" placeholder="ก้อน / ถุง / ม้วน">
-        </div>
+        <div id="issueLinesWrap" style="display:flex;flex-direction:column;gap:6px"></div>
       </div>
       <!-- Row 4: หมายเหตุ -->
       <div class="form-group" style="margin-bottom:12px">
@@ -3801,9 +3806,10 @@ function renderIssueTable(){
   let arr = [..._issueCache].sort((a,b)=>(b._ts||0)-(a._ts||0));
   if(q){
     const lq = q.toLowerCase();
-    arr = arr.filter(t=>
-      [t.book,t.no,t.date,t.proj,t.contractor,t.item,t.note].some(v=>String(v||'').toLowerCase().includes(lq))
-    );
+    arr = arr.filter(t=>{
+      const lineItems = (t.lines||[]).map(l=>l.item||'').join(' ');
+      return [t.book,t.no,t.date,t.proj,t.contractorCode,t.contractor,lineItems,t.note].some(v=>String(v||'').toLowerCase().includes(lq));
+    });
   }
   const tbody = document.getElementById('issueTbody');
   const nodata = document.getElementById('issueNodata');
@@ -3829,16 +3835,23 @@ function renderIssueTable(){
     const typeBadge = (t.type==='return')
       ? `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:99px;font-size:11.5px;font-weight:700;background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber-light)">↩️ คืน</span>`
       : `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:99px;font-size:11.5px;font-weight:700;background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-light)">🛒 สั่งซื้อ</span>`;
+    // Build lines display — support both old (item/qty/unit) and new (lines[]) format
+    const lines = t.lines && t.lines.length ? t.lines : (t.item ? [{item:t.item, qty:t.qty, unit:t.unit}] : []);
+    const linesHtml = lines.length
+      ? lines.map(l=>`<div style="display:flex;align-items:baseline;gap:6px;padding:2px 0;border-bottom:1px dashed var(--border);font-size:13px">
+          <span style="flex:1;color:var(--text)">${esc(l.item||'—')}</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text2);white-space:nowrap">${l.qty!=null&&l.qty!==''?Number(l.qty).toLocaleString('th-TH'):''} <span style="color:var(--text3)">${esc(l.unit||'')}</span></span>
+        </div>`).join('')
+      : '<span style="color:var(--text3);font-size:12px">—</span>';
     return `<tr${isToday?' class="row-today"':''}>
       <td class="td-date">${dateStr}${isToday?'<span class="today-badge-inline">วันนี้</span>':''}</td>
       <td>${typeBadge}</td>
       <td style="font-family:'IBM Plex Mono',monospace;font-size:12.5px">${esc(t.book||'—')}</td>
       <td style="font-family:'IBM Plex Mono',monospace;font-size:12.5px">${esc(t.no||'—')}</td>
       <td>${esc(t.proj||'—')}</td>
+      <td style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text2)">${esc(t.contractorCode||'—')}</td>
       <td>${esc(t.contractor||'—')}</td>
-      <td style="max-width:200px">${esc(t.item||'—')}</td>
-      <td style="text-align:right;font-family:'IBM Plex Mono',monospace">${(t.qty!=null&&t.qty!=='')?Number(t.qty).toLocaleString('th-TH'):'—'}</td>
-      <td style="color:var(--text2);font-size:13px">${esc(t.unit||'—')}</td>
+      <td style="min-width:200px;max-width:280px">${linesHtml}</td>
       <td style="min-width:80px">${thumbsHtml}</td>
       <td><div class="tr-actions">
         <button class="tr-btn tr-btn-edit" onclick="openIssueModal('${fid}')">✏️ แก้ไข</button>
@@ -3895,9 +3908,56 @@ function _setIssueType(val){
   }
 }
 
+/* ─── Issue Lines (multi-line items) ─── */
+let _issueLines = []; // [{item, qty, unit}]
+
+function _renderIssueLines(){
+  const wrap = document.getElementById('issueLinesWrap');
+  if(!wrap) return;
+  if(!_issueLines.length) _issueLines.push({item:'', qty:'', unit:''});
+  wrap.innerHTML = _issueLines.map((ln, i) => `
+    <div style="display:grid;grid-template-columns:1fr 90px 90px 32px;gap:6px;align-items:center" data-line="${i}">
+      <input type="text" class="form-input" style="font-size:13px"
+        placeholder="ชื่อรายการ / สินค้า"
+        value="${esc(ln.item)}"
+        oninput="_issueLines[${i}].item=this.value">
+      <input type="number" class="form-input" style="font-size:13px;text-align:right"
+        placeholder="0" step="any"
+        value="${ln.qty!==''&&ln.qty!=null?ln.qty:''}"
+        oninput="_issueLines[${i}].qty=this.value===''?'':parseFloat(this.value)">
+      <input type="text" class="form-input" style="font-size:13px"
+        placeholder="หน่วย"
+        value="${esc(ln.unit)}"
+        oninput="_issueLines[${i}].unit=this.value">
+      <button type="button" onclick="_removeIssueLine(${i})"
+        style="width:32px;height:32px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface2);color:var(--text3);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.13s;font-family:sans-serif"
+        onmouseover="this.style.background='var(--red-bg)';this.style.color='var(--red-text)';this.style.borderColor='var(--red-light)'"
+        onmouseout="this.style.background='var(--surface2)';this.style.color='var(--text3)';this.style.borderColor='var(--border-strong)'"
+        ${_issueLines.length<=1?'disabled style="opacity:.3;cursor:not-allowed;width:32px;height:32px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface2);color:var(--text3);font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0"':''}>✕</button>
+    </div>
+  `).join('');
+}
+
+function addIssueLine(){
+  _issueLines.push({item:'', qty:'', unit:''});
+  _renderIssueLines();
+  // focus last item input
+  setTimeout(()=>{
+    const inputs = document.querySelectorAll('#issueLinesWrap input[type="text"]');
+    if(inputs.length) inputs[inputs.length-2].focus();
+  }, 50);
+}
+
+function _removeIssueLine(i){
+  if(_issueLines.length<=1) return;
+  _issueLines.splice(i,1);
+  _renderIssueLines();
+}
+
 function openIssueModal(fid){
   issueEditId = fid||null;
   _issueImgPending = [];
+  _issueLines = [];
   document.getElementById('issueModalTitle').textContent = fid ? '✏️ แก้ไขใบออก' : '＋ เพิ่มใบออก';
   if(fid){
     const t = _issueCache.find(x=>x._fid===fid);
@@ -3906,20 +3966,25 @@ function openIssueModal(fid){
       document.getElementById('is-no').value = t.no||'';
       document.getElementById('is-date').value = t.date||'';
       document.getElementById('is-proj').value = t.proj||'';
+      document.getElementById('is-contractor-code').value = t.contractorCode||'';
       document.getElementById('is-contractor').value = t.contractor||'';
-      document.getElementById('is-item').value = t.item||'';
-      document.getElementById('is-qty').value = t.qty!=null?t.qty:'';
-      document.getElementById('is-unit').value = t.unit||'';
       document.getElementById('is-note').value = t.note||'';
       _setIssueType(t.type||'order');
-      // load existing images into pending
+      // load lines — support legacy single item
+      if(t.lines && t.lines.length){
+        _issueLines = t.lines.map(l=>({item:l.item||'', qty:l.qty!=null?l.qty:'', unit:l.unit||''}));
+      } else {
+        _issueLines = [{item:t.item||'', qty:t.qty!=null?t.qty:'', unit:t.unit||''}];
+      }
       (t.images||[]).forEach((src,i)=>_issueImgPending.push({dataUrl:src, name:'img_'+i}));
     }
   } else {
-    ['is-book','is-no','is-proj','is-contractor','is-item','is-qty','is-unit','is-note'].forEach(id=>{ document.getElementById(id).value=''; });
+    ['is-book','is-no','is-proj','is-contractor-code','is-contractor','is-note'].forEach(id=>{ document.getElementById(id).value=''; });
     document.getElementById('is-date').value = new Date().toISOString().slice(0,10);
     _setIssueType('order');
+    _issueLines = [{item:'', qty:'', unit:''}];
   }
+  _renderIssueLines();
   _renderIssueImgPreview();
   document.getElementById('issueModal').classList.add('open');
 }
@@ -3928,6 +3993,7 @@ function closeIssueModal(){
   document.getElementById('issueModal').classList.remove('open');
   issueEditId = null;
   _issueImgPending = [];
+  _issueLines = [];
 }
 
 async function saveIssue(){
@@ -3941,14 +4007,16 @@ async function saveIssue(){
 
   const images = _issueImgPending.map(x=>x.dataUrl);
   const typeVal = document.querySelector('input[name="is-type"]:checked');
+  // collect lines, filter empty rows
+  const lines = _issueLines.filter(l=>l.item||l.qty!==''||l.unit);
+  if(!lines.length){ alert('กรุณากรอกรายการสินค้าอย่างน้อย 1 รายการ'); return; }
   const payload = {
     book, no, date,
     type: typeVal ? typeVal.value : 'order',
     proj: document.getElementById('is-proj').value.trim(),
+    contractorCode: document.getElementById('is-contractor-code').value.trim(),
     contractor: document.getElementById('is-contractor').value.trim(),
-    item: document.getElementById('is-item').value.trim(),
-    qty: document.getElementById('is-qty').value!=='' ? parseFloat(document.getElementById('is-qty').value) : '',
-    unit: document.getElementById('is-unit').value.trim(),
+    lines,
     note: document.getElementById('is-note').value.trim(),
     images,
     _ts: Date.now()
