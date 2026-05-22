@@ -658,6 +658,25 @@ tr.row-cancel .td-po{color:var(--red-text)!important}
 .store-sheet-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
 
 
+/* ── TODAY HIGHLIGHT (concrete table) ── */
+tr.row-today td {
+  background: rgba(26,101,181,.07) !important;
+}
+tr.row-today:hover td {
+  background: rgba(26,101,181,.13) !important;
+}
+tr.row-today .td-date {
+  color: var(--blue-text) !important;
+  font-weight: 700 !important;
+}
+.today-badge-inline {
+  display:inline-flex;align-items:center;gap:3px;
+  font-size:10px;font-weight:700;padding:1px 6px;
+  border-radius:99px;background:var(--blue-bg);
+  color:var(--blue-text);border:1px solid var(--blue-light);
+  vertical-align:middle;margin-left:5px;white-space:nowrap;
+}
+
 /* ── VENDOR PAGE ── */
 .vd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
 .vd-card{
@@ -1260,6 +1279,10 @@ function togglePw(btn){
         <div class="tsm-card">
           <div class="tsm-label">รายการทั้งหมด</div>
           <div class="tsm-val" id="csm-total">0</div>
+        </div>
+        <div class="tsm-card" style="border:1.5px solid var(--blue-light);background:var(--blue-bg)">
+          <div class="tsm-label" style="color:var(--blue-text)">📅 PO เปิดวันนี้</div>
+          <div class="tsm-val" id="csm-today" style="color:var(--blue)">0</div>
         </div>
         <div class="tsm-card">
           <div class="tsm-label">ราคารวมทั้งหมด (บาท)</div>
@@ -3123,7 +3146,19 @@ function renderConcreteSummary(){
   const amount = arr.reduce((s,c)=>s+(parseFloat(c.totalPrice)||0), 0);
   const vol = arr.reduce((s,c)=>s+(parseFloat(c.vol)||0), 0);
   const shops = new Set(arr.map(c=>c.shop).filter(Boolean)).size;
+
+  // นับ PO วันนี้
+  const now = new Date();
+  const todayCount = arr.filter(c=>{
+    const ts = parseDateTH(c.date);
+    if(!ts) return false;
+    const d = new Date(ts);
+    return d.getDate()===now.getDate() && d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear();
+  }).length;
+
   document.getElementById('csm-total').textContent = total.toLocaleString();
+  const todayEl = document.getElementById('csm-today');
+  if(todayEl) todayEl.textContent = todayCount.toLocaleString();
   document.getElementById('csm-amount').textContent = '฿'+amount.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
   document.getElementById('csm-vol').textContent = vol.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
   document.getElementById('csm-shops').textContent = shops;
@@ -3210,16 +3245,30 @@ function renderConcreteTable(){
   document.getElementById('concreteTableCount').textContent = filtered.length.toLocaleString()+' รายการ';
   if(!filtered.length){ tbody.innerHTML=''; nodata.style.display='block'; return; }
   nodata.style.display='none';
+
+  // คำนวณวันนี้สำหรับ highlight
+  const now = new Date();
+  function isToday(dateStr){
+    const ts = parseDateTH(dateStr);
+    if(!ts) return false;
+    const d = new Date(ts);
+    return d.getDate()===now.getDate() && d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear();
+  }
+
   // render max 200 rows to keep DOM fast
   const LIMIT = 200;
   const show = filtered.length > LIMIT ? filtered.slice(0, LIMIT) : filtered;
   tbody.innerHTML = show.map(c=>{
     const fid = c._fid||c.id;
+    const today = isToday(c.date);
     const vol   = (parseFloat(c.vol)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
     const unitP = (parseFloat(c.unitPrice)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
     const totalP= (parseFloat(c.totalPrice)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
-    return `<tr>
-      <td class="td-date">${esc(c.date||'—')}</td>
+    const dateCell = today
+      ? `<td class="td-date">${esc(c.date||'—')}<span class="today-badge-inline">วันนี้</span></td>`
+      : `<td class="td-date">${esc(c.date||'—')}</td>`;
+    return `<tr${today?' class="row-today"':''}>
+      ${dateCell}
       <td class="td-transfer-no">${esc(c.st||'—')}</td>
       <td style="font-family:'IBM Plex Mono',monospace;font-size:12.5px">${vol}</td>
       <td class="td-muted">${esc(c.pr||'—')}</td>
