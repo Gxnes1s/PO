@@ -3137,6 +3137,55 @@ function renderConcretePage(){
   subscribeConcretes();
 }
 
+function _parseAnyDateToLocal(raw){
+  // รองรับทุกรูปแบบที่อาจเก็บใน Firestore
+  if(!raw) return null;
+
+  // Firestore Timestamp object
+  if(raw && typeof raw === 'object' && typeof raw.toDate === 'function') return raw.toDate();
+
+  // JS Date object
+  if(raw instanceof Date) return isNaN(raw) ? null : raw;
+
+  const s = String(raw).trim();
+  if(!s) return null;
+
+  // ISO: 2026-05-22 หรือ 2026-05-22T...
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(iso){
+    let y=parseInt(iso[1]), m=parseInt(iso[2]), d=parseInt(iso[3]);
+    if(y > 2400) y -= 543;
+    return new Date(y, m-1, d);
+  }
+
+  // d/m/yy หรือ d/m/yyyy (พ.ศ. หรือ ค.ศ.)
+  const p = s.split('/');
+  if(p.length === 3){
+    let [d,m,y] = p.map(Number);
+    if(!isNaN(d) && !isNaN(m) && !isNaN(y)){
+      if(y < 100) y += 2500;   // พ.ศ. 2 หลัก → เต็ม
+      if(y > 2400) y -= 543;   // พ.ศ. → ค.ศ.
+      return new Date(y, m-1, d);
+    }
+  }
+
+  // Excel serial
+  if(/^\d{4,6}$/.test(s)){
+    const dt = new Date((parseInt(s) - 25569) * 86400000);
+    return isNaN(dt) ? null : dt;
+  }
+
+  // fallback
+  const fb = new Date(s);
+  return isNaN(fb) ? null : fb;
+}
+
+function _isSameDay(dateA, dateB){
+  return dateA.getFullYear()===dateB.getFullYear() &&
+         dateA.getMonth()===dateB.getMonth() &&
+         dateA.getDate()===dateB.getDate();
+}
+
 function renderConcreteSummary(){
   const arr = _concreteCache;
   const total = arr.length;
@@ -3144,13 +3193,11 @@ function renderConcreteSummary(){
   const vol = arr.reduce((s,c)=>s+(parseFloat(c.vol)||0), 0);
   const shops = new Set(arr.map(c=>c.shop).filter(Boolean)).size;
 
-  // นับ PO วันนี้
-  const now = new Date();
+  // นับ PO วันนี้ — ใช้ _parseAnyDateToLocal ครอบคลุมทุกรูปแบบ
+  const today = new Date();
   const todayCount = arr.filter(c=>{
-    const ts = parseDateTH(c.date);
-    if(!ts) return false;
-    const d = new Date(ts);
-    return d.getDate()===now.getDate() && d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear();
+    const dt = _parseAnyDateToLocal(c.date);
+    return dt && _isSameDay(dt, today);
   }).length;
 
   document.getElementById('csm-total').textContent = total.toLocaleString();
@@ -3256,12 +3303,10 @@ function renderConcreteTable(){
   nodata.style.display='none';
 
   // คำนวณวันนี้สำหรับ highlight
-  const now = new Date();
+  const _today = new Date();
   function isToday(dateStr){
-    const ts = parseDateTH(dateStr);
-    if(!ts) return false;
-    const d = new Date(ts);
-    return d.getDate()===now.getDate() && d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear();
+    const dt = _parseAnyDateToLocal(dateStr);
+    return dt ? _isSameDay(dt, _today) : false;
   }
 
   // render max 200 rows to keep DOM fast
