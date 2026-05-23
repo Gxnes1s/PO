@@ -1445,6 +1445,7 @@ function togglePw(btn){
             <button id="poDateClear" onclick="document.getElementById('poDateFrom').value='';document.getElementById('poDateTo').value='';renderTable()" style="display:none;padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);cursor:pointer;font-size:12px">✕</button>
           </div>
           <div class="filter-btns" id="filters"></div>
+<button class="btn" onclick="exportPODashboard()" style="display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;padding:9px 14px;border-radius:10px;border:1px solid var(--green-light);background:var(--green-bg);color:var(--green-text)">📥 Export Excel</button>
 <button class="btn-primary" onclick="openPOModal()">＋ เพิ่ม PO</button>
         </div>
         <div id="jobRow"></div>
@@ -1599,6 +1600,7 @@ function togglePw(btn){
           <input type="date" id="trDateTo" style="padding:8px 10px;border:1px solid var(--border);border-radius:10px;font-size:12.5px;background:var(--surface);color:var(--text);font-family:'Sarabun',sans-serif;cursor:pointer" oninput="renderTransferTable()">
           <button id="trDateClear" onclick="document.getElementById('trDateFrom').value='';document.getElementById('trDateTo').value='';renderTransferTable()" style="display:none;padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);cursor:pointer;font-size:12px">✕</button>
         </div>
+        <button class="btn" onclick="exportTransferExcel()" style="display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;padding:9px 14px;border-radius:10px;border:1px solid var(--green-light);background:var(--green-bg);color:var(--green-text)">📥 Export Excel</button>
         <button class="btn-primary" onclick="openTransferModal()">＋ เพิ่มรายการโอน</button>
       </div>
 
@@ -1680,6 +1682,7 @@ function togglePw(btn){
           <input type="file" id="concreteFileInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleConcreteFile(this.files[0]);this.value=''">
         </label>
         <button class="btn btn-danger" onclick="clearAllConcrete()" style="font-size:13px;font-weight:600;padding:9px 16px;border-radius:10px">🗑 ลบทั้งหมด</button>
+        <button class="btn" onclick="exportConcreteExcel()" style="display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;padding:9px 14px;border-radius:10px;border:1px solid var(--green-light);background:var(--green-bg);color:var(--green-text)">📥 Export Excel</button>
         <button class="btn-primary" onclick="openConcreteModal()">＋ เพิ่มคอนกรีต</button>
       </div>
 
@@ -2004,6 +2007,7 @@ function togglePw(btn){
         <button id="isDateClear" onclick="document.getElementById('isDateFrom').value='';document.getElementById('isDateTo').value='';renderIssueTable()" style="display:none;padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);cursor:pointer;font-size:12px">✕</button>
       </div>
       <button class="btn-primary" onclick="openIssueModal()">＋ เพิ่มใบออก</button>
+      <button onclick="exportIssueExcel()" style="display:inline-flex;align-items:center;gap:5px;padding:9px 14px;border-radius:10px;border:1px solid var(--green-light);background:var(--green-bg);color:var(--green-text);font-size:13px;font-weight:600;cursor:pointer;font-family:'Sarabun',sans-serif">📥 Export Excel</button>
     </div>
 
     <!-- Table -->
@@ -5121,6 +5125,7 @@ function _pomanPageHTML(){
         <button id="pomanDateClear" onclick="document.getElementById('pomanDateFrom').value='';document.getElementById('pomanDateTo').value='';renderPOManTable()" style="display:none;padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);cursor:pointer;font-size:12px">✕</button>
       </div>
       <button class="btn-primary" onclick="openPOManModal()">＋ เพิ่ม PO</button>
+      <button onclick="exportPOManExcel()" style="padding:9px 14px;border-radius:10px;border:1px solid var(--green-light);background:var(--green-bg);color:var(--green-text);cursor:pointer;font-size:13px;font-weight:700;font-family:'Sarabun',sans-serif;flex-shrink:0;display:inline-flex;align-items:center;gap:5px">📥 Export Excel</button>
       <button id="pomanDeleteAllBtn" onclick="deleteAllPOMan()" style="padding:9px 14px;border-radius:10px;border:1.5px solid var(--red-light);background:var(--red-bg);color:var(--red-text);cursor:pointer;font-size:13px;font-weight:700;font-family:'Sarabun',sans-serif;flex-shrink:0">🗑️ ลบทั้งหมด</button>
     </div>
 
@@ -5312,6 +5317,156 @@ async function handlePOManFile(file){
   }
 }
 
+/* ─── EXPORT EXCEL UTILITIES ─── */
+function _xlsxDownload(wb, filename){
+  const wbout = XLSX.write(wb, {bookType:'xlsx', type:'array'});
+  const blob = new Blob([wbout], {type:'application/octet-stream'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 3000);
+}
+
+function _today(){ return new Date().toISOString().slice(0,10); }
+
+/* Export PO Dashboard (ข้อมูลที่กรองอยู่) */
+function exportPODashboard(){
+  const s = S();
+  const data = getFiltered();
+  if(!data.length){ alert('ไม่มีข้อมูลให้ Export'); return; }
+  const storeName = STORES[curStore]?.name || 'PO';
+  // headers: use smart cols + status
+  const SMART = ['po','job','vendor','date','amount'];
+  const pCols = SMART.map(k=>s.colMap[k]).filter(Boolean);
+  const skip = new Set([...pCols, s.colMap.status,'_status','_ts']);
+  const rest = s.hdrs.filter(h=>!skip.has(h) && !['Subcontract','Contract number'].includes(h));
+  const cols = [...pCols, ...rest].slice(0,10);
+  const headers = [...cols, 'Status'];
+  const rows = data.map(row=>{
+    const r = cols.map(h=> row[h]??'');
+    r.push(row._status || row[s.colMap.status] || '');
+    return r;
+  });
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+  // column widths
+  ws['!cols'] = headers.map((_,i)=>({wch: i===0?14:i===1?10:i===2?30:i===3?12:i===4?14:18}));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'PO');
+  _xlsxDownload(wb, `PO_${storeName}_${_today()}.xlsx`);
+}
+
+/* Export Transfer (รายการโอน) */
+function exportTransferExcel(){
+  const arr = [..._transfersCache].sort((a,b)=>{
+    const da = a.date ? new Date(a.date).getTime() : (a._ts||0);
+    const db = b.date ? new Date(b.date).getTime() : (b._ts||0);
+    return db - da;
+  });
+  // apply current filters
+  const q = (document.getElementById('transferSearch')||{}).value||'';
+  const fromVal = (document.getElementById('trDateFrom')||{}).value||'';
+  const toVal   = (document.getElementById('trDateTo')||{}).value||'';
+  const fromTs  = fromVal ? new Date(fromVal).getTime() : 0;
+  const toTs    = toVal   ? new Date(toVal).getTime()+86399999 : Infinity;
+  const filtered = arr.filter(t=>{
+    const mq = !q || [t.date,t.no,t.po,t.job,t.shop,t.detail].some(v=>String(v||'').toLowerCase().includes(q.toLowerCase()));
+    let md = true;
+    if(fromTs||toTs!==Infinity){ const dt=_parseAnyDateToLocal(t.date); if(dt) md=dt.getTime()>=fromTs && dt.getTime()<=toTs; }
+    return mq && md;
+  });
+  if(!filtered.length){ alert('ไม่มีข้อมูลให้ Export'); return; }
+  const headers = ['วันที่','ใบโอน','PO','JOB','ยอดเงิน (บาท)','ร้านค้า','รายละเอียด'];
+  const rows = filtered.map(t=>[t.date||'',t.no||'',t.po||'',t.job||'',parseFloat(t.amount)||0,t.shop||'',t.detail||'']);
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+  ws['!cols'] = [{wch:12},{wch:16},{wch:14},{wch:12},{wch:16},{wch:22},{wch:30}];
+  // format amount column as number
+  for(let i=1;i<=rows.length;i++){
+    const cell = ws[XLSX.utils.encode_cell({r:i,c:4})];
+    if(cell) cell.z = '#,##0.00';
+  }
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'รายการโอน');
+  _xlsxDownload(wb, `Transfer_${_today()}.xlsx`);
+}
+
+/* Export Concrete (คอนกรีต) */
+function exportConcreteExcel(){
+  const arr = [..._concreteCache].sort((a,b)=>{
+    const da = _parseAnyDateToLocal(a.date); const db = _parseAnyDateToLocal(b.date);
+    return (db?db.getTime():0) - (da?da.getTime():0);
+  });
+  const q = (document.getElementById('concreteSearch')||{}).value||'';
+  const fromVal = (document.getElementById('ctDateFrom')||{}).value||'';
+  const toVal   = (document.getElementById('ctDateTo')||{}).value||'';
+  const fromTs  = fromVal ? new Date(fromVal).getTime() : 0;
+  const toTs    = toVal   ? new Date(toVal).getTime()+86399999 : Infinity;
+  const filtered = arr.filter(p=>{
+    const mq = !q || [p.date,p.st,p.pr,p.po,p.shop,p.job,p.note].some(v=>String(v||'').toLowerCase().includes(q.toLowerCase()));
+    let md = true;
+    if(fromTs||toTs!==Infinity){ const dt=_parseAnyDateToLocal(p.date); if(dt) md=dt.getTime()>=fromTs && dt.getTime()<=toTs; }
+    return mq && md;
+  });
+  if(!filtered.length){ alert('ไม่มีข้อมูลให้ Export'); return; }
+  const headers = ['วันที่','ST','คิว (ม³)','PR','PO','ราคา/หน่วย','ราคา (บาท)','ร้าน','JOB','หมายเหตุ'];
+  const rows = filtered.map(p=>[p.date||'',p.st||'',parseFloat(p.vol)||0,p.pr||'',p.po||'',parseFloat(p.unitPrice)||0,parseFloat(p.totalPrice)||0,p.shop||'',p.job||'',p.note||'']);
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+  ws['!cols'] = [{wch:12},{wch:12},{wch:10},{wch:12},{wch:14},{wch:14},{wch:16},{wch:22},{wch:12},{wch:24}];
+  for(let i=1;i<=rows.length;i++){
+    [[2],[5],[6]].forEach(([c])=>{ const cell=ws[XLSX.utils.encode_cell({r:i,c})]; if(cell) cell.z='#,##0.00'; });
+  }
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'คอนกรีต');
+  _xlsxDownload(wb, `Concrete_${_today()}.xlsx`);
+}
+
+/* Export Issue (ใบออก) */
+function exportIssueExcel(){
+  const arr = [..._issueCache].sort((a,b)=>{
+    const da = _parseAnyDateToLocal(a.date); const db = _parseAnyDateToLocal(b.date);
+    return (db?db.getTime():0) - (da?da.getTime():0);
+  });
+  const q = (document.getElementById('issueSearch')||{}).value||'';
+  const fromVal = (document.getElementById('isDateFrom')||{}).value||'';
+  const toVal   = (document.getElementById('isDateTo')||{}).value||'';
+  const fromTs  = fromVal ? new Date(fromVal).getTime() : 0;
+  const toTs    = toVal   ? new Date(toVal).getTime()+86399999 : Infinity;
+  const filtered = arr.filter(is=>{
+    const mq = !q || [is.date,is.book,is.no,is.proj,is.contractorCode,is.contractor,is.note].some(v=>String(v||'').toLowerCase().includes(q.toLowerCase()));
+    let md = true;
+    if(fromTs||toTs!==Infinity){ const dt=_parseAnyDateToLocal(is.date); if(dt) md=dt.getTime()>=fromTs && dt.getTime()<=toTs; }
+    return mq && md;
+  });
+  if(!filtered.length){ alert('ไม่มีข้อมูลให้ Export'); return; }
+  const typeLabel = t => t==='return'?'คืนสินค้า':'สั่งซื้อ';
+  const linesText = lines => (lines||[]).map(l=>`${l.name||''} x${l.qty||''} ${l.unit||''}`).join(', ');
+  const headers = ['วันที่','ประเภท','เล่มที่','เลขที่','รหัสโครงการ','รหัส ผรม.','ชื่อผู้รับเหมา','รายการสินค้า','หมายเหตุ'];
+  const rows = filtered.map(is=>[is.date||'',typeLabel(is.type),is.book||'',is.no||'',is.proj||'',is.contractorCode||'',is.contractor||'',linesText(is.lines),is.note||'']);
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+  ws['!cols'] = [{wch:12},{wch:12},{wch:10},{wch:10},{wch:16},{wch:14},{wch:24},{wch:40},{wch:28}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'ใบออก');
+  _xlsxDownload(wb, `Issue_${_today()}.xlsx`);
+}
+
+/* Export PO Man (Excel, replaces CSV) */
+function exportPOManExcel(){
+  const arr = _pomanSorted;
+  if(!arr.length){ alert('ไม่มีข้อมูลให้ Export'); return; }
+  const statusLabel = {open:'เปิด',received:'รับของแล้ว',closed:'ปิด',cancelled:'ยกเลิก'};
+  const headers = ['ว.ด.ป','PR','PO','ราคา (บาท)','ร้าน / Vendor','รายละเอียด','JOB','สถานะ'];
+  const rows = arr.map(p=>[p.date||'',p.pr||'',p.po||'',parseFloat(p.price)||0,p.shop||'',p.detail||'',p.job||'',statusLabel[p.status]||p.status||'เปิด']);
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+  ws['!cols'] = [{wch:12},{wch:12},{wch:16},{wch:16},{wch:24},{wch:34},{wch:14},{wch:12}];
+  for(let i=1;i<=rows.length;i++){
+    const cell = ws[XLSX.utils.encode_cell({r:i,c:3})];
+    if(cell) cell.z = '#,##0.00';
+  }
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'PO Management');
+  _xlsxDownload(wb, `POMan_${_today()}.xlsx`);
+}
+
 window.deleteAllPOMan = deleteAllPOMan;
 window._pomanPageHTML = _pomanPageHTML;
 window.renderPOManPage = renderPOManPage;
@@ -5322,6 +5477,11 @@ window.deletePOMan = deletePOMan;
 window.renderPOManTable = renderPOManTable;
 window.sortPOManTable = sortPOManTable;
 window.exportPOManCSV = exportPOManCSV;
+window.exportPOManExcel = exportPOManExcel;
+window.exportTransferExcel = exportTransferExcel;
+window.exportConcreteExcel = exportConcreteExcel;
+window.exportIssueExcel = exportIssueExcel;
+window.exportPODashboard = exportPODashboard;
 window.handlePOManFile = handlePOManFile;
 </script>
 
