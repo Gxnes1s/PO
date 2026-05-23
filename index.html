@@ -752,21 +752,30 @@ tr.row-cancel .td-po{color:var(--red-text)!important}
 
 /* ── TODAY HIGHLIGHT (concrete table) ── */
 tr.row-today td {
-  background: rgba(26,52,128,.06) !important;
+  background: linear-gradient(90deg, rgba(200,168,90,.13) 0%, rgba(200,168,90,.07) 100%) !important;
+  border-top: 1.5px solid rgba(200,168,90,.35) !important;
+  border-bottom: 1.5px solid rgba(200,168,90,.35) !important;
 }
 tr.row-today:hover td {
-  background: rgba(26,52,128,.11) !important;
+  background: linear-gradient(90deg, rgba(200,168,90,.22) 0%, rgba(200,168,90,.13) 100%) !important;
+}
+tr.row-today td:first-child {
+  border-left: 4px solid var(--gold-500) !important;
 }
 tr.row-today .td-date {
-  color: var(--navy-700) !important;
-  font-weight: 700 !important;
+  color: var(--gold-500) !important;
+  font-weight: 800 !important;
 }
 .today-badge-inline {
   display:inline-flex;align-items:center;gap:3px;
-  font-size:10px;font-weight:700;padding:1px 6px;
-  border-radius:99px;background:var(--blue-bg);
-  color:var(--navy-700);border:1px solid var(--blue-light);
-  vertical-align:middle;margin-left:5px;white-space:nowrap;
+  font-size:10px;font-weight:800;padding:2px 8px;
+  border-radius:99px;
+  background:linear-gradient(135deg,var(--gold-500),var(--gold-400));
+  color:#fff;
+  border:none;
+  box-shadow:0 2px 6px rgba(200,168,90,.4);
+  vertical-align:middle;margin-left:6px;white-space:nowrap;
+  letter-spacing:.02em;
 }
 
 /* ── Extra gold refinements ── */
