@@ -4749,9 +4749,13 @@ function subscribePOMan(){
 }
 
 function _rebuildPOManSorted(){
+  function naturalVal(v){ return String(v||'').replace(/(\d+)/g, n=>n.padStart(10,'0')); }
   _pomanSorted = [..._pomanCache].sort((a,b)=>{
     const da=parseDateTH(a.date), db=parseDateTH(b.date);
     if(db!==da) return db-da;
+    // same date → เรียงเลข PO จากน้อยไปมาก
+    const pa=naturalVal(a.po), pb=naturalVal(b.po);
+    if(pa!==pb) return pa.localeCompare(pb);
     return (b._ts||0)-(a._ts||0);
   });
 }
@@ -4835,10 +4839,27 @@ function renderPOManTable(){
   const _today = new Date();
   // apply sort
   if(window._pomanSortCol){
-    const col=window._pomanSortCol||'date', dir=window._pomanSortDir||(-1);    arr=[...arr].sort((a,b)=>{
+    const col=window._pomanSortCol||'date', dir=window._pomanSortDir||(-1);
+    // natural sort: แยกตัวอักษรกับตัวเลข เช่น PO-9 < PO-10
+    function naturalVal(v){
+      return String(v).replace(/(\d+)/g, n=>n.padStart(10,'0'));
+    }
+    arr=[...arr].sort((a,b)=>{
       let va=a[col]||'', vb=b[col]||'';
       if(col==='price'){ va=parseFloat(va)||0; vb=parseFloat(vb)||0; return (va-vb)*dir; }
-      if(col==='date'){ va=parseDateTH(va)||0; vb=parseDateTH(vb)||0; return (va-vb)*dir; }
+      if(col==='date'){
+        va=parseDateTH(String(va))||0; vb=parseDateTH(String(vb))||0;
+        if(va!==vb) return (va-vb)*dir;
+        // secondary sort: PO number when dates equal
+        return naturalVal(a.po||'').localeCompare(naturalVal(b.po||''))*dir;
+      }
+      if(col==='po'||col==='pr'||col==='job'){
+        const cmp=naturalVal(va).localeCompare(naturalVal(vb));
+        if(cmp!==0) return cmp*dir;
+        // secondary sort: date when PO equal
+        const da=parseDateTH(String(a.date||''))||0, db=parseDateTH(String(b.date||''))||0;
+        return (da-db)*dir;
+      }
       return String(va).localeCompare(String(vb),'th')*dir;
     });
   }
