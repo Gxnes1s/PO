@@ -2384,6 +2384,11 @@ function switchStore(idx){
 function openPage(page){
   currentPage=page;
   syncBottomNav(page);
+  // For PO page, inject HTML first before trying to find the element
+  if(page==='po' && !document.getElementById('page-po')){
+    const content = document.querySelector('.content');
+    if(content && window._pomanPageHTML) content.insertAdjacentHTML('beforeend', window._pomanPageHTML());
+  }
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   const el=document.getElementById('page-'+page);
   if(el) el.classList.add('active');
@@ -2402,7 +2407,7 @@ function refreshPageContent(page){
   if(page==='transfers'){ renderTransferPage(); return; }
   if(page==='concrete'){ renderConcretePage(); return; }
   if(page==='issue'){ renderIssuePage(); return; }
-  if(page==='po'){ renderPOManPage(); return; }
+  if(page==='po'){ if(window.renderPOManPage) window.renderPOManPage(); return; }
   if(page==='settings') renderSettings(currentSettingsTab);
 }
 
@@ -5193,7 +5198,18 @@ async function handlePOManFile(file){
     if(statusEl){ statusEl.style.display='block'; statusEl.style.color='var(--red)'; statusEl.style.background='var(--red-bg)'; statusEl.style.border='1px solid var(--red-light)'; statusEl.textContent='❌ เกิดข้อผิดพลาด: '+err.message; }
   }
 }
-}
+
+// Expose to global scope so openPage() can call it
+window._pomanPageHTML = _pomanPageHTML;
+window.renderPOManPage = renderPOManPage;
+window.openPOManModal = openPOManModal;
+window.closePOManModal = closePOManModal;
+window.savePOMan = savePOMan;
+window.deletePOMan = deletePOMan;
+window.renderPOManTable = renderPOManTable;
+window.sortPOManTable = sortPOManTable;
+window.exportPOManCSV = exportPOManCSV;
+window.handlePOManFile = handlePOManFile;
 </script>
 
 <!-- PO Modal -->
