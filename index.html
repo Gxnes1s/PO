@@ -649,7 +649,7 @@ tr.row-cancel .td-po{color:var(--red-text)!important}
   :root{--sidebar-w:0px}
   .sidebar{display:none}
   .bento{grid-template-columns:1fr 1fr}
-  .main-wrap{padding-bottom:64px}
+  .main-wrap{padding-bottom:64px;margin-left:0!important;width:100%!important}
   .bottom-nav{display:flex}
   .store-sheet{display:flex}
   #bottomNav span{display:block!important;visibility:visible!important}
@@ -663,6 +663,30 @@ tr.row-cancel .td-po{color:var(--red-text)!important}
   #concreteModal [style*="grid-template-columns:1fr 2fr"]{
     grid-template-columns:1fr 1fr!important
   }
+  /* issue modal grid → stack on mobile */
+  #issueModal [style*="grid-template-columns:1fr 1fr 1fr"],
+  #issueModal [style*="grid-template-columns:1fr 140px 1fr"],
+  #issueModal [style*="grid-template-columns:1fr 1fr"]{
+    grid-template-columns:1fr!important
+  }
+  /* transfer toolbar stack */
+  .transfer-toolbar{flex-direction:column;gap:8px}
+  .transfer-search-wrap{min-width:100%}
+  /* issue date range wrap */
+  .issue-date-range{flex-wrap:wrap!important;gap:4px!important}
+  .issue-date-range input[type="date"]{flex:1;min-width:120px}
+  /* table horizontal scroll */
+  .table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table{min-width:640px}
+  /* page head flex column */
+  .page-head[style*="display:flex"]{flex-direction:column;align-items:flex-start!important}
+  /* btn full width on mobile toolbar */
+  .transfer-toolbar .btn-primary{width:100%;justify-content:center}
+  /* summary cards 2 col */
+  .issue-summary,.transfer-summary{grid-template-columns:1fr 1fr!important}
+  /* topbar compact */
+  .topbar-time,.topbar-breadcrumb{display:none}
+  #topbarUser{max-width:100px}
 }
 
 /* ── BOTTOM NAV (mobile) ── */
@@ -848,7 +872,11 @@ img,table{max-width:100%}
     gap:10px;
   }
   .table-scroll{
-    max-height:none;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+  table{
+    min-width:680px;
   }
 }
 
@@ -882,6 +910,7 @@ img,table{max-width:100%}
   .transfer-toolbar{
     flex-direction:column;
     align-items:stretch;
+    gap:8px;
   }
   .search-wrap,
   .transfer-search-wrap{
@@ -892,13 +921,20 @@ img,table{max-width:100%}
   .analytics-bento,
   .vendor-grid,
   .vd-grid{
-    grid-template-columns:1fr !important;
+    grid-template-columns:1fr 1fr !important;
+  }
+  .issue-summary{
+    grid-template-columns:1fr 1fr !important;
   }
   .table-card{
     border-radius:14px;
   }
+  .table-scroll{
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+  }
   table{
-    min-width:780px;
+    min-width:700px;
   }
   th,td{
     padding:10px 12px;
@@ -906,6 +942,18 @@ img,table{max-width:100%}
   }
   .modal-body{
     padding:1rem;
+  }
+  /* toolbar date range wrap on mobile */
+  .transfer-toolbar>div[style*="flex-shrink:0"]{
+    flex-wrap:wrap;
+    gap:4px;
+  }
+  .transfer-toolbar input[type="date"]{
+    flex:1;min-width:120px;
+  }
+  .transfer-toolbar .btn-primary{
+    width:100%;
+    text-align:center;
   }
 }
 
@@ -1945,11 +1993,11 @@ function togglePw(btn){
         <span class="transfer-search-icon">🔍</span>
         <input type="text" id="issueSearch" placeholder="ค้นหา เล่มที่ เลขที่ รหัสโครงการ ชื่อผู้รับเหมา วันที่..." oninput="renderIssueTable()">
       </div>
-      <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+      <div class="issue-date-range" style="display:flex;align-items:center;gap:6px;flex-shrink:0;flex-wrap:wrap">
         <span style="font-size:12px;color:var(--text3);white-space:nowrap;font-weight:600">📅 จาก</span>
-        <input type="date" id="isDateFrom" style="padding:8px 10px;border:1px solid var(--border);border-radius:10px;font-size:12.5px;background:var(--surface);color:var(--text);font-family:'Sarabun',sans-serif;cursor:pointer" oninput="renderIssueTable()">
+        <input type="date" id="isDateFrom" style="padding:8px 10px;border:1px solid var(--border);border-radius:10px;font-size:12.5px;background:var(--surface);color:var(--text);font-family:'Sarabun',sans-serif;cursor:pointer;flex:1;min-width:130px" oninput="renderIssueTable()">
         <span style="font-size:12px;color:var(--text3);font-weight:600">ถึง</span>
-        <input type="date" id="isDateTo" style="padding:8px 10px;border:1px solid var(--border);border-radius:10px;font-size:12.5px;background:var(--surface);color:var(--text);font-family:'Sarabun',sans-serif;cursor:pointer" oninput="renderIssueTable()">
+        <input type="date" id="isDateTo" style="padding:8px 10px;border:1px solid var(--border);border-radius:10px;font-size:12.5px;background:var(--surface);color:var(--text);font-family:'Sarabun',sans-serif;cursor:pointer;flex:1;min-width:130px" oninput="renderIssueTable()">
         <button id="isDateClear" onclick="document.getElementById('isDateFrom').value='';document.getElementById('isDateTo').value='';renderIssueTable()" style="display:none;padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);cursor:pointer;font-size:12px">✕</button>
       </div>
       <button class="btn-primary" onclick="openIssueModal()">＋ เพิ่มใบออก</button>
@@ -2342,6 +2390,8 @@ function openPage(page){
   document.getElementById('topbarBreadcrumb').textContent='/ '+{
     concrete:'คอนกรีต', transfers:'รายการโอน', issue:'ใบออก', settings:'ตั้งค่า'
   }[page]||page;
+  // scroll to top on mobile
+  window.scrollTo({top:0,behavior:'smooth'});
   refreshPageContent(page);
 }
 
@@ -4133,9 +4183,16 @@ function subscribeIssues(){
   if(_issueUnsubscribe) _issueUnsubscribe();
   setIssueFbStatus('connecting');
   const { onSnapshot, query, orderBy } = window._fsLib;
+  // query by _ts — we sort by date in renderIssueTable()
   const q = query(_fsIssueCol(), orderBy('_ts','desc'));
   _issueUnsubscribe = onSnapshot(q, snap => {
     _issueCache = snap.docs.map(d => ({...d.data(), _fid: d.id}));
+    // sort by date desc, tiebreak by _ts desc
+    _issueCache.sort((a,b)=>{
+      const da = parseIssueDate(a.date), db = parseIssueDate(b.date);
+      if(db!==da) return db-da;
+      return (b._ts||0)-(a._ts||0);
+    });
     setIssueFbStatus('online');
     if(document.getElementById('page-issue') && document.getElementById('page-issue').classList.contains('active')){
       renderIssueSummary(); renderIssueTable();
@@ -4143,7 +4200,14 @@ function subscribeIssues(){
   }, err => {
     console.warn('Firestore issue error:', err);
     setIssueFbStatus('offline');
-    try{ _issueCache = JSON.parse(localStorage.getItem('issues_data')||'[]'); }catch(e){}
+    try{
+      _issueCache = JSON.parse(localStorage.getItem('issues_data')||'[]');
+      _issueCache.sort((a,b)=>{
+        const da = parseIssueDate(a.date), db = parseIssueDate(b.date);
+        if(db!==da) return db-da;
+        return (b._ts||0)-(a._ts||0);
+      });
+    }catch(e){}
     renderIssueSummary(); renderIssueTable();
   });
 }
