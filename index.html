@@ -4918,6 +4918,43 @@ async function savePOMan(){
     _ts: Date.now()
   };
 
+  // ── duplicate check (skip when editing) ──
+  if(!pomanEditId){
+    const dup = _pomanCache.find(x=>
+      x.date===payload.date &&
+      x.pr===payload.pr &&
+      x.po===payload.po &&
+      String(x.price)===String(payload.price) &&
+      x.shop===payload.shop &&
+      x.detail===payload.detail &&
+      x.job===payload.job
+    );
+    if(dup){
+      // same data but status changed → ask to update
+      if(dup.status !== payload.status){
+        if(!confirm(`พบรายการเดิมสถานะ "${_statusLabel(dup.status)}" — ต้องการเปลี่ยนเป็น "${_statusLabel(payload.status)}" หรือไม่?`)){
+          saveBtn.textContent='💾 บันทึก'; saveBtn.disabled=false; return;
+        }
+        // update status only
+        try {
+          if(!window._firebaseReady) throw new Error('no fb');
+          const { updateDoc, doc } = window._fsLib;
+          await updateDoc(doc(window._db,'poman',dup._fid), {status:payload.status, _ts:Date.now()});
+        } catch(e){
+          const arr=JSON.parse(localStorage.getItem('poman_data')||'[]');
+          const idx=arr.findIndex(x=>(x.id||x._fid)===(dup.id||dup._fid));
+          if(idx>-1){ arr[idx].status=payload.status; arr[idx]._ts=Date.now(); }
+          localStorage.setItem('poman_data',JSON.stringify(arr));
+          _pomanCache=arr; _rebuildPOManSorted(); renderPOManSummary(); renderPOManTable();
+        }
+        saveBtn.textContent='💾 บันทึก'; saveBtn.disabled=false;
+        closePOManModal(); return;
+      }
+      alert('⚠️ มีรายการนี้อยู่แล้ว (ข้อมูลซ้ำ)');
+      saveBtn.textContent='💾 บันทึก'; saveBtn.disabled=false; return;
+    }
+  }
+
   try {
     if(!window._firebaseReady) throw new Error('Firebase not ready');
     const { addDoc, updateDoc, doc } = window._fsLib;
@@ -4942,6 +4979,34 @@ async function savePOMan(){
 
   saveBtn.textContent='💾 บันทึก'; saveBtn.disabled=false;
   closePOManModal();
+}
+
+function _statusLabel(s){
+  return {open:'📂 เปิด',received:'📦 รับของแล้ว',closed:'✅ ปิด',cancelled:'🚫 ยกเลิก'}[s]||s;
+}
+
+async function deleteAllPOMan(){
+  const total = _pomanCache.length;
+  if(!total){ alert('ไม่มีข้อมูล PO'); return; }
+  if(!confirm(`⚠️ ยืนยันลบข้อมูล PO ทั้งหมด ${total} รายการ?\n\nการกระทำนี้ไม่สามารถย้อนกลับได้`)) return;
+  if(!confirm(`⚠️ ยืนยันอีกครั้ง — ลบ ${total} รายการถาวรเลยใช่ไหม?`)) return;
+
+  const delBtn = document.getElementById('pomanDeleteAllBtn');
+  if(delBtn){ delBtn.textContent='⏳ กำลังลบ...'; delBtn.disabled=true; }
+
+  try {
+    if(!window._firebaseReady) throw new Error('no fb');
+    const { deleteDoc, doc } = window._fsLib;
+    const batchSize = 20;
+    const ids = _pomanCache.map(x=>x._fid).filter(Boolean);
+    for(let i=0;i<ids.length;i+=batchSize){
+      await Promise.all(ids.slice(i,i+batchSize).map(id=>deleteDoc(doc(window._db,'poman',id))));
+    }
+  } catch(e){
+    localStorage.removeItem('poman_data');
+    _pomanCache=[]; _rebuildPOManSorted(); renderPOManSummary(); renderPOManTable();
+  }
+  if(delBtn){ delBtn.textContent='🗑️ ลบทั้งหมด'; delBtn.disabled=false; }
 }
 
 async function deletePOMan(fid){
@@ -5035,6 +5100,7 @@ function _pomanPageHTML(){
         <button id="pomanDateClear" onclick="document.getElementById('pomanDateFrom').value='';document.getElementById('pomanDateTo').value='';renderPOManTable()" style="display:none;padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);cursor:pointer;font-size:12px">✕</button>
       </div>
       <button class="btn-primary" onclick="openPOManModal()">＋ เพิ่ม PO</button>
+      <button id="pomanDeleteAllBtn" onclick="deleteAllPOMan()" style="padding:9px 14px;border-radius:10px;border:1.5px solid var(--red-light);background:var(--red-bg);color:var(--red-text);cursor:pointer;font-size:13px;font-weight:700;font-family:'Sarabun',sans-serif;flex-shrink:0">🗑️ ลบทั้งหมด</button>
     </div>
 
     <!-- Table -->
@@ -5165,25 +5231,59 @@ async function handlePOManFile(file){
 
     if(!payloads.length){ setStatus('❌ ไม่พบข้อมูลที่ใช้ได้','var(--red)','var(--red-bg)'); return; }
 
+    // ── deduplicate against existing cache ──
+    const existing = _pomanCache;
+    const toAdd = [], toUpdate = [];
+    for(const p of payloads){
+      const dup = existing.find(x=>
+        x.date===p.date && x.pr===p.pr && x.po===p.po &&
+        String(x.price)===String(p.price) && x.shop===p.shop &&
+        x.detail===p.detail && x.job===p.job
+      );
+      if(!dup){ toAdd.push(p); }
+      else if(dup.status !== p.status){ toUpdate.push({...p, _fid: dup._fid, _localId: dup.id}); }
+      // else exact duplicate — skip
+    }
+    const skipped = payloads.length - toAdd.length - toUpdate.length;
+    if(!toAdd.length && !toUpdate.length){
+      setStatus(`ℹ️ ข้อมูลซ้ำทั้งหมด ${skipped} รายการ — ไม่มีการเพิ่ม`,'var(--text3)','var(--surface2)');
+      setTimeout(()=>{ if(statusEl) statusEl.style.display='none'; }, 5000);
+      return;
+    }
+
     // save to Firestore or localStorage
-    let saved=0, failed=0;
+    let saved=0, updated=0, failed=0;
     if(window._firebaseReady){
-      const { addDoc } = window._fsLib;
+      const { addDoc, updateDoc, doc } = window._fsLib;
       const col = _fsPomanCol();
       const batchSize=20;
-      for(let i=0;i<payloads.length;i+=batchSize){
-        const chunk=payloads.slice(i,i+batchSize);
+      for(let i=0;i<toAdd.length;i+=batchSize){
+        const chunk=toAdd.slice(i,i+batchSize);
         await Promise.all(chunk.map(p=>addDoc(col,p).then(()=>saved++).catch(()=>failed++)));
-        setStatus('⏳ นำเข้าแล้ว '+saved+'/'+payloads.length+'...','var(--amber)','var(--amber-bg)');
+        setStatus('⏳ เพิ่มแล้ว '+saved+'/'+toAdd.length+'...','var(--amber)','var(--amber-bg)');
+      }
+      for(const p of toUpdate){
+        if(p._fid){
+          await updateDoc(doc(window._db,'poman',p._fid),{status:p.status,_ts:Date.now()}).then(()=>updated++).catch(()=>failed++);
+        }
       }
     } else {
       const arr=JSON.parse(localStorage.getItem('poman_data')||'[]');
-      payloads.forEach(p=>{ arr.unshift({...p,id:'pm_'+Date.now()+'_'+(Math.random()*9999|0)}); saved++; });
+      toAdd.forEach(p=>{ arr.unshift({...p,id:'pm_'+Date.now()+'_'+(Math.random()*9999|0)}); saved++; });
+      toUpdate.forEach(p=>{
+        const idx=arr.findIndex(x=>(x.id||x._fid)===(p._localId||p._fid));
+        if(idx>-1){ arr[idx].status=p.status; arr[idx]._ts=Date.now(); updated++; }
+      });
       localStorage.setItem('poman_data',JSON.stringify(arr));
       _pomanCache=arr; _rebuildPOManSorted(); renderPOManSummary(); renderPOManTable();
     }
-    const msg = failed>0 ? `⚠️ นำเข้า ${saved} รายการ (ล้มเหลว ${failed})` : `✅ นำเข้าสำเร็จ ${saved} รายการ`;
-    setStatus(msg, failed>0?'var(--amber)':'var(--green)', failed>0?'var(--amber-bg)':'var(--green-bg)');
+    const parts=[];
+    if(saved) parts.push(`เพิ่ม ${saved} รายการ`);
+    if(updated) parts.push(`อัพเดทสถานะ ${updated} รายการ`);
+    if(skipped) parts.push(`ซ้ำข้าม ${skipped} รายการ`);
+    if(failed) parts.push(`ล้มเหลว ${failed} รายการ`);
+    const msg = (failed?'⚠️ ':'✅ ') + parts.join(' / ');
+    setStatus(msg, failed?'var(--amber)':'var(--green)', failed?'var(--amber-bg)':'var(--green-bg)');
     setTimeout(()=>{ if(statusEl) statusEl.style.display='none'; }, 5000);
   } catch(err){
     console.error('PO import error:',err);
@@ -5191,7 +5291,7 @@ async function handlePOManFile(file){
   }
 }
 
-// Expose to global scope so openPage() can call it
+window.deleteAllPOMan = deleteAllPOMan;
 window._pomanPageHTML = _pomanPageHTML;
 window.renderPOManPage = renderPOManPage;
 window.openPOManModal = openPOManModal;
