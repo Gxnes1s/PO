@@ -2402,7 +2402,7 @@ function refreshPageContent(page){
   if(page==='transfers'){ renderTransferPage(); return; }
   if(page==='concrete'){ renderConcretePage(); return; }
   if(page==='issue'){ renderIssuePage(); return; }
-  if(page==='po'){ renderPOManagePage(); return; }
+  if(page==='po'){ renderPOManPage(); return; }
   if(page==='settings') renderSettings(currentSettingsTab);
 }
 
@@ -4828,6 +4828,15 @@ function renderPOManTable(){
   if(nodata) nodata.style.display='none';
 
   const _today = new Date();
+  // apply sort
+  if(window._pomanSortCol){
+    const col=window._pomanSortCol||'date', dir=window._pomanSortDir||(-1);    arr=[...arr].sort((a,b)=>{
+      let va=a[col]||'', vb=b[col]||'';
+      if(col==='price'){ va=parseFloat(va)||0; vb=parseFloat(vb)||0; return (va-vb)*dir; }
+      if(col==='date'){ va=parseDateTH(va)||0; vb=parseDateTH(vb)||0; return (va-vb)*dir; }
+      return String(va).localeCompare(String(vb),'th')*dir;
+    });
+  }
   const LIMIT = 200;
   const show = arr.length > LIMIT ? arr.slice(0, LIMIT) : arr;
   tbody.innerHTML = show.map(p=>{
@@ -4951,8 +4960,29 @@ function _pomanPageHTML(){
     <div class="page-head" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
       <div>
         <div class="page-head-title">PO</div>
-        <div class="page-head-sub">จัดการ Purchase Order — เพิ่ม แก้ไข ลบ &nbsp;<span id="pomanFbStatus" style="font-size:11px;padding:2px 9px;border-radius:99px;background:var(--surface2);color:var(--text3)">⏳ กำลังเชื่อมต่อ...</span></div>
+        <div class="page-head-sub">จัดการ Purchase Order — เพิ่ม แก้ไข ลบ อัพโหลด &nbsp;<span id="pomanFbStatus" style="font-size:11px;padding:2px 9px;border-radius:99px;background:var(--surface2);color:var(--text3)">⏳ กำลังเชื่อมต่อ...</span></div>
       </div>
+    </div>
+
+    <!-- Upload Zone -->
+    <div id="pomanUploadZone" style="border:2px dashed rgba(26,44,107,.18);border-radius:16px;padding:1.5rem;background:rgba(255,255,255,.7);margin-bottom:1.25rem;cursor:pointer;transition:all .2s ease"
+      onclick="document.getElementById('pomanFileInput').click()"
+      ondragover="event.preventDefault();this.style.borderColor='var(--acc)';this.style.background='var(--acc-bg)'"
+      ondragleave="this.style.borderColor='rgba(26,44,107,.18)';this.style.background='rgba(255,255,255,.7)'"
+      ondrop="event.preventDefault();this.style.borderColor='rgba(26,44,107,.18)';this.style.background='rgba(255,255,255,.7)';handlePOManFile(event.dataTransfer.files[0])">
+      <input type="file" id="pomanFileInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="handlePOManFile(this.files[0]);this.value=''">
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <div style="width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,var(--surface2),var(--surface3));display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;box-shadow:var(--shadow)">📂</div>
+        <div style="flex:1;min-width:180px">
+          <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:3px">อัพโหลดไฟล์ PO (Excel / CSV)</div>
+          <div style="font-size:12.5px;color:var(--text3)">ลากไฟล์มาวาง หรือคลิกเพื่อเลือกไฟล์ — รองรับ .xlsx .xls .csv — ระบบจะเพิ่มข้อมูลเข้า Firestore อัตโนมัติ</div>
+        </div>
+        <div style="display:flex;gap:7px;flex-shrink:0">
+          <span style="padding:4px 11px;border-radius:99px;font-size:11px;font-weight:700;background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-light)">.xlsx</span>
+          <span style="padding:4px 11px;border-radius:99px;font-size:11px;font-weight:700;background:var(--blue-bg);color:var(--blue-text);border:1px solid var(--blue-light)">.csv</span>
+        </div>
+      </div>
+      <div id="pomanImportStatus" style="display:none;margin-top:10px;padding:8px 14px;border-radius:10px;font-size:13px;font-weight:600"></div>
     </div>
 
     <!-- Summary cards -->
@@ -5014,19 +5044,22 @@ function _pomanPageHTML(){
     <div class="table-card">
       <div class="table-header">
         <span class="table-header-title">รายการ PO</span>
-        <span class="table-count" id="pomanTableCount">0 รายการ</span>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="table-count" id="pomanTableCount">0 รายการ</span>
+          <button onclick="exportPOManCSV()" style="padding:5px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;font-size:12px;font-weight:600;font-family:'Sarabun',sans-serif">⬇️ Export CSV</button>
+        </div>
       </div>
       <div class="table-scroll">
         <table>
           <thead>
             <tr>
-              <th>ว.ด.ป</th>
-              <th>PR</th>
-              <th>PO</th>
-              <th style="text-align:right">ราคา (บาท)</th>
+              <th style="cursor:pointer;user-select:none;white-space:nowrap" onclick="sortPOManTable('date')">ว.ด.ป <span id="sort-date">↕</span></th>
+              <th style="cursor:pointer;user-select:none" onclick="sortPOManTable('pr')">PR <span id="sort-pr">↕</span></th>
+              <th style="cursor:pointer;user-select:none" onclick="sortPOManTable('po')">PO <span id="sort-po">↕</span></th>
+              <th style="text-align:right;cursor:pointer;user-select:none" onclick="sortPOManTable('price')">ราคา (บาท) <span id="sort-price">↕</span></th>
               <th>ร้าน</th>
               <th>รายละเอียด</th>
-              <th>JOB</th>
+              <th style="cursor:pointer;user-select:none" onclick="sortPOManTable('job')">JOB <span id="sort-job">↕</span></th>
               <th>สถานะ</th>
               <th></th>
             </tr>
@@ -5034,11 +5067,132 @@ function _pomanPageHTML(){
           <tbody id="pomanTbody"></tbody>
         </table>
         <div class="no-data" id="pomanNodata" style="display:none">
-          <div class="no-data-icon">📋</div>ไม่พบรายการ PO
+          <div class="no-data-icon">📋</div>ไม่พบรายการ PO — คลิก "＋ เพิ่ม PO" หรืออัพโหลดไฟล์ Excel/CSV ด้านบน
         </div>
       </div>
     </div>
   </div>`;
+}
+
+/* ── PO import from Excel/CSV ── */
+window._pomanSortCol = 'date'; window._pomanSortDir = -1;
+function sortPOManTable(col){
+  if(window._pomanSortCol===col) window._pomanSortDir*=-1;
+  else { window._pomanSortCol=col; window._pomanSortDir=-1; }
+  document.querySelectorAll('[id^="sort-"]').forEach(el=>el.textContent='↕');
+  const el=document.getElementById('sort-'+col); if(el) el.textContent=window._pomanSortDir>0?'↑':'↓';
+  renderPOManTable();
+}
+
+function exportPOManCSV(){
+  const arr = _pomanSorted;
+  if(!arr.length){ alert('ไม่มีข้อมูลให้ Export'); return; }
+  const rows = [['ว.ด.ป','PR','PO','ราคา','ร้าน','รายละเอียด','JOB','สถานะ']];
+  arr.forEach(p=>rows.push([p.date||'',p.pr||'',p.po||'',p.price||0,p.shop||'',p.detail||'',p.job||'',p.status||'open']));
+  const csv = rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n');
+  const blob = new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='PO_export_'+new Date().toISOString().slice(0,10)+'.csv'; a.click();
+}
+
+async function handlePOManFile(file){
+  if(!file) return;
+  const statusEl = document.getElementById('pomanImportStatus');
+  function setStatus(msg, color, bg){
+    if(!statusEl) return;
+    statusEl.style.display='block';
+    statusEl.style.color=color;
+    statusEl.style.background=bg;
+    statusEl.style.border='1px solid '+color+'44';
+    statusEl.textContent=msg;
+  }
+  setStatus('⏳ กำลังอ่านไฟล์...','var(--amber)','var(--amber-bg)');
+  try {
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf, {type:'array', cellDates:true});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const raw = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+    if(raw.length<2){ setStatus('❌ ไฟล์ไม่มีข้อมูล','var(--red)','var(--red-bg)'); return; }
+
+    // find header row
+    const hdrs = raw[0].map(h=>String(h).trim());
+    // column mapping
+    function findCol(hints){ for(const h of hints){ const i=hdrs.findIndex(v=>v.toLowerCase().includes(h.toLowerCase())); if(i>-1) return i; } return -1; }
+    const iDate   = findCol(['ว.ด.ป','วัน','date']);
+    const iPR     = findCol(['pr']);
+    const iPO     = findCol(['po']);
+    const iPrice  = findCol(['ราคา','price','amount','มูลค่า']);
+    const iShop   = findCol(['ร้าน','vendor','shop','ผู้จำหน่าย','supplier']);
+    const iDetail = findCol(['รายละเอียด','detail','desc','description','สินค้า']);
+    const iJob    = findCol(['job','โครงการ','project','งาน']);
+    const iStatus = findCol(['สถานะ','status']);
+
+    const rows = raw.slice(1).filter(r=>r.some(v=>v!==''&&v!==null&&v!==undefined));
+    if(!rows.length){ setStatus('❌ ไม่พบข้อมูลในไฟล์','var(--red)','var(--red-bg)'); return; }
+
+    setStatus('⏳ กำลังนำเข้า '+rows.length+' รายการ...','var(--amber)','var(--amber-bg)');
+
+    // normalize status
+    function normalizeStatus(v){
+      const s=String(v||'').toLowerCase().trim();
+      if(!s||s==='-'||s==='เปิด'||s==='open') return 'open';
+      if(s.includes('ยกเลิก')||s.includes('cancel')) return 'cancelled';
+      if(s.includes('ปิด')||s.includes('close')) return 'closed';
+      if(s.includes('รับ')||s.includes('receive')) return 'received';
+      if(s) return 'open'; // non-empty unknown → open
+      return 'open';
+    }
+    // normalize price
+    function normalizePrice(v){
+      if(typeof v==='number') return v;
+      return parseFloat(String(v).replace(/[,\s฿]/g,''))||0;
+    }
+    // normalize date
+    function normalizeDate(v){
+      if(!v) return '';
+      if(v instanceof Date){ const d=v; return `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()-543>0?d.getFullYear()-543:d.getFullYear()}`; }
+      return String(v).trim();
+    }
+
+    const payloads = rows.map(r=>({
+      date:   iDate>-1   ? normalizeDate(r[iDate])   : '',
+      pr:     iPR>-1     ? String(r[iPR]||'').trim()  : '',
+      po:     iPO>-1     ? String(r[iPO]||'').trim()  : '',
+      price:  iPrice>-1  ? normalizePrice(r[iPrice])  : 0,
+      shop:   iShop>-1   ? String(r[iShop]||'').trim(): '',
+      detail: iDetail>-1 ? String(r[iDetail]||'').trim():'',
+      job:    iJob>-1    ? String(r[iJob]||'').trim()  : '',
+      status: iStatus>-1 ? normalizeStatus(r[iStatus]) : 'open',
+      _ts: Date.now()+(Math.random()*1000|0)
+    })).filter(p=>p.date||p.pr||p.po||p.shop);
+
+    if(!payloads.length){ setStatus('❌ ไม่พบข้อมูลที่ใช้ได้','var(--red)','var(--red-bg)'); return; }
+
+    // save to Firestore or localStorage
+    let saved=0, failed=0;
+    if(window._firebaseReady){
+      const { addDoc } = window._fsLib;
+      const col = _fsPomanCol();
+      const batchSize=20;
+      for(let i=0;i<payloads.length;i+=batchSize){
+        const chunk=payloads.slice(i,i+batchSize);
+        await Promise.all(chunk.map(p=>addDoc(col,p).then(()=>saved++).catch(()=>failed++)));
+        setStatus('⏳ นำเข้าแล้ว '+saved+'/'+payloads.length+'...','var(--amber)','var(--amber-bg)');
+      }
+    } else {
+      const arr=JSON.parse(localStorage.getItem('poman_data')||'[]');
+      payloads.forEach(p=>{ arr.unshift({...p,id:'pm_'+Date.now()+'_'+(Math.random()*9999|0)}); saved++; });
+      localStorage.setItem('poman_data',JSON.stringify(arr));
+      _pomanCache=arr; _rebuildPOManSorted(); renderPOManSummary(); renderPOManTable();
+    }
+    const msg = failed>0 ? `⚠️ นำเข้า ${saved} รายการ (ล้มเหลว ${failed})` : `✅ นำเข้าสำเร็จ ${saved} รายการ`;
+    setStatus(msg, failed>0?'var(--amber)':'var(--green)', failed>0?'var(--amber-bg)':'var(--green-bg)');
+    setTimeout(()=>{ if(statusEl) statusEl.style.display='none'; }, 5000);
+  } catch(err){
+    console.error('PO import error:',err);
+    if(statusEl){ statusEl.style.display='block'; statusEl.style.color='var(--red)'; statusEl.style.background='var(--red-bg)'; statusEl.style.border='1px solid var(--red-light)'; statusEl.textContent='❌ เกิดข้อผิดพลาด: '+err.message; }
+  }
+}
 }
 </script>
 
