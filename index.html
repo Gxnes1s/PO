@@ -1344,6 +1344,9 @@ function togglePw(btn){
     <button class="nav-item" data-page="transfers" onclick="openPage('transfers')">
       <span class="nav-icon">🔄</span><span>รายการโอน</span>
     </button>
+    <button class="nav-item" data-page="po" onclick="openPage('po')">
+      <span class="nav-icon">📋</span><span>PO</span>
+    </button>
     <button class="nav-item" data-page="issue" onclick="openPage('issue')">
       <span class="nav-icon">📄</span><span>ใบออก</span>
     </button>
@@ -2388,7 +2391,7 @@ function openPage(page){
   const nav=document.querySelector(`.sidebar [data-page="${page}"]`);
   if(nav) nav.classList.add('active');
   document.getElementById('topbarBreadcrumb').textContent='/ '+{
-    concrete:'คอนกรีต', transfers:'รายการโอน', issue:'ใบออก', settings:'ตั้งค่า'
+    concrete:'คอนกรีต', transfers:'รายการโอน', issue:'ใบออก', po:'PO', settings:'ตั้งค่า'
   }[page]||page;
   // scroll to top on mobile
   window.scrollTo({top:0,behavior:'smooth'});
@@ -2399,6 +2402,7 @@ function refreshPageContent(page){
   if(page==='transfers'){ renderTransferPage(); return; }
   if(page==='concrete'){ renderConcretePage(); return; }
   if(page==='issue'){ renderIssuePage(); return; }
+  if(page==='po'){ renderPOManagePage(); return; }
   if(page==='settings') renderSettings(currentSettingsTab);
 }
 
@@ -4147,6 +4151,8 @@ document.getElementById('concreteModal').addEventListener('click',function(e){
 document.addEventListener('DOMContentLoaded',function(){
   const issueModal = document.getElementById('issueModal');
   if(issueModal) issueModal.addEventListener('click',function(e){ if(e.target===this) closeIssueModal(); });
+  const pomanModal = document.getElementById('pomanModal');
+  if(pomanModal) pomanModal.addEventListener('click',function(e){ if(e.target===this) closePOManModal(); });
   // Type radio toggle visual
   ['is-type-order','is-type-return'].forEach(id=>{
     const el = document.getElementById(id);
@@ -4669,6 +4675,10 @@ function closeStoreSheet(){
     <span style="font-size:18px;line-height:1;display:block!important">🔄</span>
     <span style="font-size:10px;font-weight:700;display:block!important;visibility:visible!important;opacity:1!important">โอน</span>
   </button>
+  <button class="bnav-item" data-page="po" onclick="openPage('po')">
+    <span style="font-size:18px;line-height:1;display:block!important">📋</span>
+    <span style="font-size:10px;font-weight:700;display:block!important;visibility:visible!important;opacity:1!important">PO</span>
+  </button>
   <button class="bnav-item" data-page="issue" onclick="openPage('issue')">
     <span style="font-size:18px;line-height:1;display:block!important">📄</span>
     <span style="font-size:10px;font-weight:700;display:block!important;visibility:visible!important;opacity:1!important">ใบออก</span>
@@ -4684,6 +4694,416 @@ function closeStoreSheet(){
 
 
 
+
+<!-- ══════════════════════════════════════
+     PO MANAGEMENT PAGE
+══════════════════════════════════════ -->
+<style>
+.po-status-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11.5px;font-weight:700;white-space:nowrap}
+.po-status-open{background:#E8F2FC;color:#0D3D72;border:1px solid #C5DCF5}
+.po-status-received{background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber-light)}
+.po-status-closed{background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-light)}
+.po-status-cancelled{background:var(--red-bg);color:var(--red-text);border:1px solid var(--red-light)}
+</style>
+
+<script>
+/* ─── PO MANAGEMENT (Firestore collection: 'poman') ─── */
+let _pomanCache = [];
+let _pomanSorted = [];
+let _pomanUnsubscribe = null;
+let pomanEditId = null;
+
+function _fsPomanCol(){ return window._fsLib.collection(window._db, 'poman'); }
+
+function setPOManFbStatus(s){
+  const el=document.getElementById('pomanFbStatus'); if(!el) return;
+  if(s==='connecting'){ el.textContent='⏳ กำลังเชื่อมต่อ...'; el.style.background='var(--amber-bg)'; el.style.color='var(--amber-text)'; }
+  else if(s==='online'){ el.innerHTML='<span style="width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block"></span> เชื่อมต่อแล้ว'; el.style.background='var(--green-bg)'; el.style.color='var(--green-text)'; }
+  else if(s==='offline'){ el.innerHTML='⚠️ ออฟไลน์'; el.style.background='var(--red-bg)'; el.style.color='var(--red-text)'; }
+}
+
+function subscribePOMan(){
+  if(!window._firebaseReady){ window.addEventListener('firebase-ready', subscribePOMan, {once:true}); return; }
+  if(_pomanUnsubscribe) _pomanUnsubscribe();
+  setPOManFbStatus('connecting');
+  const { onSnapshot, query, orderBy } = window._fsLib;
+  const q = query(_fsPomanCol(), orderBy('_ts','desc'));
+  _pomanUnsubscribe = onSnapshot(q, snap => {
+    _pomanCache = snap.docs.map(d=>({...d.data(), _fid:d.id}));
+    _rebuildPOManSorted();
+    setPOManFbStatus('online');
+    if(document.getElementById('page-po')&&document.getElementById('page-po').classList.contains('active')){
+      renderPOManSummary(); renderPOManTable();
+    }
+  }, err => {
+    console.warn('Firestore poman error:', err);
+    setPOManFbStatus('offline');
+    try{ _pomanCache = JSON.parse(localStorage.getItem('poman_data')||'[]'); }catch(e){}
+    _rebuildPOManSorted(); renderPOManSummary(); renderPOManTable();
+  });
+}
+
+function _rebuildPOManSorted(){
+  _pomanSorted = [..._pomanCache].sort((a,b)=>{
+    const da=parseDateTH(a.date), db=parseDateTH(b.date);
+    if(db!==da) return db-da;
+    return (b._ts||0)-(a._ts||0);
+  });
+}
+
+function renderPOManPage(){
+  // inject HTML if not yet done
+  if(!document.getElementById('page-po')){
+    const content = document.querySelector('.content');
+    if(content) content.insertAdjacentHTML('beforeend', _pomanPageHTML());
+  }
+  renderPOManSummary();
+  renderPOManTable();
+  subscribePOMan();
+}
+
+function _pomanStatusBadge(status){
+  const map = {
+    open:      '<span class="po-status-badge po-status-open">📂 เปิด</span>',
+    received:  '<span class="po-status-badge po-status-received">📦 รับของแล้ว</span>',
+    closed:    '<span class="po-status-badge po-status-closed">✅ ปิด</span>',
+    cancelled: '<span class="po-status-badge po-status-cancelled">🚫 ยกเลิก</span>',
+  };
+  return map[status] || map.open;
+}
+
+function renderPOManSummary(){
+  const arr = _pomanCache;
+  const total = arr.length;
+  const openCount = arr.filter(p=>(!p.status||p.status==='open')).length;
+  const receivedCount = arr.filter(p=>p.status==='received').length;
+  const closedCount = arr.filter(p=>p.status==='closed').length;
+  const cancelCount = arr.filter(p=>p.status==='cancelled').length;
+  const totalAmt = arr.filter(p=>p.status!=='cancelled').reduce((s,p)=>s+(parseFloat(p.price)||0),0);
+  const today = new Date();
+  const todayCount = arr.filter(p=>{
+    if(!p.date) return false;
+    const dt = _parseAnyDateToLocal(p.date);
+    return dt && _isSameDay(dt, today);
+  }).length;
+
+  const set = (id,v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
+  set('psm-total', total.toLocaleString());
+  set('psm-open', openCount.toLocaleString());
+  set('psm-received', receivedCount.toLocaleString());
+  set('psm-closed', closedCount.toLocaleString());
+  set('psm-cancel', cancelCount.toLocaleString());
+  set('psm-amount', '฿'+totalAmt.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2}));
+  set('psm-today', todayCount.toLocaleString());
+}
+
+function renderPOManTable(){
+  if(!_pomanSorted.length && _pomanCache.length) _rebuildPOManSorted();
+  const q = ((document.getElementById('pomanSearch')||{}).value||'').toLowerCase().trim();
+  const fromVal = (document.getElementById('pomanDateFrom')||{}).value||'';
+  const toVal   = (document.getElementById('pomanDateTo')||{}).value||'';
+  const fromTs  = fromVal ? new Date(fromVal).getTime() : 0;
+  const toTs    = toVal   ? new Date(toVal).getTime()+86399999 : Infinity;
+  const statusFilter = (document.getElementById('pomanStatusFilter')||{}).value||'all';
+  const clearBtn = document.getElementById('pomanDateClear');
+  if(clearBtn) clearBtn.style.display = (fromVal||toVal)?'inline-block':'none';
+
+  let arr = _pomanSorted.filter(p=>{
+    const mq = !q || [p.date,p.pr,p.po,p.shop,p.detail,p.job,p.status].some(v=>String(v||'').toLowerCase().includes(q));
+    let md = true;
+    if(fromTs||toTs!==Infinity){
+      const dt = _parseAnyDateToLocal(p.date);
+      if(dt) md = dt.getTime()>=fromTs && dt.getTime()<=toTs;
+    }
+    const ms = statusFilter==='all' || p.status===statusFilter || (!p.status && statusFilter==='open');
+    return mq && md && ms;
+  });
+
+  const tbody = document.getElementById('pomanTbody');
+  const nodata = document.getElementById('pomanNodata');
+  const countEl = document.getElementById('pomanTableCount');
+  if(countEl) countEl.textContent = arr.length.toLocaleString()+' รายการ';
+  if(!tbody) return;
+  if(!arr.length){ tbody.innerHTML=''; if(nodata) nodata.style.display='block'; return; }
+  if(nodata) nodata.style.display='none';
+
+  const _today = new Date();
+  const LIMIT = 200;
+  const show = arr.length > LIMIT ? arr.slice(0, LIMIT) : arr;
+  tbody.innerHTML = show.map(p=>{
+    const fid = p._fid||p.id;
+    const dt = _parseAnyDateToLocal(p.date);
+    const todayRow = dt && _isSameDay(dt, _today);
+    const dateDisp = p.date || '—';
+    const price = (parseFloat(p.price)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+    return `<tr${todayRow?' class="row-today"':''}>
+      <td class="td-date">${esc(dateDisp)}${todayRow?'<span class="today-badge-inline">วันนี้</span>':''}</td>
+      <td class="td-muted">${esc(p.pr||'—')}</td>
+      <td class="td-po">${esc(p.po||'—')}</td>
+      <td class="td-amt-tr" style="text-align:right">฿${price}</td>
+      <td class="td-vendor">${esc(p.shop||'—')}</td>
+      <td class="td-muted" style="max-width:180px;overflow:hidden;text-overflow:ellipsis;font-size:12px">${esc(p.detail||'—')}</td>
+      <td class="td-muted">${esc(p.job||'—')}</td>
+      <td>${_pomanStatusBadge(p.status||'open')}</td>
+      <td><div class="tr-actions">
+        <button class="tr-btn tr-btn-edit" onclick="openPOManModal('${fid}')">✏️ แก้ไข</button>
+        <button class="tr-btn tr-btn-del" onclick="deletePOMan('${fid}')">🗑</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+  if(arr.length > LIMIT){
+    tbody.insertAdjacentHTML('beforeend',`<tr><td colspan="9" style="text-align:center;padding:12px;color:var(--text3);font-size:13px">แสดง ${LIMIT} จาก ${arr.length.toLocaleString()} รายการ — กรองด้วยช่องค้นหาเพื่อดูเพิ่ม</td></tr>`);
+  }
+}
+
+function openPOManModal(fid){
+  pomanEditId = fid||null;
+  document.getElementById('pomanModalTitle').textContent = fid ? '✏️ แก้ไข PO' : '＋ เพิ่ม PO';
+  if(fid){
+    const p = _pomanCache.find(x=>x._fid===fid);
+    if(p){
+      document.getElementById('pm-date').value   = p.date||'';
+      document.getElementById('pm-pr').value     = p.pr||'';
+      document.getElementById('pm-po').value     = p.po||'';
+      document.getElementById('pm-price').value  = p.price!=null?p.price:'';
+      document.getElementById('pm-shop').value   = p.shop||'';
+      document.getElementById('pm-detail').value = p.detail||'';
+      document.getElementById('pm-job').value    = p.job||'';
+      document.getElementById('pm-status').value = p.status||'open';
+    }
+  } else {
+    ['pm-pr','pm-po','pm-price','pm-shop','pm-detail','pm-job'].forEach(id=>{ document.getElementById(id).value=''; });
+    document.getElementById('pm-date').value   = '';
+    document.getElementById('pm-status').value = 'open';
+  }
+  document.getElementById('pomanModal').classList.add('open');
+}
+
+function closePOManModal(){
+  document.getElementById('pomanModal').classList.remove('open');
+  pomanEditId = null;
+}
+
+async function savePOMan(){
+  const date   = document.getElementById('pm-date').value.trim();
+  const po     = document.getElementById('pm-po').value.trim();
+  if(!date){ alert('กรุณากรอกวันที่'); return; }
+
+  const saveBtn = document.querySelector('#pomanModal .btn-primary');
+  saveBtn.textContent='⏳ กำลังบันทึก...'; saveBtn.disabled=true;
+
+  const payload = {
+    date,
+    pr:     document.getElementById('pm-pr').value.trim(),
+    po,
+    price:  parseFloat(document.getElementById('pm-price').value)||0,
+    shop:   document.getElementById('pm-shop').value.trim(),
+    detail: document.getElementById('pm-detail').value.trim(),
+    job:    document.getElementById('pm-job').value.trim(),
+    status: document.getElementById('pm-status').value||'open',
+    _ts: Date.now()
+  };
+
+  try {
+    if(!window._firebaseReady) throw new Error('Firebase not ready');
+    const { addDoc, updateDoc, doc } = window._fsLib;
+    if(pomanEditId){
+      await updateDoc(doc(window._db,'poman',pomanEditId), payload);
+    } else {
+      await addDoc(_fsPomanCol(), payload);
+    }
+  } catch(err){
+    console.warn('Firestore poman save failed, using localStorage:', err);
+    const arr = JSON.parse(localStorage.getItem('poman_data')||'[]');
+    if(pomanEditId){
+      const idx = arr.findIndex(x=>(x.id||x._fid)===pomanEditId);
+      if(idx>-1) arr[idx]={...arr[idx],...payload};
+    } else {
+      arr.unshift({...payload, id:'pm_'+Date.now()});
+    }
+    localStorage.setItem('poman_data', JSON.stringify(arr));
+    _pomanCache = arr;
+    _rebuildPOManSorted(); renderPOManSummary(); renderPOManTable();
+  }
+
+  saveBtn.textContent='💾 บันทึก'; saveBtn.disabled=false;
+  closePOManModal();
+}
+
+async function deletePOMan(fid){
+  if(!confirm('ยืนยันลบรายการ PO นี้?')) return;
+  try {
+    if(!window._firebaseReady) throw new Error('Firebase not ready');
+    const { deleteDoc, doc } = window._fsLib;
+    await deleteDoc(doc(window._db,'poman',fid));
+  } catch(err){
+    console.warn('Firestore poman delete failed, using localStorage:', err);
+    const arr = JSON.parse(localStorage.getItem('poman_data')||'[]').filter(x=>(x.id||x._fid)!==fid);
+    localStorage.setItem('poman_data', JSON.stringify(arr));
+    _pomanCache = arr;
+    _rebuildPOManSorted(); renderPOManSummary(); renderPOManTable();
+  }
+}
+
+function _pomanPageHTML(){
+  return `
+  <div class="page" id="page-po">
+    <div class="page-head" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <div>
+        <div class="page-head-title">PO</div>
+        <div class="page-head-sub">จัดการ Purchase Order — เพิ่ม แก้ไข ลบ &nbsp;<span id="pomanFbStatus" style="font-size:11px;padding:2px 9px;border-radius:99px;background:var(--surface2);color:var(--text3)">⏳ กำลังเชื่อมต่อ...</span></div>
+      </div>
+    </div>
+
+    <!-- Summary cards -->
+    <div class="transfer-summary" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr));margin-bottom:1.25rem">
+      <div class="tsm-card">
+        <div class="tsm-label">ทั้งหมด</div>
+        <div class="tsm-val" id="psm-total">0</div>
+      </div>
+      <div class="tsm-card" style="border:1.5px solid #C5DCF5;background:#E8F2FC">
+        <div class="tsm-label" style="color:#0D3D72">📂 เปิด</div>
+        <div class="tsm-val" id="psm-open" style="color:#1A65B5">0</div>
+      </div>
+      <div class="tsm-card" style="border:1.5px solid var(--amber-light);background:var(--amber-bg)">
+        <div class="tsm-label" style="color:var(--amber-text)">📦 รับของแล้ว</div>
+        <div class="tsm-val" id="psm-received" style="color:var(--amber)">0</div>
+      </div>
+      <div class="tsm-card" style="border:1.5px solid var(--green-light);background:var(--green-bg)">
+        <div class="tsm-label" style="color:var(--green-text)">✅ ปิด</div>
+        <div class="tsm-val" id="psm-closed" style="color:var(--green)">0</div>
+      </div>
+      <div class="tsm-card" style="border:1.5px solid var(--red-light);background:var(--red-bg)">
+        <div class="tsm-label" style="color:var(--red-text)">🚫 ยกเลิก</div>
+        <div class="tsm-val" id="psm-cancel" style="color:var(--red)">0</div>
+      </div>
+      <div class="tsm-card">
+        <div class="tsm-label">📅 วันนี้</div>
+        <div class="tsm-val" id="psm-today">0</div>
+      </div>
+      <div class="tsm-card">
+        <div class="tsm-label">มูลค่ารวม (บาท)</div>
+        <div class="tsm-val" id="psm-amount" style="color:var(--green);font-size:18px">฿0</div>
+      </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="transfer-toolbar">
+      <div class="transfer-search-wrap">
+        <span class="transfer-search-icon">🔍</span>
+        <input type="text" id="pomanSearch" placeholder="ค้นหา PR, PO, ร้าน, JOB, รายละเอียด..." oninput="clearTimeout(window._pmT);window._pmT=setTimeout(renderPOManTable,300)">
+      </div>
+      <select id="pomanStatusFilter" onchange="renderPOManTable()" style="padding:9px 12px;border:1px solid var(--border);border-radius:10px;font-size:13px;font-weight:600;background:var(--surface);color:var(--text);font-family:'Sarabun',sans-serif;cursor:pointer;flex-shrink:0">
+        <option value="all">สถานะทั้งหมด</option>
+        <option value="open">📂 เปิด</option>
+        <option value="received">📦 รับของแล้ว</option>
+        <option value="closed">✅ ปิด</option>
+        <option value="cancelled">🚫 ยกเลิก</option>
+      </select>
+      <div class="issue-date-range" style="display:flex;align-items:center;gap:6px;flex-shrink:0;flex-wrap:wrap">
+        <span style="font-size:12px;color:var(--text3);white-space:nowrap;font-weight:600">📅 จาก</span>
+        <input type="date" id="pomanDateFrom" style="padding:8px 10px;border:1px solid var(--border);border-radius:10px;font-size:12.5px;background:var(--surface);color:var(--text);font-family:'Sarabun',sans-serif;cursor:pointer;flex:1;min-width:130px" oninput="renderPOManTable()">
+        <span style="font-size:12px;color:var(--text3);font-weight:600">ถึง</span>
+        <input type="date" id="pomanDateTo" style="padding:8px 10px;border:1px solid var(--border);border-radius:10px;font-size:12.5px;background:var(--surface);color:var(--text);font-family:'Sarabun',sans-serif;cursor:pointer;flex:1;min-width:130px" oninput="renderPOManTable()">
+        <button id="pomanDateClear" onclick="document.getElementById('pomanDateFrom').value='';document.getElementById('pomanDateTo').value='';renderPOManTable()" style="display:none;padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);cursor:pointer;font-size:12px">✕</button>
+      </div>
+      <button class="btn-primary" onclick="openPOManModal()">＋ เพิ่ม PO</button>
+    </div>
+
+    <!-- Table -->
+    <div class="table-card">
+      <div class="table-header">
+        <span class="table-header-title">รายการ PO</span>
+        <span class="table-count" id="pomanTableCount">0 รายการ</span>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>ว.ด.ป</th>
+              <th>PR</th>
+              <th>PO</th>
+              <th style="text-align:right">ราคา (บาท)</th>
+              <th>ร้าน</th>
+              <th>รายละเอียด</th>
+              <th>JOB</th>
+              <th>สถานะ</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="pomanTbody"></tbody>
+        </table>
+        <div class="no-data" id="pomanNodata" style="display:none">
+          <div class="no-data-icon">📋</div>ไม่พบรายการ PO
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+</script>
+
+<!-- PO Modal -->
+<div class="modal-overlay" id="pomanModal">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-head">
+      <span class="modal-title" id="pomanModalTitle">＋ เพิ่ม PO</span>
+      <button class="modal-close" onclick="closePOManModal()">✕</button>
+    </div>
+    <div class="modal-body" style="padding:1rem 1.2rem">
+      <!-- Row 1: วันที่ + PR + PO -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">วันที่ *</label>
+          <input type="text" class="form-input" id="pm-date" placeholder="เช่น 23/5/69">
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">PR</label>
+          <input type="text" class="form-input" id="pm-pr" placeholder="เลขที่ PR">
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">PO</label>
+          <input type="text" class="form-input" id="pm-po" placeholder="เลขที่ PO">
+        </div>
+      </div>
+      <!-- Row 2: ราคา + ร้าน -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">ราคา (บาท)</label>
+          <input type="number" class="form-input" id="pm-price" placeholder="0.00" step="0.01">
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">ร้าน / Vendor</label>
+          <input type="text" class="form-input" id="pm-shop" placeholder="ชื่อร้านค้า">
+        </div>
+      </div>
+      <!-- Row 3: รายละเอียด -->
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="form-label">รายละเอียด</label>
+        <textarea class="form-textarea" id="pm-detail" placeholder="รายละเอียดสินค้า / บริการ..." rows="2"></textarea>
+      </div>
+      <!-- Row 4: JOB + สถานะ -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:0">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">JOB</label>
+          <input type="text" class="form-input" id="pm-job" placeholder="รหัส Job / โครงการ">
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">สถานะ</label>
+          <select class="form-input" id="pm-status" style="cursor:pointer">
+            <option value="open">📂 เปิด</option>
+            <option value="received">📦 รับของแล้ว</option>
+            <option value="closed">✅ ปิด</option>
+            <option value="cancelled">🚫 ยกเลิก</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closePOManModal()">ยกเลิก</button>
+      <button class="btn-primary" onclick="savePOMan()">💾 บันทึก</button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
