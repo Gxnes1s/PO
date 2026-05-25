@@ -848,6 +848,35 @@ tr.row-cancel .td-po{color:var(--red-text)!important}
 .store-sheet-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
 
 
+/* ── TODAY CARD — เด่น สะดุดตา ── */
+.tsm-today-card{
+  background:linear-gradient(135deg,#E84E0F 0%,#FF6B1A 60%,#FF8C3A 100%) !important;
+  border:2px solid rgba(255,140,60,.6) !important;
+  box-shadow:0 6px 24px rgba(232,78,15,.4),0 2px 8px rgba(0,0,0,.15) !important;
+  position:relative;overflow:hidden;
+}
+.tsm-today-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,#FFD580,#FFC040,#FFD580);
+}
+.tsm-today-card::after{
+  content:'📋';position:absolute;bottom:-10px;right:-4px;
+  font-size:52px;opacity:.12;line-height:1;pointer-events:none;
+}
+.tsm-today-label{
+  color:rgba(255,255,255,.9) !important;
+  font-weight:800 !important;
+  letter-spacing:.06em !important;
+  text-shadow:0 1px 3px rgba(0,0,0,.2);
+}
+.tsm-today-val{
+  color:#fff !important;
+  font-size:40px !important;
+  font-weight:800 !important;
+  text-shadow:0 2px 10px rgba(0,0,0,.25) !important;
+  letter-spacing:-.04em !important;
+}
+
 /* ── TODAY HIGHLIGHT (concrete table) ── */
 tr.row-today td {
   background: rgba(26,52,128,.06) !important;
@@ -1674,9 +1703,9 @@ function togglePw(btn){
           <div class="tsm-label">รายการทั้งหมด</div>
           <div class="tsm-val" id="tsm-total">0</div>
         </div>
-        <div class="tsm-card" style="border:1.5px solid var(--blue-light);background:var(--blue-bg)">
-          <div class="tsm-label" style="color:var(--blue-text)">📅 โอนวันนี้</div>
-          <div class="tsm-val" id="tsm-today" style="color:var(--blue)">0</div>
+        <div class="tsm-card tsm-today-card">
+          <div class="tsm-label tsm-today-label">🔥 โอนวันนี้</div>
+          <div class="tsm-val tsm-today-val" id="tsm-today">0</div>
         </div>
         <div class="tsm-card">
           <div class="tsm-label">ยอดโอนรวม (บาท)</div>
@@ -1747,9 +1776,9 @@ function togglePw(btn){
           <div class="tsm-label">รายการทั้งหมด</div>
           <div class="tsm-val" id="csm-total">0</div>
         </div>
-        <div class="tsm-card" style="border:1.5px solid var(--blue-light);background:var(--blue-bg)">
-          <div class="tsm-label" style="color:var(--blue-text)">📅 PO เปิดวันนี้</div>
-          <div class="tsm-val" id="csm-today" style="color:var(--blue)">0</div>
+        <div class="tsm-card tsm-today-card">
+          <div class="tsm-label tsm-today-label">🔥 PO เปิดวันนี้</div>
+          <div class="tsm-val tsm-today-val" id="csm-today">0</div>
         </div>
         <div class="tsm-card">
           <div class="tsm-label">ราคารวมทั้งหมด (บาท)</div>
@@ -5195,11 +5224,10 @@ function _pomanPageHTML(){
         <div class="tsm-label" style="color:var(--red-text)">🚫 ยกเลิก</div>
         <div class="tsm-val" id="psm-cancel" style="color:var(--red)">0</div>
       </div>
-      <div class="tsm-card" style="background:linear-gradient(135deg,#FF6B1A 0%,#E84E0F 100%);border:2px solid #FF8C42;box-shadow:0 6px 24px rgba(255,107,26,.35),0 2px 8px rgba(0,0,0,.1);position:relative;overflow:hidden">
-        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#FFD580,#FFA040,#FFD580)"></div>
-        <div class="tsm-label" style="color:rgba(255,255,255,.85);font-weight:800;letter-spacing:.08em">📅 PO โอนวันนี้</div>
-        <div class="tsm-val" id="psm-today" style="color:#fff;font-size:38px;font-weight:800;text-shadow:0 2px 8px rgba(0,0,0,.2)">0</div>
-        <div style="position:absolute;bottom:-12px;right:-8px;font-size:48px;opacity:.12;line-height:1">📋</div>
+      <div class="tsm-card tsm-today-card">
+        <div class="tsm-label tsm-today-label">🔥 PO เปิดวันนี้</div>
+        <div class="tsm-val tsm-today-val" id="psm-today">0</div>
+        <div style="position:absolute;bottom:-12px;right:-8px;font-size:48px;opacity:.12;line-height:1;pointer-events:none">📋</div>
       </div>
       <div class="tsm-card">
         <div class="tsm-label">มูลค่ารวม (บาท)</div>
