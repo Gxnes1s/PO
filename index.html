@@ -650,7 +650,7 @@ tr.row-cancel .td-po{color:var(--red-text)!important}
   transform:translateY(-1px);
 }
 .btn-primary:active{transform:translateY(0);box-shadow:0 2px 8px rgba(13,27,62,.2)}
-.transfer-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:1.25rem}
+.transfer-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:1.25rem}
 .tsm-card{
   background:var(--surface);border-radius:14px;
   border:1px solid var(--border);box-shadow:var(--shadow);
@@ -659,7 +659,7 @@ tr.row-cancel .td-po{color:var(--red-text)!important}
 }
 .tsm-card:hover{transform:translateY(-1px);box-shadow:var(--shadow-md)}
 .tsm-label{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);font-weight:700;margin-bottom:6px}
-.tsm-val{font-size:28px;font-weight:700;font-family:'IBM Plex Mono',monospace;letter-spacing:-.03em}
+.tsm-val{font-size:clamp(18px,4vw,28px);font-weight:700;font-family:'IBM Plex Mono',monospace;letter-spacing:-.03em;line-height:1.1;word-break:break-all}
 
 /* Modal */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(5,10,25,.55);z-index:600;backdrop-filter:blur(6px);align-items:center;justify-content:center}
@@ -759,8 +759,6 @@ tr.row-cancel .td-po{color:var(--red-text)!important}
   .page-head[style*="display:flex"]{flex-direction:column;align-items:flex-start!important}
   /* btn full width on mobile toolbar */
   .transfer-toolbar .btn-primary{width:100%;justify-content:center}
-  /* summary cards 2 col */
-  .issue-summary,.transfer-summary{grid-template-columns:1fr 1fr!important}
   /* topbar compact */
   .topbar-time,.topbar-breadcrumb{display:none}
   #topbarUser{max-width:100px}
@@ -995,8 +993,8 @@ body{overflow-x:hidden}
   .page-head-sub{font-size:12px}
   .toolbar,.transfer-toolbar{flex-direction:column;align-items:stretch;gap:8px}
   .search-wrap,.transfer-search-wrap{min-width:100%}
-  .transfer-summary,.vendor-grid,.vd-grid{grid-template-columns:1fr 1fr!important}
-  .issue-summary{grid-template-columns:1fr 1fr!important}
+  .vendor-grid,.vd-grid{grid-template-columns:1fr 1fr!important}
+  .issue-summary{grid-template-columns:repeat(auto-fit,minmax(130px,1fr))!important}
   .table-card{border-radius:12px}
   th,td{padding:10px 12px;font-size:12px}
   .modal-body{padding:1rem}
@@ -1043,7 +1041,9 @@ body{overflow-x:hidden}
   .issue-date-range{flex-wrap:wrap!important;gap:4px!important}
   .issue-date-range input[type="date"]{flex:1;min-width:120px}
   .transfer-toolbar .btn-primary{width:100%;justify-content:center}
-  .issue-summary,.transfer-summary{grid-template-columns:1fr 1fr!important}
+  /* summary cards: 2 col on phone, smaller minmax */
+  .transfer-summary{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))!important;gap:8px}
+  .issue-summary{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))!important;gap:8px}
   table{min-width:560px}
   .page-head[style*="display:flex"]{flex-direction:column;align-items:flex-start!important}
 }
@@ -5256,7 +5256,7 @@ function _pomanPageHTML(){
     </div>
 
     <!-- Summary cards -->
-    <div class="transfer-summary" style="grid-template-columns:repeat(4,1fr) 1.6fr;margin-bottom:1.25rem">
+    <div class="transfer-summary" style="margin-bottom:1.25rem">
       <div class="tsm-card">
         <div class="tsm-label">ทั้งหมด</div>
         <div class="tsm-val" id="psm-total">0</div>
