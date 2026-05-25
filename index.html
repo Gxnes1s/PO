@@ -34,7 +34,7 @@ window.dispatchEvent(new Event('firebase-ready'));
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  /* ── Navy + Gold Luxury Theme ── */
+  /* ── Navy + Gold — Light & Readable ── */
   --navy-900:#0D1B3E;
   --navy-800:#142251;
   --navy-700:#1A2C6B;
@@ -43,32 +43,33 @@ window.dispatchEvent(new Event('firebase-ready'));
   --navy-100:#E8EBF7;
   --navy-50:#F2F4FB;
 
-  --gold-500:#C8A85A;
-  --gold-400:#D4B56A;
-  --gold-300:#E2C88C;
-  --gold-200:#EFD9A8;
-  --gold-100:#FAF2DC;
-  --gold-50:#FFFCF0;
+  --gold-500:#B8942A;
+  --gold-400:#C8A840;
+  --gold-300:#D4B860;
+  --gold-200:#E8D090;
+  --gold-100:#F5EAC8;
+  --gold-50:#FBF5E0;
 
-  --bg:#0b1520;
-  --surface:#0f2035;
-  --surface2:#0d1a2e;
-  --surface3:#081424;
-  --border:rgba(201,168,76,.1);
-  --border-strong:rgba(201,168,76,.2);
-  --text:#e8dfc8;
-  --text2:#a8b8cc;
-  --text3:#5a7898;
+  /* Light surfaces — เบา อ่านง่าย */
+  --bg:#F0F2F8;
+  --surface:#FFFFFF;
+  --surface2:#F4F6FC;
+  --surface3:#EEF0F8;
+  --border:rgba(20,34,81,.1);
+  --border-strong:rgba(20,34,81,.18);
+  --text:#0D1B3E;
+  --text2:#2A3A62;
+  --text3:#6A7A9A;
 
   --blue:#1A3480;
   --blue-bg:#E8EBF7;
   --blue-light:#BEC8EF;
   --blue-text:#0D1B3E;
 
-  --green:#1A6B3A;
-  --green-bg:#E2F5EC;
-  --green-light:#8FDCB0;
-  --green-text:#0E3D21;
+  --green:#0F5C32;
+  --green-bg:#E0F5EB;
+  --green-light:#7DCCA0;
+  --green-text:#083D20;
 
   --amber:#7A5A08;
   --amber-bg:#FBF2D8;
@@ -86,11 +87,11 @@ window.dispatchEvent(new Event('firebase-ready'));
   --radius:14px;
   --radius-sm:10px;
   --radius-xs:6px;
-  --shadow:0 2px 8px rgba(13,27,62,.08),0 0 0 1px rgba(13,27,62,.05);
+  --shadow:0 2px 10px rgba(13,27,62,.08),0 0 0 1px rgba(13,27,62,.05);
   --shadow-md:0 8px 32px rgba(13,27,62,.14),0 0 0 1px rgba(13,27,62,.06);
-  --shadow-gold:0 4px 20px rgba(200,168,90,.25);
+  --shadow-gold:0 4px 20px rgba(184,148,42,.3);
 
-  --acc:#1A3480;
+  --acc:#1A2C6B;
   --acc-bg:#E8EBF7;
   --acc-light:#BEC8EF;
   --acc-text:#0D1B3E;
@@ -99,7 +100,7 @@ window.dispatchEvent(new Event('firebase-ready'));
   --sidebar-w:248px;
 
   /* Gold accent gradient */
-  --gold-grad:linear-gradient(135deg, #C8A85A 0%, #E2C88C 50%, #C8A85A 100%);
+  --gold-grad:linear-gradient(135deg, #B8942A 0%, #D4B860 50%, #B8942A 100%);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{
@@ -110,14 +111,14 @@ body{
   min-height:100vh;
   display:flex;
   background-image:
-    radial-gradient(ellipse at 80% 0%, rgba(201,168,76,.04) 0%, transparent 60%),
-    radial-gradient(ellipse at 0% 100%, rgba(26,44,107,.08) 0%, transparent 50%);
+    radial-gradient(ellipse at 80% 0%, rgba(26,52,128,.05) 0%, transparent 60%),
+    radial-gradient(ellipse at 0% 100%, rgba(200,168,90,.03) 0%, transparent 50%);
 }
 
 /* ── SIDEBAR ── */
 .sidebar{
   width:var(--sidebar-w);
-  background:linear-gradient(180deg, #04111f 0%, #071422 60%, #040e1a 100%);
+  background:linear-gradient(180deg, #07112A 0%, #0D1B3E 60%, #0A1630 100%);
   color:#fff;
   position:fixed;
   left:0;top:0;bottom:0;
@@ -282,15 +283,15 @@ body{
 
 /* top bar */
 .topbar{
-  background:rgba(7,20,34,.97);
+  background:rgba(255,255,255,.97);
   backdrop-filter:blur(20px);
   -webkit-backdrop-filter:blur(20px);
   padding:0 1.6rem;
   height:62px;
   display:flex;align-items:center;gap:12px;
   position:sticky;top:0;z-index:200;
-  border-bottom:1px solid rgba(201,168,76,.15);
-  box-shadow:0 2px 16px rgba(0,0,0,.35);
+  border-bottom:1px solid rgba(13,27,62,.1);
+  box-shadow:0 2px 16px rgba(13,27,62,.08);
 }
 /* gold bottom line — more visible */
 .topbar::after{
@@ -301,10 +302,10 @@ body{
   background:linear-gradient(90deg, transparent 0%, var(--gold-400) 15%, var(--gold-300) 50%, var(--gold-400) 85%, transparent 100%);
   opacity:.75;
 }
-.topbar-title{font-size:15px;font-weight:700;color:var(--gold-300);letter-spacing:.02em;font-family:'Cinzel',serif}
-.topbar-breadcrumb{font-size:12px;color:var(--text3);padding:3px 10px;background:rgba(201,168,76,.08);border-radius:99px;border:1px solid rgba(201,168,76,.15)}
+.topbar-title{font-size:15px;font-weight:700;color:var(--navy-900);letter-spacing:.02em;font-family:'Cinzel',serif}
+.topbar-breadcrumb{font-size:12px;color:var(--text3);padding:3px 10px;background:var(--navy-50);border-radius:99px;border:1px solid var(--border)}
 .topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
-.topbar-time{font-size:11px;color:var(--gold-400);font-family:'IBM Plex Mono',monospace;padding:5px 12px;background:rgba(201,168,76,.08);border-radius:99px;border:1px solid rgba(201,168,76,.2);font-weight:600}
+.topbar-time{font-size:11px;color:var(--navy-700);font-family:'IBM Plex Mono',monospace;padding:5px 12px;background:var(--gold-100);border-radius:99px;border:1px solid var(--gold-200);font-weight:600}
 .btn-topbar{
   padding:7px 14px;font-size:12px;font-weight:700;
   border-radius:var(--radius-sm);
@@ -458,10 +459,10 @@ body{
 .search-wrap input{
   width:100%;padding:10px 16px 10px 40px;
   border:1px solid var(--border);border-radius:12px;
-  font-size:13.5px;background:var(--surface2);
+  font-size:13.5px;background:var(--surface);
   color:var(--text);transition:all .18s ease;font-family:'Sarabun',sans-serif;
 }
-.search-wrap input:focus{outline:none;border-color:var(--gold-500);box-shadow:0 0 0 3px rgba(201,168,76,.12)}
+.search-wrap input:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px rgba(26,101,181,.1)}
 .filter-btns{display:flex;gap:5px;flex-wrap:wrap}
 .fbtn{
   padding:8px 14px;font-size:12.5px;font-weight:600;
@@ -481,20 +482,20 @@ body{
   background:var(--surface);
   border-radius:16px;overflow:hidden;
   border:1px solid var(--border);
-  box-shadow:0 2px 16px rgba(0,0,0,.3);
+  box-shadow:var(--shadow);
 }
 .table-header{
-  padding:14px 20px;border-bottom:2px solid rgba(201,168,76,.15);
+  padding:14px 20px;border-bottom:2px solid var(--gold-100);
   display:flex;align-items:center;gap:10px;
-  background:linear-gradient(135deg,#071422 0%,#0d1a2e 100%);
+  background:linear-gradient(135deg,var(--navy-50) 0%,#fff 100%);
 }
-.table-header-title{font-size:13.5px;font-weight:700;color:var(--gold-300);font-family:'Cinzel',serif;letter-spacing:.02em}
-.table-count{font-size:11.5px;color:var(--text3);background:rgba(201,168,76,.08);padding:3px 10px;border-radius:99px;font-family:'IBM Plex Mono',monospace;font-weight:600;border:1px solid rgba(201,168,76,.15)}
+.table-header-title{font-size:13.5px;font-weight:700;color:var(--navy-900);font-family:'Cinzel',serif;letter-spacing:.02em}
+.table-count{font-size:11.5px;color:var(--text3);background:var(--surface2);padding:3px 10px;border-radius:99px;font-family:'IBM Plex Mono',monospace;font-weight:600;border:1px solid var(--border)}
 .table-scroll{overflow-x:auto;max-height:520px;overflow-y:auto}
 table{width:100%;border-collapse:collapse;font-size:13px}
 th{
-  background:linear-gradient(180deg,#071422 0%,#04111f 100%);
-  color:rgba(200,168,76,.8);
+  background:linear-gradient(180deg,var(--navy-800) 0%,var(--navy-900) 100%);
+  color:rgba(255,255,255,.75);
   font-weight:700;
   font-size:9.5px;text-transform:uppercase;letter-spacing:.12em;
   padding:13px 15px;text-align:left;
@@ -623,10 +624,10 @@ tr.row-cancel .td-po{color:var(--red-text)!important}
 .transfer-search-wrap input{
   width:100%;padding:10px 16px 10px 40px;
   border:1px solid var(--border);border-radius:12px;
-  font-size:13.5px;background:var(--surface2);
+  font-size:13.5px;background:var(--surface);
   color:var(--text);transition:all .18s ease;font-family:'Sarabun',sans-serif;
 }
-.transfer-search-wrap input:focus{outline:none;border-color:var(--gold-500);box-shadow:0 0 0 3px rgba(201,168,76,.12)}
+.transfer-search-wrap input:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px rgba(26,101,181,.1)}
 .transfer-search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:14px;pointer-events:none}
 .btn-primary{
   background:linear-gradient(135deg,#1A2C6B 0%,#0D1B3E 100%);
@@ -652,13 +653,13 @@ tr.row-cancel .td-po{color:var(--red-text)!important}
 .transfer-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:1.25rem}
 .tsm-card{
   background:var(--surface);border-radius:14px;
-  border:1px solid var(--border);box-shadow:0 2px 12px rgba(0,0,0,.25);
+  border:1px solid var(--border);box-shadow:var(--shadow);
   padding:1.1rem 1.3rem;
   transition:transform .18s,box-shadow .18s;
 }
-.tsm-card:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,0,0,.35)}
+.tsm-card:hover{transform:translateY(-1px);box-shadow:var(--shadow-md)}
 .tsm-label{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);font-weight:700;margin-bottom:6px}
-.tsm-val{font-size:28px;font-weight:700;font-family:'IBM Plex Mono',monospace;letter-spacing:-.03em;color:var(--text)}
+.tsm-val{font-size:28px;font-weight:700;font-family:'IBM Plex Mono',monospace;letter-spacing:-.03em}
 
 /* Modal */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(5,10,25,.55);z-index:600;backdrop-filter:blur(6px);align-items:center;justify-content:center}
@@ -674,16 +675,16 @@ tr.row-cancel .td-po{color:var(--red-text)!important}
 .modal-close{width:32px;height:32px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;color:var(--text2);transition:.15s}
 .modal-close:hover{background:var(--red-bg);color:var(--red-text);border-color:var(--red-light)}
 .modal-body{padding:1.4rem}
-.modal-footer{padding:1rem 1.4rem;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;background:var(--surface2)}
+.modal-footer{padding:1rem 1.4rem;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;background:var(--surface3)}
 .form-group{margin-bottom:1rem}
 .form-label{display:block;font-size:11.5px;font-weight:700;color:var(--navy-700);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em}
 .form-input,.form-select,.form-textarea{
   width:100%;padding:10px 13px;
   border:1.5px solid var(--border-strong);border-radius:10px;
-  font-size:13.5px;background:var(--surface2);color:var(--text);
+  font-size:13.5px;background:var(--surface);color:var(--text);
   font-family:'Sarabun',sans-serif;transition:.18s;
 }
-.form-input:focus,.form-select:focus,.form-textarea:focus{outline:none;border-color:var(--gold-500);box-shadow:0 0 0 3px rgba(201,168,76,.12)}
+.form-input:focus,.form-select:focus,.form-textarea:focus{outline:none;border-color:var(--navy-600);box-shadow:0 0 0 3px rgba(26,52,128,.12)}
 .form-textarea{resize:vertical;min-height:72px}
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .tr-actions{display:flex;gap:5px}
@@ -830,22 +831,22 @@ tr.row-cancel .td-po{color:var(--red-text)!important}
 .store-sheet-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
 
 
-/* ── TODAY HIGHLIGHT (concrete table) ── */
+/* ── TODAY HIGHLIGHT ── */
 tr.row-today td {
-  background: rgba(201,168,76,.07) !important;
+  background: rgba(184,148,42,.07) !important;
 }
 tr.row-today:hover td {
-  background: rgba(201,168,76,.13) !important;
+  background: rgba(184,148,42,.13) !important;
 }
 tr.row-today .td-date {
-  color: var(--gold-400) !important;
+  color: var(--navy-700) !important;
   font-weight: 700 !important;
 }
 .today-badge-inline {
   display:inline-flex;align-items:center;gap:3px;
   font-size:10px;font-weight:700;padding:1px 6px;
-  border-radius:99px;background:rgba(201,168,76,.12);
-  color:var(--gold-300);border:1px solid rgba(201,168,76,.35);
+  border-radius:99px;background:var(--gold-100);
+  color:var(--gold-500);border:1px solid var(--gold-200);
   vertical-align:middle;margin-left:5px;white-space:nowrap;
 }
 
@@ -854,13 +855,13 @@ tr.row-today .td-date {
   background:var(--surface);
   border-radius:16px;
   border:1px solid var(--border);
-  box-shadow:0 2px 12px rgba(0,0,0,.3);
+  box-shadow:var(--shadow);
   padding:1.1rem 1.2rem;
   position:relative;overflow:hidden;
   transition:transform .2s ease,box-shadow .2s ease;
   cursor:pointer;
 }
-.bento-card:hover{transform:translateY(-2px);box-shadow:0 10px 32px rgba(0,0,0,.4),0 0 0 1px rgba(201,168,76,.1)}
+.bento-card:hover{transform:translateY(-2px);box-shadow:0 10px 32px rgba(13,27,62,.12),0 0 0 1px rgba(13,27,62,.06)}
 .bento-card:active{transform:scale(.985)}
 
 /* gold accent strip on bento cards */
@@ -877,22 +878,23 @@ tr.row-today .td-date {
 .fbtn.f-red.active{background:var(--red);border-color:var(--red)}
 
 /* search focus */
-.search-wrap input:focus{outline:none;border-color:var(--gold-500);box-shadow:0 0 0 3px rgba(201,168,76,.1)}
+.search-wrap input:focus{outline:none;border-color:var(--navy-600);box-shadow:0 0 0 3px rgba(26,52,128,.1)}
 
 /* modal refinements */
-.modal{background:var(--surface);border-radius:20px;box-shadow:0 24px 64px rgba(0,0,0,.55),0 0 0 1px rgba(201,168,76,.15);width:100%;max-width:540px;padding:0;overflow:hidden}
-.modal-head{padding:1.2rem 1.4rem;border-bottom:2px solid rgba(201,168,76,.2);display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#071422,#0d1a2e)}
-.modal-title{font-size:16px;font-weight:700;color:var(--gold-300);font-family:'Cinzel',serif;letter-spacing:.02em}
+.modal{background:var(--surface);border-radius:20px;box-shadow:0 24px 64px rgba(13,27,62,.22),0 0 0 1px rgba(13,27,62,.07);width:100%;max-width:540px;padding:0;overflow:hidden}
+.modal-head{padding:1.2rem 1.4rem;border-bottom:2px solid var(--gold-100);display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,var(--navy-50),#fff)}
+.modal-title{font-size:16px;font-weight:700;color:var(--navy-900);font-family:'Cinzel',serif;letter-spacing:.02em}
 
 /* Settings nav active */
-.settings-nav-item.active{background:rgba(201,168,76,.08);color:var(--gold-400);border-left:3px solid var(--gold-500)}
+.settings-nav-item.active{background:var(--navy-50);color:var(--navy-800);border-left:3px solid var(--gold-500)}
 
 /* Job pills gold on active */
 .jpill.on{background:var(--navy-800);color:#fff;border-color:var(--navy-800)}
 
+/* Bottom nav */
 .bottom-nav{
-  background:linear-gradient(180deg,#071422,#04111f);
-  border-top:1px solid rgba(201,168,76,.15);
+  background:linear-gradient(180deg,var(--navy-900),var(--navy-800));
+  border-top:1px solid rgba(200,168,90,.15);
 }
 .bnav-item.active{color:var(--gold-300)}
 
@@ -904,7 +906,7 @@ tr.row-today .td-date {
 .page-head-title{
   font-size:22px;font-weight:700;letter-spacing:.01em;
   font-family:'Cinzel',serif;
-  color:var(--gold-300);
+  color:var(--navy-900);
 }
 
 /* info bar */
@@ -915,11 +917,11 @@ tr.row-today .td-date {
 
 /* table card table header */
 .table-header{
-  padding:12px 18px;border-bottom:2px solid rgba(201,168,76,.2);
+  padding:12px 18px;border-bottom:2px solid var(--gold-100);
   display:flex;align-items:center;gap:10px;
-  background:linear-gradient(135deg,#071422,#0d1a2e);
+  background:linear-gradient(135deg,var(--navy-50),#fff);
 }
-.table-header-title{font-size:13.5px;font-weight:700;color:var(--gold-300);font-family:'Cinzel',serif;letter-spacing:.02em}
+.table-header-title{font-size:13.5px;font-weight:700;color:var(--navy-900);font-family:'Cinzel',serif;letter-spacing:.02em}
 
 /* status badge pill update */
 #globalFbStatus[style*="background:var(--green-bg)"]{
@@ -1061,17 +1063,17 @@ img,table{max-width:100%}
 
 /* upload zone */
 .upload-zone{
-  border:2px dashed rgba(201,168,76,.25);
+  border:2px dashed rgba(13,27,62,.12);
   border-radius:20px;
   padding:3.5rem 2rem;
   text-align:center;
   cursor:pointer;
   transition:all .22s ease;
-  background:rgba(255,255,255,.03);
+  background:rgba(255,255,255,.75);
   backdrop-filter:blur(10px);
   margin-bottom:1.25rem;
 }
-.upload-zone:hover,.upload-zone.drag{border-color:var(--gold-500);background:rgba(201,168,76,.05)}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--navy-600);background:var(--navy-50)}
 .upload-icon{
   width:68px;height:68px;
   background:linear-gradient(135deg,var(--navy-50),#fff);
@@ -1125,6 +1127,109 @@ img,table{max-width:100%}
 .vd-empty-icon{font-size:40px;margin-bottom:12px}
 .vd-empty-text{font-size:14px;font-weight:600;color:var(--text2);margin-bottom:6px}
 .vd-empty-sub{font-size:13px}
+
+/* ── NAVY-GOLD READABILITY OVERRIDES ── */
+
+/* Topbar: ขาว เส้นทองด้านล่าง */
+.topbar{
+  background:#ffffff;
+  border-bottom:1px solid rgba(20,34,81,.08);
+  box-shadow:0 1px 0 var(--gold-200), 0 2px 12px rgba(13,27,62,.07);
+}
+.topbar::after{opacity:.6}
+.topbar-title{color:var(--navy-900)}
+.topbar-breadcrumb{background:var(--navy-50);color:var(--text3);border-color:var(--border)}
+.topbar-time{background:var(--gold-50);color:var(--navy-700);border-color:var(--gold-200)}
+
+/* Summary cards: พื้นขาว ตัวเลขเข้ม */
+.tsm-card{background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow)}
+.tsm-val{color:var(--navy-900);font-size:30px}
+.tsm-label{color:var(--text3)}
+
+/* Table: th navy เข้ม ตัวขาวชัด */
+th{
+  background:linear-gradient(180deg,var(--navy-700) 0%,var(--navy-900) 100%);
+  color:rgba(255,255,255,.9);
+  letter-spacing:.1em;
+}
+
+/* Table rows: พื้นขาว ตัวเข้ม */
+td{color:var(--text);border-bottom-color:rgba(20,34,81,.07)}
+tr:hover td{background:rgba(26,44,107,.04)}
+
+/* Table header bar */
+.table-header{
+  background:linear-gradient(135deg,var(--navy-50) 0%,#ffffff 100%);
+  border-bottom:2px solid var(--gold-200);
+}
+.table-header-title{color:var(--navy-900)}
+.table-count{background:var(--surface2);color:var(--text3);border-color:var(--border)}
+
+/* Table scroll area */
+.table-card{background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow)}
+
+/* Page titles */
+.page-head-title{
+  color:var(--navy-900);
+  background:var(--gold-grad);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.page-head-sub{color:var(--text3)}
+
+/* Toolbar inputs: ขาว อ่านง่าย */
+.search-wrap input,
+.transfer-search-wrap input{
+  background:var(--surface);
+  color:var(--text);
+  border-color:var(--border-strong);
+}
+.search-wrap input::placeholder,
+.transfer-search-wrap input::placeholder{color:var(--text3)}
+.search-wrap input:focus,
+.transfer-search-wrap input:focus{border-color:var(--navy-600);box-shadow:0 0 0 3px rgba(26,44,107,.1)}
+
+/* Form inputs */
+.form-input,.form-select,.form-textarea{
+  background:var(--surface);
+  color:var(--text);
+  border-color:var(--border-strong);
+}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--navy-600);box-shadow:0 0 0 3px rgba(26,44,107,.1)}
+.form-label{color:var(--navy-700)}
+
+/* Modal */
+.modal{box-shadow:0 24px 64px rgba(13,27,62,.22),0 0 0 1px rgba(13,27,62,.07)}
+.modal-head{background:linear-gradient(135deg,var(--navy-50),#fff);border-bottom:2px solid var(--gold-200)}
+.modal-title{color:var(--navy-900)}
+.modal-footer{background:var(--surface3)}
+.modal-close{background:var(--surface2);color:var(--text2)}
+
+/* Bento cards */
+.bento-card{background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow)}
+
+/* Buttons */
+.btn{background:var(--surface);color:var(--text);border-color:var(--border-strong)}
+.btn:hover{background:var(--surface2)}
+.btn-primary{
+  background:linear-gradient(135deg,var(--navy-700) 0%,var(--navy-900) 100%);
+  border-color:rgba(184,148,42,.4);
+  color:#fff;
+}
+.btn-primary:hover{background:linear-gradient(135deg,var(--navy-600) 0%,var(--navy-800) 100%)}
+
+/* Search icon & date range text */
+.search-icon,.transfer-search-icon{color:var(--text3)}
+
+/* Vendor cards */
+.vd-card{background:var(--surface)}
+
+/* td-amt green stays visible */
+.td-amt-tr{color:var(--green);font-weight:600}
+
+/* Amount values */
+#tsm-amount,#csm-amount,#psm-amount{color:var(--green)!important}
 </style>
 </head>
 <body>
@@ -1652,10 +1757,10 @@ function togglePw(btn){
           <div class="tsm-label">รายการทั้งหมด</div>
           <div class="tsm-val" id="tsm-total">0</div>
         </div>
-        <div class="tsm-card" style="border:1.5px solid rgba(201,168,76,.45);background:rgba(201,168,76,.08);position:relative;overflow:hidden">
-          <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--gold-500)"></div>
-          <div class="tsm-label" style="color:var(--gold-400)">📅 โอนวันนี้</div>
-          <div class="tsm-val" id="tsm-today" style="color:var(--gold-300)">0</div>
+        <div class="tsm-card" style="background:linear-gradient(135deg,var(--navy-800) 0%,var(--navy-900) 100%);border:1.5px solid rgba(184,148,42,.4);position:relative;overflow:hidden">
+          <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#B8942A,#D4B860,#B8942A)"></div>
+          <div class="tsm-label" style="color:rgba(212,184,96,.8)">📅 โอนวันนี้</div>
+          <div class="tsm-val" id="tsm-today" style="color:#E8D090;font-size:32px">0</div>
         </div>
         <div class="tsm-card">
           <div class="tsm-label">ยอดโอนรวม (บาท)</div>
@@ -1726,10 +1831,10 @@ function togglePw(btn){
           <div class="tsm-label">รายการทั้งหมด</div>
           <div class="tsm-val" id="csm-total">0</div>
         </div>
-        <div class="tsm-card" style="border:1.5px solid rgba(201,168,76,.45);background:rgba(201,168,76,.08);position:relative;overflow:hidden">
-          <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--gold-500)"></div>
-          <div class="tsm-label" style="color:var(--gold-400)">📅 PO เปิดวันนี้</div>
-          <div class="tsm-val" id="csm-today" style="color:var(--gold-300)">0</div>
+        <div class="tsm-card" style="background:linear-gradient(135deg,var(--navy-800) 0%,var(--navy-900) 100%);border:1.5px solid rgba(184,148,42,.4);position:relative;overflow:hidden">
+          <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#B8942A,#D4B860,#B8942A)"></div>
+          <div class="tsm-label" style="color:rgba(212,184,96,.8)">📅 PO เปิดวันนี้</div>
+          <div class="tsm-val" id="csm-today" style="color:#E8D090;font-size:32px">0</div>
         </div>
         <div class="tsm-card">
           <div class="tsm-label">ราคารวมทั้งหมด (บาท)</div>
@@ -2064,10 +2169,10 @@ function togglePw(btn){
         <div class="tsm-label" style="color:var(--amber-text)">↩️ คืนสินค้า</div>
         <div class="tsm-val" id="ism-return" style="color:var(--amber)">0</div>
       </div>
-      <div class="tsm-card" style="border:1.5px solid rgba(201,168,76,.45);background:rgba(201,168,76,.08);position:relative;overflow:hidden">
-        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--gold-500)"></div>
-        <div class="tsm-label" style="color:var(--gold-400)">📅 วันนี้</div>
-        <div class="tsm-val" id="ism-today" style="color:var(--gold-300)">0</div>
+      <div class="tsm-card" style="background:linear-gradient(135deg,var(--navy-800) 0%,var(--navy-900) 100%);border:1.5px solid rgba(184,148,42,.4);position:relative;overflow:hidden">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#B8942A,#D4B860,#B8942A)"></div>
+        <div class="tsm-label" style="color:rgba(212,184,96,.8)">📅 วันนี้</div>
+        <div class="tsm-val" id="ism-today" style="color:#E8D090;font-size:32px">0</div>
       </div>
       <div class="tsm-card">
         <div class="tsm-label">โครงการ</div>
@@ -5176,10 +5281,10 @@ function _pomanPageHTML(){
         <div class="tsm-label" style="color:var(--red-text)">🚫 ยกเลิก</div>
         <div class="tsm-val" id="psm-cancel" style="color:var(--red)">0</div>
       </div>
-      <div class="tsm-card" style="border:1.5px solid rgba(201,168,76,.45);background:rgba(201,168,76,.08);position:relative;overflow:hidden">
-        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--gold-500)"></div>
-        <div class="tsm-label" style="color:var(--gold-400)">📅 วันนี้</div>
-        <div class="tsm-val" id="psm-today" style="color:var(--gold-300)">0</div>
+      <div class="tsm-card" style="background:linear-gradient(135deg,var(--navy-800) 0%,var(--navy-900) 100%);border:1.5px solid rgba(184,148,42,.4);position:relative;overflow:hidden">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#B8942A,#D4B860,#B8942A)"></div>
+        <div class="tsm-label" style="color:rgba(212,184,96,.8)">📅 วันนี้</div>
+        <div class="tsm-val" id="psm-today" style="color:#E8D090;font-size:32px">0</div>
       </div>
       <div class="tsm-card">
         <div class="tsm-label">มูลค่ารวม (บาท)</div>
