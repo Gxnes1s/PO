@@ -508,9 +508,10 @@ td{padding:12px 15px;border-bottom:1px solid rgba(13,27,62,.06);color:var(--text
 td:first-child{ padding-left:20px }
 tr:last-child td{border-bottom:none}
 tr:hover td{background:rgba(26,52,128,.04);transition:.15s}
-tr.row-cancel td{color:var(--text3);background:rgba(250,234,234,.35)}
-tr.row-cancel:hover td{background:rgba(250,234,234,.6)}
-tr.row-cancel .td-po{color:var(--red-text)!important}
+tr.row-cancel td{color:var(--red-text)!important;background:rgba(220,50,50,.09)!important;border-bottom:1px solid rgba(220,50,50,.15)!important}
+tr.row-cancel td:first-child{border-left:3px solid var(--red)!important;padding-left:17px!important}
+tr.row-cancel:hover td{background:rgba(220,50,50,.15)!important}
+tr.row-cancel .td-po{color:var(--red-text)!important;font-weight:700}
 .td-po{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;color:var(--navy-700)}
 .td-vendor{font-weight:500;max-width:200px;overflow:hidden;text-overflow:ellipsis}
 .td-muted{color:var(--text2)}
@@ -658,8 +659,8 @@ tr.row-cancel .td-po{color:var(--red-text)!important}
   transition:transform .18s,box-shadow .18s;
 }
 .tsm-card:hover{transform:translateY(-1px);box-shadow:var(--shadow-md)}
-.tsm-label{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);font-weight:700;margin-bottom:6px}
-.tsm-val{font-size:clamp(18px,4vw,28px);font-weight:700;font-family:'IBM Plex Mono',monospace;letter-spacing:-.03em;line-height:1.1;word-break:break-all}
+.tsm-label{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);font-weight:700;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tsm-val{font-size:clamp(14px,3.5vw,26px);font-weight:700;font-family:'IBM Plex Mono',monospace;letter-spacing:-.03em;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* Modal */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(5,10,25,.55);z-index:600;backdrop-filter:blur(6px);align-items:center;justify-content:center}
@@ -1131,7 +1132,7 @@ body{overflow-x:hidden}
 
 /* Summary cards: พื้นขาว ตัวเลขเข้ม */
 .tsm-card{background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow)}
-.tsm-val{color:var(--navy-900);font-size:30px}
+.tsm-val{color:var(--navy-900)}
 .tsm-label{color:var(--text3)}
 
 /* Table: th navy เข้ม ตัวขาวชัด */
@@ -1748,7 +1749,7 @@ function togglePw(btn){
         <div class="tsm-card" style="background:linear-gradient(135deg,var(--navy-800) 0%,var(--navy-900) 100%);border:1.5px solid rgba(184,148,42,.4);position:relative;overflow:hidden">
           <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#B8942A,#D4B860,#B8942A)"></div>
           <div class="tsm-label" style="color:rgba(212,184,96,.8)">📅 โอนวันนี้</div>
-          <div class="tsm-val" id="tsm-today" style="color:#E8D090;font-size:32px">0</div>
+          <div class="tsm-val" id="tsm-today" style="color:#E8D090">0</div>
         </div>
         <div class="tsm-card">
           <div class="tsm-label">ยอดโอนรวม (บาท)</div>
@@ -1822,7 +1823,7 @@ function togglePw(btn){
         <div class="tsm-card" style="background:linear-gradient(135deg,var(--navy-800) 0%,var(--navy-900) 100%);border:1.5px solid rgba(184,148,42,.4);position:relative;overflow:hidden">
           <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#B8942A,#D4B860,#B8942A)"></div>
           <div class="tsm-label" style="color:rgba(212,184,96,.8)">📅 PO เปิดวันนี้</div>
-          <div class="tsm-val" id="csm-today" style="color:#E8D090;font-size:32px">0</div>
+          <div class="tsm-val" id="csm-today" style="color:#E8D090">0</div>
         </div>
         <div class="tsm-card">
           <div class="tsm-label">ราคารวมทั้งหมด (บาท)</div>
@@ -2160,7 +2161,7 @@ function togglePw(btn){
       <div class="tsm-card" style="background:linear-gradient(135deg,var(--navy-800) 0%,var(--navy-900) 100%);border:1.5px solid rgba(184,148,42,.4);position:relative;overflow:hidden">
         <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#B8942A,#D4B860,#B8942A)"></div>
         <div class="tsm-label" style="color:rgba(212,184,96,.8)">📅 วันนี้</div>
-        <div class="tsm-val" id="ism-today" style="color:#E8D090;font-size:32px">0</div>
+        <div class="tsm-val" id="ism-today" style="color:#E8D090">0</div>
       </div>
       <div class="tsm-card">
         <div class="tsm-label">โครงการ</div>
@@ -5048,9 +5049,11 @@ function renderPOManTable(){
     const fid = p._fid||p.id;
     const dt = _parseAnyDateToLocal(p.date);
     const todayRow = dt && _isSameDay(dt, _today);
+    const isCancel = (p.status||'open') === 'cancelled';
     const dateDisp = p.date || '—';
     const price = (parseFloat(p.price)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
-    return `<tr${todayRow?' class="row-today"':''}>
+    const trClass = isCancel ? 'row-cancel' : (todayRow ? 'row-today' : '');
+    return `<tr${trClass?' class="'+trClass+'"':''}>
       <td class="td-date">${esc(dateDisp)}${todayRow?'<span class="today-badge-inline">วันนี้</span>':''}</td>
       <td class="td-muted">${esc(p.pr||'—')}</td>
       <td class="td-po">${esc(p.po||'—')}</td>
@@ -5272,7 +5275,7 @@ function _pomanPageHTML(){
       <div class="tsm-card" style="background:linear-gradient(135deg,var(--navy-800) 0%,var(--navy-900) 100%);border:1.5px solid rgba(184,148,42,.4);position:relative;overflow:hidden">
         <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#B8942A,#D4B860,#B8942A)"></div>
         <div class="tsm-label" style="color:rgba(212,184,96,.8)">📅 วันนี้</div>
-        <div class="tsm-val" id="psm-today" style="color:#E8D090;font-size:32px">0</div>
+        <div class="tsm-val" id="psm-today" style="color:#E8D090">0</div>
       </div>
       <div class="tsm-card">
         <div class="tsm-label">มูลค่ารวม (บาท)</div>
