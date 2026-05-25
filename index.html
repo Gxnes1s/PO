@@ -28,7 +28,7 @@ window._db = db;
 window._auth = auth;
 window._authLib = { signInWithEmailAndPassword, signOut, onAuthStateChanged };
 window._fsLib = { collection, getDocs, addDoc, updateDoc, deleteDoc, setDoc, doc, getDoc, query, orderBy, onSnapshot };
-window._firebaseReady = true;
+window._firebaseReady = true; console.log('Firebase Ready');
 window.dispatchEvent(new Event('firebase-ready'));
 </script>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet">
@@ -3769,64 +3769,23 @@ function setConcreteFbStatus(s){
 }
 
 function subscribeConcretes(){
-  if(!window._firebaseReady){
-    setConcreteFbStatus('offline');
-    try{ _concreteCache = JSON.parse(localStorage.getItem('concrete_data')||'[]'); }catch(e){}
-    _rebuildConcreteSorted(); renderConcreteSummary(); renderConcreteTable();
-    return;
-  }
-
+  if(!window._firebaseReady){ window.addEventListener('firebase-ready', subscribeConcretes, {once:true}); return; }
   if(_concreteUnsubscribe) _concreteUnsubscribe();
-
   setConcreteFbStatus('connecting');
-
   const { onSnapshot, query, orderBy } = window._fsLib;
   const q = query(_fsConcreteCol(), orderBy('_ts','desc'));
-
-  let connected = false;
-
-  const timeout = setTimeout(()=>{
-    if(!connected){
-      console.warn('Concrete Firestore timeout -> fallback localStorage');
-      setConcreteFbStatus('offline');
-      try{ _concreteCache = JSON.parse(localStorage.getItem('concrete_data')||'[]'); }catch(e){}
-      _rebuildConcreteSorted();
-      renderConcreteSummary();
-      renderConcreteTable();
-    }
-  }, 6000);
-
   _concreteUnsubscribe = onSnapshot(q, snap => {
-    connected = true;
-    clearTimeout(timeout);
-
     _concreteCache = snap.docs.map(d => ({...d.data(), _fid: d.id}));
-
-    try{
-      localStorage.setItem('concrete_data', JSON.stringify(_concreteCache));
-    }catch(e){}
-
     setConcreteFbStatus('online');
-
     if(document.getElementById('page-concrete').classList.contains('active')){
       renderConcreteSummary();
       renderConcreteTable();
     }
   }, err => {
-    clearTimeout(timeout);
     console.warn('Firestore concrete error:', err);
-
     setConcreteFbStatus('offline');
-
-    try{
-      _concreteCache = JSON.parse(localStorage.getItem('concrete_data')||'[]');
-    }catch(e){
-      _concreteCache = [];
-    }
-
-    _rebuildConcreteSorted();
-    renderConcreteSummary();
-    renderConcreteTable();
+    try{ _concreteCache = JSON.parse(localStorage.getItem('concrete_data')||'[]'); }catch(e){}
+    _rebuildConcreteSorted(); renderConcreteSummary(); renderConcreteTable();
   });
 }
 
