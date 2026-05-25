@@ -1833,10 +1833,6 @@ function togglePw(btn){
           <div class="tsm-label">ปริมาณ (คิว)</div>
           <div class="tsm-val" id="csm-vol">0</div>
         </div>
-        <div class="tsm-card">
-          <div class="tsm-label">จำนวนร้าน</div>
-          <div class="tsm-val" id="csm-shops">0</div>
-        </div>
       </div>
 
       <!-- Toolbar -->
@@ -4210,13 +4206,15 @@ function renderConcreteTable(){
   tbody.innerHTML = show.map(c=>{
     const fid = c._fid||c.id;
     const today = isToday(c.date);
+    const isCancel = /ยกเลิก|cancel/i.test(c.note||'');
     const vol   = (parseFloat(c.vol)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
     const unitP = (parseFloat(c.unitPrice)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
     const totalP= (parseFloat(c.totalPrice)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
     const dateCell = today
       ? `<td class="td-date">${esc(c.date||'—')}<span class="today-badge-inline">วันนี้</span></td>`
       : `<td class="td-date">${esc(c.date||'—')}</td>`;
-    return `<tr${today?' class="row-today"':''}>
+    const trClass = isCancel ? 'row-cancel' : (today ? 'row-today' : '');
+    return `<tr${trClass?' class="'+trClass+'"':''}>
       ${dateCell}
       <td class="td-transfer-no">${esc(c.st||'—')}</td>
       <td style="font-family:'IBM Plex Mono',monospace;font-size:12.5px">${vol}</td>
