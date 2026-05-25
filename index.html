@@ -1420,6 +1420,13 @@ tr:hover td{background:rgba(26,44,107,.04)}
 </div>
 <script>
 
+function setTextSafe(id, value){
+  const el = document.getElementById(id);
+  if(el) el.textContent = value;
+}
+
+
+
 
 async function loadCloudExcel(){
   const urlInput = document.getElementById('cloudExcelUrl');
@@ -2506,10 +2513,10 @@ function applyTheme(){
   root.style.setProperty('--acc-text',t.accText);
   root.style.setProperty('--nav-bg',t.navBg);
   document.getElementById('sidebar').style.background=t.navBg;
-  document.getElementById('topbarTitle').textContent='PO — '+t.name;
-  document.getElementById('storeLbl').textContent='📍 '+t.name;
-  document.getElementById('tableTitle').textContent='รายการ PO — '+t.name;
-  document.getElementById('pageHeadSub').textContent='สรุปภาพรวม Purchase Order — '+t.name;
+  setTextSafe('topbarTitle', 'PO — '+t.name);
+  setTextSafe('storeLbl', '📍 '+t.name);
+  setTextSafe('tableTitle', 'รายการ PO — '+t.name);
+  setTextSafe('pageHeadSub', 'สรุปภาพรวม Purchase Order — '+t.name);
   // update store pills
   document.querySelectorAll('.store-pill').forEach((p,i)=>{
     p.classList.toggle('on',i===curStore);
@@ -2550,7 +2557,7 @@ function switchStore(idx){
   document.getElementById('mainSection').style.display=has?'block':'none';
   document.getElementById('resetBtn').classList.toggle('show',has);
   if(has){ showInfoLoaded(); renderAll(); }
-  else document.getElementById('topbarTime').textContent='—';
+  else setTextSafe('topbarTime', '—');
   // refresh active page
   if(currentPage==='transfers') openPage('concrete');
   else if(currentPage!=='dashboard') refreshPageContent(currentPage);
@@ -2571,9 +2578,9 @@ function openPage(page){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const nav=document.querySelector(`.sidebar [data-page="${page}"]`);
   if(nav) nav.classList.add('active');
-  document.getElementById('topbarBreadcrumb').textContent='/ '+{
+  setTextSafe('topbarBreadcrumb', '/ '+{
     concrete:'คอนกรีต', transfers:'รายการโอน', issue:'ใบออก', po:'PO', settings:'ตั้งค่า'
-  }[page]||page;
+  }[page]||page);
   // scroll to top on mobile
   window.scrollTo({top:0,behavior:'smooth'});
   refreshPageContent(page);
@@ -2823,7 +2830,7 @@ function renderFilters(){
 /* ─── RENDER TABLE ─── */
 function renderTable(){
   const s=S(),data=getFiltered();
-  document.getElementById('tableCount').textContent=`${data.length.toLocaleString()} รายการ`;
+  setTextSafe('tableCount', `${data.length.toLocaleString()} รายการ`);
   const tbody=document.getElementById('tbody');
   const nodata=document.getElementById('nodata');
   if(!data.length){ tbody.innerHTML=''; nodata.style.display='block'; return; }
@@ -2859,7 +2866,7 @@ let editingPOIndex = -1;
 
 function openPOModal(){
   editingPOIndex = -1;
-  document.getElementById('poModalTitle').textContent = 'เพิ่ม PO';
+  setTextSafe('poModalTitle', 'เพิ่ม PO');
   ['po-po','po-vendor','po-date','po-amount','po-job'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('po-status').value='confirm';
   document.getElementById('poModal').classList.add('open');
@@ -2874,7 +2881,7 @@ function editPO(idx){
   const row = s.rows[idx];
   editingPOIndex = idx;
 
-  document.getElementById('poModalTitle').textContent = 'แก้ไข PO';
+  setTextSafe('poModalTitle', 'แก้ไข PO');
   document.getElementById('po-po').value = row[s.colMap.po] || '';
   document.getElementById('po-vendor').value = row[s.colMap.vendor] || '';
   document.getElementById('po-date').value = row[s.colMap.date] || '';
@@ -3070,8 +3077,8 @@ async function saveVendorDB(){
 
 function openAddVendorModal(){
   _vendorEditId = null;
-  document.getElementById('vendorModalTitle').textContent = 'เพิ่ม Vendor ใหม่';
-  document.getElementById('vm-save-btn').textContent = 'เพิ่ม Vendor';
+  setTextSafe('vendorModalTitle', 'เพิ่ม Vendor ใหม่');
+  setTextSafe('vm-save-btn', 'เพิ่ม Vendor');
   ['vm-name','vm-code','vm-phone','vm-taxid','vm-address','vm-note'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.value='';
   });
@@ -3081,8 +3088,8 @@ function openAddVendorModal(){
 function openEditVendorModal(id){
   const vd = vendorDB.find(v=>v.id===id); if(!vd) return;
   _vendorEditId = id;
-  document.getElementById('vendorModalTitle').textContent = 'แก้ไข Vendor';
-  document.getElementById('vm-save-btn').textContent = 'บันทึกการแก้ไข';
+  setTextSafe('vendorModalTitle', 'แก้ไข Vendor');
+  setTextSafe('vm-save-btn', 'บันทึกการแก้ไข');
   document.getElementById('vm-name').value = vd.name||'';
   document.getElementById('vm-code').value = vd.code||'';
   document.getElementById('vm-phone').value = vd.phone||'';
@@ -3476,9 +3483,9 @@ function showInfoMerge(){
     `รวม <b>${s.rows.length.toLocaleString()} PO</b>${s.colMap.job?' · Job: '+s.colMap.job:''} · ${now.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})} น.`+
     updatesDetail;
   const ts=now.toLocaleDateString('th-TH',{day:'numeric',month:'short'})+' '+now.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
-  document.getElementById('topbarTime').textContent=ts;
-  document.getElementById('lastUpdateSide').textContent='อัปเดต: '+ts;
-  document.getElementById('colMapInfo').textContent=`PO:${s.colMap.po||'—'} · Job:${s.colMap.job||'ไม่พบ'} · Status:${s.colMap.status||'—'}`;
+  setTextSafe('topbarTime', ts);
+  setTextSafe('lastUpdateSide', 'อัปเดต: '+ts);
+  setTextSafe('colMapInfo', `PO:${s.colMap.po||'—'} · Job:${s.colMap.job||'ไม่พบ'} · Status:${s.colMap.status||'—'}`);
 }
 function showInfoLoaded(){
   const s=S();
@@ -3489,9 +3496,9 @@ function showInfoLoaded(){
       `โหลดจากหน่วยความจำ — <b>${s.rows.length.toLocaleString()} PO</b> · `+
       `บันทึกล่าสุด ${at.toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'})} ${at.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})} น.`;
     const ts=at.toLocaleDateString('th-TH',{day:'numeric',month:'short'})+' '+at.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
-    document.getElementById('topbarTime').textContent=ts;
-    document.getElementById('lastUpdateSide').textContent='อัปเดต: '+ts;
-    document.getElementById('colMapInfo').textContent=`PO:${s.colMap.po||'—'} · Job:${s.colMap.job||'ไม่พบ'} · Status:${s.colMap.status||'—'}`;
+    setTextSafe('topbarTime', ts);
+    setTextSafe('lastUpdateSide', 'อัปเดต: '+ts);
+    setTextSafe('colMapInfo', `PO:${s.colMap.po||'—'} · Job:${s.colMap.job||'ไม่พบ'} · Status:${s.colMap.status||'—'}`);
   }catch(e){}
 }
 
@@ -3522,7 +3529,7 @@ function processFiles(files){
 }
 async function afterLoad(){
   const pr=document.getElementById('processingBadge');
-  document.getElementById('processingText').textContent='กำลังวิเคราะห์...';
+  setTextSafe('processingText', 'กำลังวิเคราะห์...');
   const s=S();
   const firstWb=workbooks[0].wb;
   const sample=XLSX.utils.sheet_to_json(firstWb.Sheets[firstWb.SheetNames[0]],{defval:'',raw:false});
@@ -3530,7 +3537,7 @@ async function afterLoad(){
   s.hdrs=Object.keys(sample[0]); guessColumns(s.hdrs);
   const inc=workbooks.flatMap(({wb})=>wb.SheetNames.flatMap(sn=>XLSX.utils.sheet_to_json(wb.Sheets[sn],{defval:'',raw:false})));
   mergeData(inc.map(r=>({...r,_status:r[s.colMap.status]||'',_ts:Date.now()})));
-  document.getElementById('processingText').textContent='กำลังบันทึกข้อมูลกลาง...';
+  setTextSafe('processingText', 'กำลังบันทึกข้อมูลกลาง...');
   await saveStore();
   pr.classList.remove('show');
   document.getElementById('uploadZone').style.display='none';
@@ -3548,7 +3555,7 @@ async function resetAll(){
   document.getElementById('uploadZone').style.display='block';
   document.getElementById('mainSection').style.display='none';
   document.getElementById('resetBtn').classList.remove('show');
-  document.getElementById('topbarTime').textContent='—';
+  setTextSafe('topbarTime', '—');
   document.getElementById('fileInput').value='';
   if(S().rows.length){ document.getElementById('mainSection').style.display='block'; renderAll(); }
 }
@@ -3558,7 +3565,7 @@ async function clearAll(){
   document.getElementById('mainSection').style.display='none';
   document.getElementById('uploadZone').style.display='block';
   document.getElementById('resetBtn').classList.remove('show');
-  document.getElementById('topbarTime').textContent='—';
+  setTextSafe('topbarTime', '—');
 }
 
 /* ─── TRANSFERS (Firestore) ─── */
@@ -3597,7 +3604,7 @@ function loadTransfers(){ return _transfersCache; }
 function openTransferModal(fid){
   transferEditId = fid||null;
   const modal = document.getElementById('transferModal');
-  document.getElementById('transferModalTitle').textContent = fid ? '✏️ แก้ไขรายการโอน' : '＋ เพิ่มรายการโอน';
+  setTextSafe('transferModalTitle', fid ? '✏️ แก้ไขรายการโอน' : '＋ เพิ่มรายการโอน');
   if(fid){
     const t = _transfersCache.find(x=>x._fid===fid);
     if(t){
@@ -3692,11 +3699,11 @@ function renderTransferSummary(){
     const dt = _parseAnyDateToLocal(t.date);
     return dt && _isSameDay(dt, today);
   }).length;
-  document.getElementById('tsm-total').textContent = total.toLocaleString();
+  setTextSafe('tsm-total', total.toLocaleString());
   const todayEl = document.getElementById('tsm-today');
   if(todayEl) todayEl.textContent = todayCount.toLocaleString();
-  document.getElementById('tsm-amount').textContent = '฿'+amount.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
-  document.getElementById('tsm-shops').textContent = shops;
+  setTextSafe('tsm-amount', '฿'+amount.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2}));
+  setTextSafe('tsm-shops', shops);
 }
 
 function renderTransferTable(){
@@ -3724,7 +3731,7 @@ function renderTransferTable(){
   });
   const tbody = document.getElementById('transferTbody');
   const nodata = document.getElementById('transferNodata');
-  document.getElementById('transferTableCount').textContent = filtered.length.toLocaleString()+' รายการ';
+  setTextSafe('transferTableCount', filtered.length.toLocaleString()+' รายการ');
   if(!filtered.length){ tbody.innerHTML=''; nodata.style.display='block'; return; }
   nodata.style.display='none';
   const today = new Date();
@@ -3799,7 +3806,7 @@ function calcConcreteTotal(){
 
 function openConcreteModal(fid){
   concreteEditId = fid||null;
-  document.getElementById('concreteModalTitle').textContent = fid ? '✏️ แก้ไขรายการคอนกรีต' : '＋ เพิ่มรายการคอนกรีต';
+  setTextSafe('concreteModalTitle', fid ? '✏️ แก้ไขรายการคอนกรีต' : '＋ เพิ่มรายการคอนกรีต');
   if(fid){
     const c = _concreteCache.find(x=>x._fid===fid);
     if(c){
@@ -4078,12 +4085,12 @@ function renderConcreteSummary(){
     return dt && _isSameDay(dt, today);
   }).length;
 
-  document.getElementById('csm-total').textContent = total.toLocaleString();
+  setTextSafe('csm-total', total.toLocaleString());
   const todayEl = document.getElementById('csm-today');
   if(todayEl) todayEl.textContent = todayCount.toLocaleString();
-  document.getElementById('csm-amount').textContent = '฿'+amount.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
-  document.getElementById('csm-vol').textContent = vol.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
-  document.getElementById('csm-shops').textContent = shops;
+  setTextSafe('csm-amount', '฿'+amount.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2}));
+  setTextSafe('csm-vol', vol.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2}));
+  setTextSafe('csm-shops', shops);
 }
 
 // แปลงวันที่จากทุกรูปแบบ → d/m/yy (พ.ศ. ย่อ) เช่น 4/5/69
@@ -4189,7 +4196,7 @@ function renderConcreteTable(){
   });
   const tbody = document.getElementById('concreteTbody');
   const nodata = document.getElementById('concreteNodata');
-  document.getElementById('concreteTableCount').textContent = filtered.length.toLocaleString()+' รายการ';
+  setTextSafe('concreteTableCount', filtered.length.toLocaleString()+' รายการ');
   if(!filtered.length){ tbody.innerHTML=''; nodata.style.display='block'; return; }
   nodata.style.display='none';
 
@@ -4499,11 +4506,11 @@ function renderIssueSummary(){
     const d = new Date(ts);
     return d.getFullYear()===today.getFullYear()&&d.getMonth()===today.getMonth()&&d.getDate()===today.getDate();
   }).length;
-  document.getElementById('ism-total').textContent = total.toLocaleString();
-  document.getElementById('ism-order').textContent = orderCount.toLocaleString();
-  document.getElementById('ism-return').textContent = returnCount.toLocaleString();
-  document.getElementById('ism-today').textContent = todayCount.toLocaleString();
-  document.getElementById('ism-proj').textContent = projs.toLocaleString();
+  setTextSafe('ism-total', total.toLocaleString());
+  setTextSafe('ism-order', orderCount.toLocaleString());
+  setTextSafe('ism-return', returnCount.toLocaleString());
+  setTextSafe('ism-today', todayCount.toLocaleString());
+  setTextSafe('ism-proj', projs.toLocaleString());
 }
 
 function renderIssueTable(){
@@ -4538,7 +4545,7 @@ function renderIssueTable(){
   }
   const tbody = document.getElementById('issueTbody');
   const nodata = document.getElementById('issueNodata');
-  document.getElementById('issueTableCount').textContent = arr.length.toLocaleString()+' รายการ';
+  setTextSafe('issueTableCount', arr.length.toLocaleString()+' รายการ');
   if(!arr.length){ tbody.innerHTML=''; nodata.style.display='block'; return; }
   nodata.style.display='none';
   const today = new Date();
@@ -4686,7 +4693,7 @@ function openIssueModal(fid){
   issueEditId = fid||null;
   _issueImgPending = [];
   _issueLines = [];
-  document.getElementById('issueModalTitle').textContent = fid ? '✏️ แก้ไขใบออก' : '＋ เพิ่มใบออก';
+  setTextSafe('issueModalTitle', fid ? '✏️ แก้ไขใบออก' : '＋ เพิ่มใบออก');
   if(fid){
     const t = _issueCache.find(x=>x._fid===fid);
     if(t){
@@ -5073,7 +5080,7 @@ function renderPOManTable(){
 
 function openPOManModal(fid){
   pomanEditId = fid||null;
-  document.getElementById('pomanModalTitle').textContent = fid ? '✏️ แก้ไข PO' : '＋ เพิ่ม PO';
+  setTextSafe('pomanModalTitle', fid ? '✏️ แก้ไข PO' : '＋ เพิ่ม PO');
   if(fid){
     const p = _pomanCache.find(x=>x._fid===fid);
     if(p){
