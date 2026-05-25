@@ -836,28 +836,33 @@ tr.row-cancel .td-po{color:var(--red-text)!important}
 
 /* ── TODAY ROW + BADGE ── */
 tr.row-today td {
-  background:linear-gradient(90deg,rgba(255,160,0,.13),rgba(255,160,0,.06)) !important;
-  border-top:2px solid rgba(255,140,0,.35) !important;
-  border-bottom:2px solid rgba(255,140,0,.35) !important;
+  background:#FFF3CD !important;
+  border-top:2px solid #FFB300 !important;
+  border-bottom:2px solid #FFB300 !important;
 }
 tr.row-today:hover td {
-  background:rgba(255,140,0,.2) !important;
+  background:#FFE082 !important;
 }
 tr.row-today .td-date {
   color:#7A3200 !important;
   font-weight:800 !important;
 }
 .today-badge-inline {
-  display:inline-flex;align-items:center;
-  font-size:10px;font-weight:900;padding:2px 9px;
-  border-radius:99px;
-  background:linear-gradient(135deg,#FF6B00,#FFB800);
-  color:#fff;
-  border:none;
-  vertical-align:middle;margin-left:6px;white-space:nowrap;
-  box-shadow:0 2px 8px rgba(255,107,0,.5);
-  letter-spacing:.05em;
-  text-shadow:0 1px 2px rgba(0,0,0,.2);
+  display:inline-flex !important;
+  align-items:center !important;
+  font-size:10px !important;
+  font-weight:900 !important;
+  padding:3px 10px !important;
+  border-radius:99px !important;
+  background:linear-gradient(135deg,#FF6B00,#FFB800) !important;
+  color:#fff !important;
+  border:none !important;
+  vertical-align:middle !important;
+  margin-left:6px !important;
+  white-space:nowrap !important;
+  box-shadow:0 2px 8px rgba(255,107,0,.5) !important;
+  letter-spacing:.05em !important;
+  text-shadow:0 1px 2px rgba(0,0,0,.25) !important;
 }
 
 /* ── Extra gold refinements ── */
@@ -1704,9 +1709,9 @@ function togglePw(btn){
           <div class="tsm-label">รายการทั้งหมด</div>
           <div class="tsm-val" id="tsm-total">0</div>
         </div>
-        <div class="tsm-card tsm-today-card">
-          <div class="tsm-label tsm-today-label">🔥 โอนวันนี้</div>
-          <div class="tsm-val tsm-today-val" id="tsm-today">0</div>
+        <div class="tsm-card tsm-today-card" style="background:linear-gradient(135deg,#FF6B00,#FFB800)!important;border:2px solid #FFD000!important;box-shadow:0 8px 28px rgba(255,107,0,.5)!important">
+          <div class="tsm-label tsm-today-label" style="color:#7A3200!important;font-weight:900!important">🔥 โอนวันนี้</div>
+          <div class="tsm-val tsm-today-val" id="tsm-today" style="color:#1A0A00!important;font-size:38px!important;font-weight:900!important">0</div>
         </div>
         <div class="tsm-card">
           <div class="tsm-label">ยอดโอนรวม (บาท)</div>
@@ -1777,9 +1782,9 @@ function togglePw(btn){
           <div class="tsm-label">รายการทั้งหมด</div>
           <div class="tsm-val" id="csm-total">0</div>
         </div>
-        <div class="tsm-card tsm-today-card">
-          <div class="tsm-label tsm-today-label">🔥 PO เปิดวันนี้</div>
-          <div class="tsm-val tsm-today-val" id="csm-today">0</div>
+        <div class="tsm-card tsm-today-card" style="background:linear-gradient(135deg,#FF6B00,#FFB800)!important;border:2px solid #FFD000!important;box-shadow:0 8px 28px rgba(255,107,0,.5)!important">
+          <div class="tsm-label tsm-today-label" style="color:#7A3200!important;font-weight:900!important">🔥 PO เปิดวันนี้</div>
+          <div class="tsm-val tsm-today-val" id="csm-today" style="color:#1A0A00!important;font-size:38px!important;font-weight:900!important">0</div>
         </div>
         <div class="tsm-card">
           <div class="tsm-label">ราคารวมทั้งหมด (บาท)</div>
@@ -5225,10 +5230,9 @@ function _pomanPageHTML(){
         <div class="tsm-label" style="color:var(--red-text)">🚫 ยกเลิก</div>
         <div class="tsm-val" id="psm-cancel" style="color:var(--red)">0</div>
       </div>
-      <div class="tsm-card tsm-today-card">
-        <div class="tsm-label tsm-today-label">🔥 PO เปิดวันนี้</div>
-        <div class="tsm-val tsm-today-val" id="psm-today">0</div>
-        <div style="position:absolute;bottom:-12px;right:-8px;font-size:48px;opacity:.12;line-height:1;pointer-events:none">📋</div>
+      <div class="tsm-card tsm-today-card" style="background:linear-gradient(135deg,#FF6B00,#FFB800)!important;border:2px solid #FFD000!important;box-shadow:0 8px 28px rgba(255,107,0,.5)!important">
+        <div class="tsm-label tsm-today-label" style="color:#7A3200!important;font-weight:900!important">🔥 PO เปิดวันนี้</div>
+        <div class="tsm-val tsm-today-val" id="psm-today" style="color:#1A0A00!important;font-size:38px!important;font-weight:900!important">0</div>
       </div>
       <div class="tsm-card">
         <div class="tsm-label">มูลค่ารวม (บาท)</div>
