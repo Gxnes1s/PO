@@ -1762,9 +1762,10 @@ function togglePw(btn){
           <div class="tsm-label">ยอดโอนรวม (บาท)</div>
           <div class="tsm-val" id="tsm-amount" style="color:var(--green)">฿0</div>
         </div>
-        <div class="tsm-card">
-          <div class="tsm-label">จำนวนร้านค้า</div>
-          <div class="tsm-val" id="tsm-shops">0</div>
+        <div class="tsm-card" style="background:linear-gradient(135deg,var(--navy-800) 0%,var(--navy-900) 100%);border:1.5px solid rgba(184,148,42,.4);position:relative;overflow:hidden">
+          <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#B8942A,#D4B860,#B8942A)"></div>
+          <div class="tsm-label" style="color:rgba(212,184,96,.8)">💰 ยอดเงินโอนวันนี้</div>
+          <div class="tsm-val" id="tsm-today-amount" style="color:#E8D090">฿0</div>
         </div>
       </div>
 
@@ -3693,17 +3694,19 @@ function renderTransferSummary(){
   const arr = _transfersCache;
   const total = arr.length;
   const amount = arr.reduce((s,t)=>s+(parseFloat(t.amount)||0),0);
-  const shops = new Set(arr.map(t=>t.shop).filter(Boolean)).size;
   const today = new Date();
-  const todayCount = arr.filter(t=>{
+  const todayFiltered = arr.filter(t=>{
     const dt = _parseAnyDateToLocal(t.date);
     return dt && _isSameDay(dt, today);
-  }).length;
+  });
+  const todayCount = todayFiltered.length;
+  const todayAmount = todayFiltered.reduce((s,t)=>s+(parseFloat(t.amount)||0),0);
   setTextSafe('tsm-total', total.toLocaleString());
   const todayEl = document.getElementById('tsm-today');
   if(todayEl) todayEl.textContent = todayCount.toLocaleString();
   setTextSafe('tsm-amount', '฿'+amount.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2}));
-  setTextSafe('tsm-shops', shops);
+  const todayAmountEl = document.getElementById('tsm-today-amount');
+  if(todayAmountEl) todayAmountEl.textContent = '฿'+todayAmount.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
 }
 
 function renderTransferTable(){
