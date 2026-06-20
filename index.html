@@ -3690,8 +3690,8 @@ function renderTransferPage(){
   subscribeTransfers();
 }
 
-function renderTransferSummary(){
-  const arr = _transfersCache;
+function renderTransferSummary(srcArr){
+  const arr = srcArr || _transfersCache;
   const total = arr.length;
   const amount = arr.reduce((s,t)=>s+(parseFloat(t.amount)||0),0);
   const today = new Date();
@@ -3735,6 +3735,7 @@ function renderTransferTable(){
   const tbody = document.getElementById('transferTbody');
   const nodata = document.getElementById('transferNodata');
   setTextSafe('transferTableCount', filtered.length.toLocaleString()+' รายการ');
+  renderTransferSummary(q || fromVal || toVal ? filtered : arr);
   if(!filtered.length){ tbody.innerHTML=''; nodata.style.display='block'; return; }
   nodata.style.display='none';
   const today = new Date();
@@ -4074,8 +4075,8 @@ function _isSameDay(dateA, dateB){
          dateA.getDate()===dateB.getDate();
 }
 
-function renderConcreteSummary(){
-  const arr = _concreteCache;
+function renderConcreteSummary(srcArr){
+  const arr = srcArr || _concreteCache;
   const total = arr.length;
   const amount = arr.reduce((s,c)=>s+(parseFloat(c.totalPrice)||0), 0);
   const vol = arr.reduce((s,c)=>s+(parseFloat(c.vol)||0), 0);
@@ -4200,6 +4201,7 @@ function renderConcreteTable(){
   const tbody = document.getElementById('concreteTbody');
   const nodata = document.getElementById('concreteNodata');
   setTextSafe('concreteTableCount', filtered.length.toLocaleString()+' รายการ');
+  renderConcreteSummary(q || fromVal || toVal ? filtered : _concreteSorted);
   if(!filtered.length){ tbody.innerHTML=''; nodata.style.display='block'; return; }
   nodata.style.display='none';
 
@@ -4495,8 +4497,8 @@ function renderIssuePage(){
   subscribeIssues();
 }
 
-function renderIssueSummary(){
-  const arr = _issueCache;
+function renderIssueSummary(srcArr){
+  const arr = srcArr || _issueCache;
   const total = arr.length;
   const projs = new Set(arr.map(t=>t.proj).filter(Boolean)).size;
   const orderCount = arr.filter(t=>(!t.type||t.type==='order')).length;
@@ -4549,6 +4551,7 @@ function renderIssueTable(){
   const tbody = document.getElementById('issueTbody');
   const nodata = document.getElementById('issueNodata');
   setTextSafe('issueTableCount', arr.length.toLocaleString()+' รายการ');
+  renderIssueSummary(q || fromVal || toVal ? arr : _issueCache);
   if(!arr.length){ tbody.innerHTML=''; nodata.style.display='block'; return; }
   nodata.style.display='none';
   const today = new Date();
@@ -4969,8 +4972,8 @@ function _pomanStatusBadge(status){
   return map[status] || map.open;
 }
 
-function renderPOManSummary(){
-  const arr = _pomanCache;
+function renderPOManSummary(srcArr){
+  const arr = srcArr || _pomanCache;
   const total = arr.length;
   const openCount = arr.filter(p=>(!p.status||p.status==='open')).length;
   const receivedCount = arr.filter(p=>p.status==='received').length;
@@ -5020,6 +5023,7 @@ function renderPOManTable(){
   const nodata = document.getElementById('pomanNodata');
   const countEl = document.getElementById('pomanTableCount');
   if(countEl) countEl.textContent = arr.length.toLocaleString()+' รายการ';
+  renderPOManSummary(q || fromVal || toVal || statusFilter!=='all' ? arr : _pomanCache);
   if(!tbody) return;
   if(!arr.length){ tbody.innerHTML=''; if(nodata) nodata.style.display='block'; return; }
   if(nodata) nodata.style.display='none';
