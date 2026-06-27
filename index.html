@@ -2162,6 +2162,10 @@ function togglePw(btn){
         <div class="tsm-label" style="color:var(--amber-text)">↩️ คืนสินค้า</div>
         <div class="tsm-val" id="ism-return" style="color:var(--amber)">0</div>
       </div>
+      <div class="tsm-card" style="border:1.5px solid var(--blue-light);background:var(--blue-bg)">
+        <div class="tsm-label" style="color:var(--blue-text)">📦 รับของ</div>
+        <div class="tsm-val" id="ism-receive" style="color:var(--blue)">0</div>
+      </div>
       <div class="tsm-card" style="background:linear-gradient(135deg,var(--navy-800) 0%,var(--navy-900) 100%);border:1.5px solid rgba(184,148,42,.4);position:relative;overflow:hidden">
         <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#B8942A,#D4B860,#B8942A)"></div>
         <div class="tsm-label" style="color:rgba(212,184,96,.8)">📅 วันนี้</div>
@@ -2256,8 +2260,8 @@ function togglePw(btn){
       <!-- Row 1b: ประเภทรายการ -->
       <div class="form-group" style="margin-bottom:10px">
         <label class="form-label">ประเภทรายการ</label>
-        <div style="display:flex;gap:8px;margin-top:4px">
-          <label id="is-type-order-lbl" style="flex:1;display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;border:2px solid var(--acc);background:var(--acc-bg);cursor:pointer;transition:all .15s;user-select:none">
+        <div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap">
+          <label id="is-type-order-lbl" style="flex:1 1 140px;min-width:140px;display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;border:2px solid var(--acc);background:var(--acc-bg);cursor:pointer;transition:all .15s;user-select:none">
             <input type="radio" name="is-type" id="is-type-order" value="order" checked style="display:none">
             <span style="width:18px;height:18px;border-radius:50%;border:2px solid var(--acc);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s" id="is-type-order-dot">
               <span style="width:9px;height:9px;border-radius:50%;background:var(--acc);display:block"></span>
@@ -2267,7 +2271,7 @@ function togglePw(btn){
               <div style="font-size:11px;color:var(--text3)">ออกใบเพื่อสั่งซื้อ</div>
             </div>
           </label>
-          <label id="is-type-return-lbl" style="flex:1;display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;border:2px solid var(--border-strong);background:var(--surface2);cursor:pointer;transition:all .15s;user-select:none">
+          <label id="is-type-return-lbl" style="flex:1 1 140px;min-width:140px;display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;border:2px solid var(--border-strong);background:var(--surface2);cursor:pointer;transition:all .15s;user-select:none">
             <input type="radio" name="is-type" id="is-type-return" value="return" style="display:none">
             <span style="width:18px;height:18px;border-radius:50%;border:2px solid var(--border-strong);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s" id="is-type-return-dot">
               <span style="width:9px;height:9px;border-radius:50%;background:transparent;display:block"></span>
@@ -2275,6 +2279,16 @@ function togglePw(btn){
             <div>
               <div style="font-size:13.5px;font-weight:700;color:var(--text2)">↩️ คืนสินค้า</div>
               <div style="font-size:11px;color:var(--text3)">ออกใบเพื่อคืนสินค้า</div>
+            </div>
+          </label>
+          <label id="is-type-receive-lbl" style="flex:1 1 140px;min-width:140px;display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;border:2px solid var(--border-strong);background:var(--surface2);cursor:pointer;transition:all .15s;user-select:none">
+            <input type="radio" name="is-type" id="is-type-receive" value="receive" style="display:none">
+            <span style="width:18px;height:18px;border-radius:50%;border:2px solid var(--border-strong);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s" id="is-type-receive-dot">
+              <span style="width:9px;height:9px;border-radius:50%;background:transparent;display:block"></span>
+            </span>
+            <div>
+              <div style="font-size:13.5px;font-weight:700;color:var(--text2)">📦 รับของ</div>
+              <div style="font-size:11px;color:var(--text3)">ออกใบเพื่อรับของ</div>
             </div>
           </label>
         </div>
@@ -4349,12 +4363,12 @@ document.addEventListener('DOMContentLoaded',function(){
   const pomanModal = document.getElementById('pomanModal');
   if(pomanModal) pomanModal.addEventListener('click',function(e){ if(e.target===this) closePOManModal(); });
   // Type radio toggle visual
-  ['is-type-order','is-type-return'].forEach(id=>{
+  ['is-type-order','is-type-return','is-type-receive'].forEach(id=>{
     const el = document.getElementById(id);
     if(el) el.addEventListener('change', function(){ if(this.checked) _setIssueType(this.value); });
   });
   // Also handle label click (since inputs are hidden)
-  ['is-type-order-lbl','is-type-return-lbl'].forEach(id=>{
+  ['is-type-order-lbl','is-type-return-lbl','is-type-receive-lbl'].forEach(id=>{
     const el = document.getElementById(id);
     if(el) el.addEventListener('click', function(){
       const inp = this.querySelector('input[type="radio"]');
@@ -4503,6 +4517,7 @@ function renderIssueSummary(srcArr){
   const projs = new Set(arr.map(t=>t.proj).filter(Boolean)).size;
   const orderCount = arr.filter(t=>(!t.type||t.type==='order')).length;
   const returnCount = arr.filter(t=>t.type==='return').length;
+  const receiveCount = arr.filter(t=>t.type==='receive').length;
   const today = new Date();
   const todayCount = arr.filter(t=>{
     if(!t.date) return false;
@@ -4514,6 +4529,7 @@ function renderIssueSummary(srcArr){
   setTextSafe('ism-total', total.toLocaleString());
   setTextSafe('ism-order', orderCount.toLocaleString());
   setTextSafe('ism-return', returnCount.toLocaleString());
+  setTextSafe('ism-receive', receiveCount.toLocaleString());
   setTextSafe('ism-today', todayCount.toLocaleString());
   setTextSafe('ism-proj', projs.toLocaleString());
 }
@@ -4575,6 +4591,8 @@ function renderIssueTable(){
       : '<span style="color:var(--text3);font-size:12px">—</span>';
     const typeBadge = (t.type==='return')
       ? `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:99px;font-size:11.5px;font-weight:700;background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber-light)">↩️ คืน</span>`
+      : (t.type==='receive')
+      ? `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:99px;font-size:11.5px;font-weight:700;background:var(--blue-bg);color:var(--blue-text);border:1px solid var(--blue-light)">📦 รับของ</span>`
       : `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:99px;font-size:11.5px;font-weight:700;background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-light)">🛒 สั่งซื้อ</span>`;
     // Build lines display — support both old (item/qty/unit) and new (lines[]) format
     const lines = t.lines && t.lines.length ? t.lines : (t.item ? [{item:t.item, qty:t.qty, unit:t.unit}] : []);
@@ -4625,28 +4643,31 @@ function handleIssueImgFiles(files){
 function handleIssueImgDrop(files){ handleIssueImgFiles(files); }
 
 function _setIssueType(val){
-  const isOrder = val!=='return';
-  document.getElementById('is-type-order').checked = isOrder;
-  document.getElementById('is-type-return').checked = !isOrder;
-  const orderLbl = document.getElementById('is-type-order-lbl');
-  const returnLbl = document.getElementById('is-type-return-lbl');
-  const orderDot = document.getElementById('is-type-order-dot');
-  const returnDot = document.getElementById('is-type-return-dot');
-  if(isOrder){
-    orderLbl.style.borderColor='var(--acc)'; orderLbl.style.background='var(--acc-bg)';
-    orderDot.innerHTML='<span style="width:9px;height:9px;border-radius:50%;background:var(--acc);display:block"></span>';
-    orderDot.style.borderColor='var(--acc)';
-    returnLbl.style.borderColor='var(--border-strong)'; returnLbl.style.background='var(--surface2)';
-    returnDot.innerHTML='<span style="width:9px;height:9px;border-radius:50%;background:transparent;display:block"></span>';
-    returnDot.style.borderColor='var(--border-strong)';
-  } else {
-    returnLbl.style.borderColor='var(--amber)'; returnLbl.style.background='var(--amber-bg)';
-    returnDot.innerHTML='<span style="width:9px;height:9px;border-radius:50%;background:var(--amber);display:block"></span>';
-    returnDot.style.borderColor='var(--amber)';
-    orderLbl.style.borderColor='var(--border-strong)'; orderLbl.style.background='var(--surface2)';
-    orderDot.innerHTML='<span style="width:9px;height:9px;border-radius:50%;background:transparent;display:block"></span>';
-    orderDot.style.borderColor='var(--border-strong)';
-  }
+  const v = (val==='return'||val==='receive') ? val : 'order';
+  document.getElementById('is-type-order').checked = (v==='order');
+  document.getElementById('is-type-return').checked = (v==='return');
+  document.getElementById('is-type-receive').checked = (v==='receive');
+
+  const cfg = {
+    order:   { lbl:'is-type-order-lbl',   dot:'is-type-order-dot',   color:'var(--acc)',   bg:'var(--acc-bg)' },
+    return:  { lbl:'is-type-return-lbl',  dot:'is-type-return-dot',  color:'var(--amber)', bg:'var(--amber-bg)' },
+    receive: { lbl:'is-type-receive-lbl', dot:'is-type-receive-dot', color:'var(--blue)',  bg:'var(--blue-bg)' }
+  };
+  Object.keys(cfg).forEach(key=>{
+    const { lbl, dot, color, bg } = cfg[key];
+    const lblEl = document.getElementById(lbl);
+    const dotEl = document.getElementById(dot);
+    if(!lblEl || !dotEl) return;
+    if(key===v){
+      lblEl.style.borderColor = color; lblEl.style.background = bg;
+      dotEl.style.borderColor = color;
+      dotEl.innerHTML = `<span style="width:9px;height:9px;border-radius:50%;background:${color};display:block"></span>`;
+    } else {
+      lblEl.style.borderColor = 'var(--border-strong)'; lblEl.style.background = 'var(--surface2)';
+      dotEl.style.borderColor = 'var(--border-strong)';
+      dotEl.innerHTML = '<span style="width:9px;height:9px;border-radius:50%;background:transparent;display:block"></span>';
+    }
+  });
 }
 
 /* ─── Issue Lines (multi-line items) ─── */
@@ -5629,7 +5650,7 @@ function exportIssueExcel(){
     return mq && md;
   });
   if(!filtered.length){ alert('ไม่มีข้อมูลให้ Export'); return; }
-  const typeLabel = t => t==='return'?'คืนสินค้า':'สั่งซื้อ';
+  const typeLabel = t => t==='return'?'คืนสินค้า':(t==='receive'?'รับของ':'สั่งซื้อ');
   const linesText = lines => (lines||[]).map(l=>`${l.name||''} x${l.qty||''} ${l.unit||''}`).join(', ');
   const headers = ['วันที่','ประเภท','เล่มที่','เลขที่','รหัสโครงการ','รหัส ผรม.','ชื่อผู้รับเหมา','รายการสินค้า','หมายเหตุ'];
   const rows = filtered.map(is=>[is.date||'',typeLabel(is.type),is.book||'',is.no||'',is.proj||'',is.contractorCode||'',is.contractor||'',linesText(is.lines),is.note||'']);
