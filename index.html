@@ -753,12 +753,7 @@ tr.row-cancel .td-po{color:var(--red-text)!important;font-weight:700}
   .reports-grid{grid-template-columns:1fr}
 }
 @media(max-width:1024px){
-  :root{--sidebar-w:72px}
-  .sidebar{width:72px}
-  .main-wrap{margin-left:72px!important;width:calc(100% - 72px)!important}
-  .brand-name,.brand-sub,.sidebar-stores-label,.store-pill span,.sidebar-nav-label,.sidebar .nav-item span:not(.nav-icon){display:none}
-  .store-pill{justify-content:center;padding:10px}
-  .nav-item{justify-content:center;padding:11px}
+  /* sidebar collapse removed — redesign handles layout */
   .bento{grid-template-columns:repeat(2,1fr)!important}
   .analytics-bento{grid-template-columns:1fr 1fr!important}
   .settings-layout{grid-template-columns:1fr}
@@ -1009,15 +1004,9 @@ body{overflow-x:hidden}
   .reports-grid{grid-template-columns:1fr}
 }
 
-/* Tablet/iPad landscape ≤1024: sidebar icon-only */
+/* Tablet/iPad landscape ≤1024: sidebar stays full on redesign */
 @media(max-width:1024px){
-  :root{--sidebar-w:72px}
-  .sidebar{width:72px!important}
-  .main-wrap{margin-left:72px!important;width:calc(100% - 72px)!important}
-  .brand-name,.brand-sub,.sidebar-stores-label,.store-pill span,
-  .sidebar-nav-label,.sidebar .nav-item span:not(.nav-icon){display:none!important}
-  .store-pill{justify-content:center;padding:10px}
-  .nav-item{justify-content:center;padding:11px}
+  /* sidebar collapse removed — redesign keeps full sidebar */
   .bento{grid-template-columns:repeat(2,1fr)!important;gap:10px}
   .analytics-bento{grid-template-columns:1fr 1fr!important}
   .settings-layout{grid-template-columns:1fr}
