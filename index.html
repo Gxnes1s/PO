@@ -1804,6 +1804,27 @@ function togglePw(btn){
         <div class="page-head-sub">จัดการรายการโอนเงิน — เพิ่ม แก้ไข ลบ &nbsp;<span id="fbStatus" style="font-size:11px;padding:2px 9px;border-radius:99px;background:var(--surface2);color:var(--text3)">⏳ กำลังเชื่อมต่อ...</span></div>
       </div>
 
+      <!-- Upload Zone -->
+      <div id="transferUploadZone" style="border:2px dashed rgba(26,44,107,.18);border-radius:16px;padding:1.5rem;background:rgba(255,255,255,.7);margin-bottom:1.25rem;cursor:pointer;transition:all .2s ease"
+        onclick="document.getElementById('transferFileInput').click()"
+        ondragover="event.preventDefault();this.style.borderColor='var(--navy-600)';this.style.background='var(--navy-50)'"
+        ondragleave="this.style.borderColor='rgba(26,44,107,.18)';this.style.background='rgba(255,255,255,.7)'"
+        ondrop="event.preventDefault();this.style.borderColor='rgba(26,44,107,.18)';this.style.background='rgba(255,255,255,.7)';handleTransferFile(event.dataTransfer.files[0])">
+        <input type="file" id="transferFileInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleTransferFile(this.files[0]);this.value=''">
+        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+          <div style="width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,var(--surface2),var(--surface3));display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;box-shadow:var(--shadow)">📂</div>
+          <div style="flex:1;min-width:180px">
+            <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:3px">นำเข้ารายการโอน (Excel / CSV)</div>
+            <div style="font-size:12.5px;color:var(--text3)">ลากไฟล์มาวาง หรือคลิกเพื่อเลือกไฟล์ — รองรับ .xlsx .xls .csv — ระบบจะเพิ่มข้อมูลเข้า Firestore อัตโนมัติ และข้ามรายการที่ซ้ำให้</div>
+          </div>
+          <div style="display:flex;gap:7px;flex-shrink:0">
+            <span style="padding:4px 11px;border-radius:99px;font-size:11px;font-weight:700;background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-light)">.xlsx</span>
+            <span style="padding:4px 11px;border-radius:99px;font-size:11px;font-weight:700;background:var(--blue-bg);color:var(--blue-text);border:1px solid var(--blue-light)">.csv</span>
+          </div>
+        </div>
+        <div id="transferImportStatus" style="display:none;margin-top:10px;padding:8px 14px;border-radius:10px;font-size:13px;font-weight:600"></div>
+      </div>
+
       <!-- Summary cards -->
       <div class="transfer-summary" id="transferSummary">
         <div class="tsm-card">
@@ -2203,6 +2224,27 @@ function togglePw(btn){
         <div class="page-head-title">ใบออก</div>
         <div class="page-head-sub">จัดการใบออก — เพิ่ม แก้ไข ลบ &nbsp;<span id="issueFbStatus" style="font-size:11px;padding:2px 9px;border-radius:99px;background:var(--surface2);color:var(--text3)">⏳ กำลังเชื่อมต่อ...</span></div>
       </div>
+    </div>
+
+    <!-- Upload Zone -->
+    <div id="issueUploadZone" style="border:2px dashed rgba(26,44,107,.18);border-radius:16px;padding:1.5rem;background:rgba(255,255,255,.7);margin-bottom:1.25rem;cursor:pointer;transition:all .2s ease"
+      onclick="document.getElementById('issueFileInput').click()"
+      ondragover="event.preventDefault();this.style.borderColor='var(--navy-600)';this.style.background='var(--navy-50)'"
+      ondragleave="this.style.borderColor='rgba(26,44,107,.18)';this.style.background='rgba(255,255,255,.7)'"
+      ondrop="event.preventDefault();this.style.borderColor='rgba(26,44,107,.18)';this.style.background='rgba(255,255,255,.7)';handleIssueFile(event.dataTransfer.files[0])">
+      <input type="file" id="issueFileInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleIssueFile(this.files[0]);this.value=''">
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <div style="width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,var(--surface2),var(--surface3));display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;box-shadow:var(--shadow)">📂</div>
+        <div style="flex:1;min-width:180px">
+          <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:3px">นำเข้าใบออก (Excel / CSV)</div>
+          <div style="font-size:12.5px;color:var(--text3)">ลากไฟล์มาวาง หรือคลิกเพื่อเลือกไฟล์ — รองรับ .xlsx .xls .csv — ระบบจะเพิ่มข้อมูลเข้า Firestore อัตโนมัติ และข้ามรายการที่ซ้ำให้ (ไม่รวมไฟล์รูปภาพ)</div>
+        </div>
+        <div style="display:flex;gap:7px;flex-shrink:0">
+          <span style="padding:4px 11px;border-radius:99px;font-size:11px;font-weight:700;background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-light)">.xlsx</span>
+          <span style="padding:4px 11px;border-radius:99px;font-size:11px;font-weight:700;background:var(--blue-bg);color:var(--blue-text);border:1px solid var(--blue-light)">.csv</span>
+        </div>
+      </div>
+      <div id="issueImportStatus" style="display:none;margin-top:10px;padding:8px 14px;border-radius:10px;font-size:13px;font-weight:600"></div>
     </div>
 
     <!-- Summary -->
@@ -5586,6 +5628,247 @@ async function handlePOManFile(file){
   }
 }
 
+/* ── shared helpers for import ── */
+function _impFindCol(hdrs, hints){
+  for(const h of hints){ const i=hdrs.findIndex(v=>v.toLowerCase().includes(h.toLowerCase())); if(i>-1) return i; }
+  return -1;
+}
+function _impNormalizeNumber(v){
+  if(typeof v==='number') return v;
+  return parseFloat(String(v).replace(/[,\s฿]/g,''))||0;
+}
+/* แปลงค่าวันที่จากไฟล์ (Date object / d/m/y พ.ศ.หรือค.ศ. / ISO) ให้เป็น ISO yyyy-mm-dd สำหรับ input type=date */
+function _impNormalizeDateISO(v){
+  if(!v) return '';
+  if(v instanceof Date){
+    const y=v.getFullYear(), m=v.getMonth()+1, d=v.getDate();
+    return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  }
+  const str = String(v).trim();
+  if(/^\d{4}-\d{2}-\d{2}/.test(str)){
+    let y = parseInt(str.slice(0,4),10);
+    if(y>=2500){ return String(y-543)+str.slice(4,10); }
+    return str.slice(0,10);
+  }
+  const m2 = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+  if(m2){
+    let dd=parseInt(m2[1],10), mm=parseInt(m2[2],10), yy=parseInt(m2[3],10);
+    if(yy>2400) yy-=543;
+    else if(yy<100) yy += (yy<70?2000:1900);
+    return `${yy}-${String(mm).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;
+  }
+  return str;
+}
+
+/* ── Transfer import from Excel/CSV ── */
+async function handleTransferFile(file){
+  if(!file) return;
+  const statusEl = document.getElementById('transferImportStatus');
+  function setStatus(msg, color, bg){
+    if(!statusEl) return;
+    statusEl.style.display='block';
+    statusEl.style.color=color;
+    statusEl.style.background=bg;
+    statusEl.style.border='1px solid '+color+'44';
+    statusEl.textContent=msg;
+  }
+  setStatus('⏳ กำลังอ่านไฟล์...','var(--amber)','var(--amber-bg)');
+  try {
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf, {type:'array', cellDates:true});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const raw = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+    if(raw.length<2){ setStatus('❌ ไฟล์ไม่มีข้อมูล','var(--red)','var(--red-bg)'); return; }
+
+    const hdrs = raw[0].map(h=>String(h).trim());
+    const iDate   = _impFindCol(hdrs,['วันที่','date']);
+    const iNo     = _impFindCol(hdrs,['ใบโอน','เลขที่โอน','no','เลขที่']);
+    const iPO     = _impFindCol(hdrs,['po']);
+    const iJob    = _impFindCol(hdrs,['job','โครงการ']);
+    const iAmount = _impFindCol(hdrs,['ยอดเงิน','amount','จำนวนเงิน','มูลค่า']);
+    const iShop   = _impFindCol(hdrs,['ร้านค้า','ร้าน','shop','vendor']);
+    const iDetail = _impFindCol(hdrs,['รายละเอียด','detail','desc']);
+
+    const rows = raw.slice(1).filter(r=>r.some(v=>v!==''&&v!==null&&v!==undefined));
+    if(!rows.length){ setStatus('❌ ไม่พบข้อมูลในไฟล์','var(--red)','var(--red-bg)'); return; }
+
+    setStatus('⏳ กำลังนำเข้า '+rows.length+' รายการ...','var(--amber)','var(--amber-bg)');
+
+    const payloads = rows.map(r=>({
+      date:   iDate>-1   ? _impNormalizeDateISO(r[iDate]) : '',
+      no:     iNo>-1     ? String(r[iNo]||'').trim()    : '',
+      po:     iPO>-1     ? String(r[iPO]||'').trim()    : '',
+      job:    iJob>-1    ? String(r[iJob]||'').trim()   : '',
+      amount: iAmount>-1 ? _impNormalizeNumber(r[iAmount]) : 0,
+      shop:   iShop>-1   ? String(r[iShop]||'').trim()  : '',
+      detail: iDetail>-1 ? String(r[iDetail]||'').trim() : '',
+      _ts: Date.now()+(Math.random()*1000|0)
+    })).filter(p=>p.date||p.no||p.po||p.shop);
+
+    if(!payloads.length){ setStatus('❌ ไม่พบข้อมูลที่ใช้ได้','var(--red)','var(--red-bg)'); return; }
+
+    // ── deduplicate against existing cache ──
+    const existing = _transfersCache;
+    const toAdd = [];
+    let skipped = 0;
+    for(const p of payloads){
+      const dup = existing.find(x=>
+        x.date===p.date && x.no===p.no && x.po===p.po &&
+        String(x.amount)===String(p.amount) && x.shop===p.shop
+      );
+      if(dup) skipped++; else toAdd.push(p);
+    }
+    if(!toAdd.length){
+      setStatus(`ℹ️ ข้อมูลซ้ำทั้งหมด ${skipped} รายการ — ไม่มีการเพิ่ม`,'var(--text3)','var(--surface2)');
+      setTimeout(()=>{ if(statusEl) statusEl.style.display='none'; }, 5000);
+      return;
+    }
+
+    let saved=0, failed=0;
+    if(window._firebaseReady){
+      const { addDoc } = window._fsLib;
+      const col = _fsCol();
+      const batchSize=20;
+      for(let i=0;i<toAdd.length;i+=batchSize){
+        const chunk=toAdd.slice(i,i+batchSize);
+        await Promise.all(chunk.map(p=>addDoc(col,p).then(()=>saved++).catch(()=>failed++)));
+        setStatus('⏳ เพิ่มแล้ว '+saved+'/'+toAdd.length+'...','var(--amber)','var(--amber-bg)');
+      }
+    } else {
+      const arr=JSON.parse(localStorage.getItem(getTransferKey())||'[]');
+      toAdd.forEach(p=>{ arr.unshift({...p,id:'tr_'+Date.now()+'_'+(Math.random()*9999|0)}); saved++; });
+      localStorage.setItem(getTransferKey(),JSON.stringify(arr));
+      _transfersCache=arr; renderTransferSummary(); renderTransferTable();
+    }
+    const parts=[];
+    if(saved) parts.push(`เพิ่ม ${saved} รายการ`);
+    if(skipped) parts.push(`ซ้ำข้าม ${skipped} รายการ`);
+    if(failed) parts.push(`ล้มเหลว ${failed} รายการ`);
+    const msg = (failed?'⚠️ ':'✅ ') + parts.join(' / ');
+    setStatus(msg, failed?'var(--amber)':'var(--green)', failed?'var(--amber-bg)':'var(--green-bg)');
+    setTimeout(()=>{ if(statusEl) statusEl.style.display='none'; }, 5000);
+  } catch(err){
+    console.error('Transfer import error:',err);
+    if(statusEl){ statusEl.style.display='block'; statusEl.style.color='var(--red)'; statusEl.style.background='var(--red-bg)'; statusEl.style.border='1px solid var(--red-light)'; statusEl.textContent='❌ เกิดข้อผิดพลาด: '+err.message; }
+  }
+}
+
+/* ── Issue import from Excel/CSV ── */
+function _impParseIssueLines(v){
+  const str = String(v||'').trim();
+  if(!str) return [{item:'',qty:'',unit:''}];
+  const parts = str.split(/,|\n/).map(s=>s.trim()).filter(Boolean);
+  const lines = parts.map(p=>{
+    const m = p.match(/^(.*?)\s*[x×]\s*([\d.,]+)\s*(.*)$/i);
+    if(m) return { item: m[1].trim(), qty: parseFloat(m[2].replace(/,/g,''))||'', unit: m[3].trim() };
+    return { item:p, qty:'', unit:'' };
+  });
+  return lines.length ? lines : [{item:str,qty:'',unit:''}];
+}
+function _impNormalizeIssueType(v){
+  const s=String(v||'').toLowerCase().trim();
+  if(s.includes('คืน')||s.includes('return')) return 'return';
+  if(s.includes('รับ')||s.includes('receive')) return 'receive';
+  return 'order';
+}
+async function handleIssueFile(file){
+  if(!file) return;
+  const statusEl = document.getElementById('issueImportStatus');
+  function setStatus(msg, color, bg){
+    if(!statusEl) return;
+    statusEl.style.display='block';
+    statusEl.style.color=color;
+    statusEl.style.background=bg;
+    statusEl.style.border='1px solid '+color+'44';
+    statusEl.textContent=msg;
+  }
+  setStatus('⏳ กำลังอ่านไฟล์...','var(--amber)','var(--amber-bg)');
+  try {
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf, {type:'array', cellDates:true});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const raw = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+    if(raw.length<2){ setStatus('❌ ไฟล์ไม่มีข้อมูล','var(--red)','var(--red-bg)'); return; }
+
+    const hdrs = raw[0].map(h=>String(h).trim());
+    const iDate  = _impFindCol(hdrs,['วันที่','date']);
+    const iType  = _impFindCol(hdrs,['ประเภท','type']);
+    const iBook  = _impFindCol(hdrs,['เล่มที่','book']);
+    const iNo    = _impFindCol(hdrs,['เลขที่','no']);
+    const iProj  = _impFindCol(hdrs,['รหัสโครงการ','project','proj']);
+    const iCCode = _impFindCol(hdrs,['รหัส ผรม','รหัสผรม','contractor code','code']);
+    const iCName = _impFindCol(hdrs,['ชื่อผู้รับเหมา','ผู้รับเหมา','contractor']);
+    const iItems = _impFindCol(hdrs,['รายการสินค้า','รายการ','items','line']);
+    const iNote  = _impFindCol(hdrs,['หมายเหตุ','note']);
+
+    const rows = raw.slice(1).filter(r=>r.some(v=>v!==''&&v!==null&&v!==undefined));
+    if(!rows.length){ setStatus('❌ ไม่พบข้อมูลในไฟล์','var(--red)','var(--red-bg)'); return; }
+
+    setStatus('⏳ กำลังนำเข้า '+rows.length+' รายการ...','var(--amber)','var(--amber-bg)');
+
+    const payloads = rows.map(r=>({
+      date: iDate>-1 ? _impNormalizeDateISO(r[iDate]) : '',
+      type: iType>-1 ? _impNormalizeIssueType(r[iType]) : 'order',
+      book: iBook>-1 ? String(r[iBook]||'').trim() : '',
+      no:   iNo>-1   ? String(r[iNo]||'').trim()   : '',
+      proj: iProj>-1 ? String(r[iProj]||'').trim() : '',
+      contractorCode: iCCode>-1 ? String(r[iCCode]||'').trim() : '',
+      contractor: iCName>-1 ? String(r[iCName]||'').trim() : '',
+      lines: iItems>-1 ? _impParseIssueLines(r[iItems]) : [{item:'',qty:'',unit:''}],
+      note: iNote>-1 ? String(r[iNote]||'').trim() : '',
+      images: [],
+      _ts: Date.now()+(Math.random()*1000|0)
+    })).filter(p=>p.date||p.book||p.no||p.contractor||p.proj);
+
+    if(!payloads.length){ setStatus('❌ ไม่พบข้อมูลที่ใช้ได้','var(--red)','var(--red-bg)'); return; }
+
+    // ── deduplicate against existing cache ──
+    const existing = _issueCache;
+    const toAdd = [];
+    let skipped = 0;
+    for(const p of payloads){
+      const dup = existing.find(x=>
+        x.date===p.date && x.book===p.book && x.no===p.no &&
+        x.proj===p.proj && x.contractor===p.contractor
+      );
+      if(dup) skipped++; else toAdd.push(p);
+    }
+    if(!toAdd.length){
+      setStatus(`ℹ️ ข้อมูลซ้ำทั้งหมด ${skipped} รายการ — ไม่มีการเพิ่ม`,'var(--text3)','var(--surface2)');
+      setTimeout(()=>{ if(statusEl) statusEl.style.display='none'; }, 5000);
+      return;
+    }
+
+    let saved=0, failed=0;
+    if(window._firebaseReady){
+      const { addDoc } = window._fsLib;
+      const col = _fsIssueCol();
+      const batchSize=20;
+      for(let i=0;i<toAdd.length;i+=batchSize){
+        const chunk=toAdd.slice(i,i+batchSize);
+        await Promise.all(chunk.map(p=>addDoc(col,p).then(()=>saved++).catch(()=>failed++)));
+        setStatus('⏳ เพิ่มแล้ว '+saved+'/'+toAdd.length+'...','var(--amber)','var(--amber-bg)');
+      }
+    } else {
+      const arr=JSON.parse(localStorage.getItem('issues_data')||'[]');
+      toAdd.forEach(p=>{ arr.unshift({...p,id:'is_'+Date.now()+'_'+(Math.random()*9999|0)}); saved++; });
+      localStorage.setItem('issues_data',JSON.stringify(arr));
+      _issueCache=arr; renderIssueSummary(); renderIssueTable();
+    }
+    const parts=[];
+    if(saved) parts.push(`เพิ่ม ${saved} รายการ`);
+    if(skipped) parts.push(`ซ้ำข้าม ${skipped} รายการ`);
+    if(failed) parts.push(`ล้มเหลว ${failed} รายการ`);
+    const msg = (failed?'⚠️ ':'✅ ') + parts.join(' / ');
+    setStatus(msg, failed?'var(--amber)':'var(--green)', failed?'var(--amber-bg)':'var(--green-bg)');
+    setTimeout(()=>{ if(statusEl) statusEl.style.display='none'; }, 5000);
+  } catch(err){
+    console.error('Issue import error:',err);
+    if(statusEl){ statusEl.style.display='block'; statusEl.style.color='var(--red)'; statusEl.style.background='var(--red-bg)'; statusEl.style.border='1px solid var(--red-light)'; statusEl.textContent='❌ เกิดข้อผิดพลาด: '+err.message; }
+  }
+}
+
+
 /* ─── EXPORT EXCEL UTILITIES ─── */
 function _xlsxDownload(wb, filename){
   const wbout = XLSX.write(wb, {bookType:'xlsx', type:'array'});
@@ -5752,6 +6035,8 @@ window.exportConcreteExcel = exportConcreteExcel;
 window.exportIssueExcel = exportIssueExcel;
 window.exportPODashboard = exportPODashboard;
 window.handlePOManFile = handlePOManFile;
+window.handleTransferFile = handleTransferFile;
+window.handleIssueFile = handleIssueFile;
 </script>
 
 <!-- PO Modal -->
