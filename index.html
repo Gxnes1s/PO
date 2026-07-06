@@ -5561,6 +5561,7 @@ const TH_MONTHS_SHORT = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.
 function _monthKey(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
 function _monthLabel(d){ return TH_MONTHS_SHORT[d.getMonth()]+' '+String((d.getFullYear()+543)%100).padStart(2,'0'); }
 function _fmtBaht(n){ return Math.round(n||0).toLocaleString('th-TH'); }
+function _fmtDateShort(s){ const d=new Date(s); if(isNaN(d)) return s||''; return d.getDate()+'/'+(d.getMonth()+1)+'/'+String(d.getFullYear()+543).slice(-2); }
 // รูปแบบเดียวกับหน้าอื่น ๆ ทั้งหมด (PO/คอนกรีต/โอนเงิน/ใบออก): คอมมาคั่นหลักพัน + ทศนิยม 2 ตำแหน่ง เสมอ ไม่มีการย่อหน่วย (k / ล.)
 function _fmtCompactBaht(n){
   return (n||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -5596,6 +5597,19 @@ function _collectSpendRecords(){
 
 let _chartTrend=null, _chartStatus=null, _chartVendor=null;
 
+// ── ตัวกรองแดชบอร์ด (คงค่าไว้ข้ามการ re-render) ──
+window._summaryFilters = window._summaryFilters || { period:'month', from:'', to:'', job:'', vendor:'' };
+function updateSummaryFilter(key, val){
+  _summaryFilters[key] = val;
+  renderSummaryPage();
+}
+function resetSummaryFilters(){
+  _summaryFilters = { period:'month', from:'', to:'', job:'', vendor:'' };
+  renderSummaryPage();
+}
+window.updateSummaryFilter = updateSummaryFilter;
+window.resetSummaryFilters = resetSummaryFilters;
+
 function renderSummaryPage(){
   _ensureSummarySubscriptions();
 
@@ -5605,37 +5619,78 @@ function renderSummaryPage(){
   const issueArr = _issueCache||[];
   const recs = _collectSpendRecords();
 
+  const f = _summaryFilters;
   const now = new Date();
-  const curKey = _monthKey(now);
-  const lastMonthDate = new Date(now.getFullYear(), now.getMonth()-1, 1);
-  const lastKey = _monthKey(lastMonthDate);
+  const startOfMonth = d => new Date(d.getFullYear(), d.getMonth(), 1).getTime();
+  const endOfMonth   = d => new Date(d.getFullYear(), d.getMonth()+1, 1).getTime()-1;
+
+  // ── ช่วงเวลาที่เลือก ──
+  let fromTs=0, toTs=Infinity, periodLabel='เดือนนี้', canCompare=true;
+  if(f.period==='lastmonth'){
+    const d=new Date(now.getFullYear(), now.getMonth()-1, 1);
+    fromTs=startOfMonth(d); toTs=endOfMonth(d); periodLabel='เดือนที่แล้ว';
+  } else if(f.period==='3m'){
+    const d=new Date(now.getFullYear(), now.getMonth()-2, 1);
+    fromTs=startOfMonth(d); toTs=endOfMonth(now); periodLabel='3 เดือนล่าสุด';
+  } else if(f.period==='all'){
+    fromTs=0; toTs=Infinity; periodLabel='ทั้งหมด'; canCompare=false;
+  } else if(f.period==='custom'){
+    fromTs = f.from ? new Date(f.from).getTime() : 0;
+    toTs   = f.to   ? new Date(f.to).getTime()+86399999 : Infinity;
+    periodLabel = (f.from||f.to) ? `${f.from?_fmtDateShort(f.from):'…'} – ${f.to?_fmtDateShort(f.to):'…'}` : 'กำหนดเอง';
+    canCompare = fromTs>0 && toTs!==Infinity;
+  } else {
+    f.period='month';
+    fromTs=startOfMonth(now); toTs=endOfMonth(now); periodLabel='เดือนนี้';
+  }
+
+  let prevFromTs=0, prevToTs=-1;
+  if(canCompare){
+    const rangeLen = toTs - fromTs;
+    prevToTs = fromTs - 1;
+    prevFromTs = fromTs - rangeLen - 1;
+  }
+
+  const inRange = (dt, fTs, tTs) => !!dt && dt.getTime()>=fTs && dt.getTime()<=tTs;
+  const matchJV = (job, vendor) => (!f.job || job===f.job) && (!f.vendor || vendor===f.vendor);
 
   let curSpend=0, lastSpend=0;
   const monthTotals = {}, shopTotals = {}, jobTotals = {};
   recs.forEach(r=>{
+    if(!matchJV(r.job||'', r.shop||'')) return;
     const key = _monthKey(r.dt);
-    if(key===curKey) curSpend+=r.amount;
-    if(key===lastKey) lastSpend+=r.amount;
-    monthTotals[key] = (monthTotals[key]||0)+r.amount;
-    if(r.shop) shopTotals[r.shop]=(shopTotals[r.shop]||0)+r.amount;
-    if(r.job) jobTotals[r.job]=(jobTotals[r.job]||0)+r.amount;
+    monthTotals[key] = (monthTotals[key]||0)+r.amount; // เทรนด์ 6 เดือน: ยึดตามตัวกรอง JOB/Vendor แต่ไม่ยึดช่วงวันที่ เพื่อให้เห็นภาพรวมรายเดือนครบ
+    if(inRange(r.dt, fromTs, toTs)){
+      curSpend += r.amount;
+      if(r.shop) shopTotals[r.shop]=(shopTotals[r.shop]||0)+r.amount;
+      if(r.job) jobTotals[r.job]=(jobTotals[r.job]||0)+r.amount;
+    }
+    if(canCompare && inRange(r.dt, prevFromTs, prevToTs)) lastSpend+=r.amount;
   });
   const pctChange = lastSpend>0 ? ((curSpend-lastSpend)/lastSpend*100) : (curSpend>0?100:0);
   const pctUp = pctChange>=0;
 
-  const countThisMonth = arr => arr.filter(x=>{ const dt=_parseAnyDateToLocal(x.date); return dt && _monthKey(dt)===curKey; }).length;
-  const poCountMonth = countThisMonth(pomanArr);
-  const concreteCountMonth = countThisMonth(concreteArr);
-  const transferCountMonth = countThisMonth(transferArr);
-  const issueCountMonth = countThisMonth(issueArr);
+  const filterCount = (arr, jobField, vendorField) => arr.filter(x=>{
+    const dt=_parseAnyDateToLocal(x.date);
+    if(!inRange(dt, fromTs, toTs)) return false;
+    return matchJV(x[jobField]||'', x[vendorField]||'');
+  }).length;
+  const poCountMonth = filterCount(pomanArr, 'job','shop');
+  const concreteCountMonth = filterCount(concreteArr, 'job','shop');
+  const transferCountMonth = filterCount(transferArr, 'job','shop');
+  const issueCountMonth = filterCount(issueArr, 'proj','contractor');
   const totalActivityMonth = poCountMonth+concreteCountMonth+transferCountMonth+issueCountMonth;
 
   const statusLabel = {open:'เปิด',received:'รับของแล้ว',closed:'ปิด',cancelled:'ยกเลิก'};
   const statusCount = {open:0,received:0,closed:0,cancelled:0};
-  pomanArr.forEach(p=>{ const s=p.status||'open'; if(statusCount[s]===undefined) statusCount.open++; else statusCount[s]++; });
-  const openPOList = pomanArr.filter(p=>{ const s=p.status||'open'; return s==='open'||s==='received'; });
+  const pomanFiltered = pomanArr.filter(p=>matchJV(p.job||'', p.shop||''));
+  pomanFiltered.forEach(p=>{ const s=p.status||'open'; if(statusCount[s]===undefined) statusCount.open++; else statusCount[s]++; });
+  const openPOList = pomanFiltered.filter(p=>{ const s=p.status||'open'; return s==='open'||s==='received'; });
   const openPOValue = openPOList.reduce((s,p)=>s+(parseFloat(p.price)||0),0);
   const openPOCount = openPOList.length;
+
+  const concreteMonthTotal = concreteArr.filter(c=>{ const dt=_parseAnyDateToLocal(c.date); return inRange(dt,fromTs,toTs) && matchJV(c.job||'', c.shop||''); }).reduce((s,c)=>s+(parseFloat(c.totalPrice)||0),0);
+  const transferMonthTotal = transferArr.filter(t=>{ const dt=_parseAnyDateToLocal(t.date); return inRange(dt,fromTs,toTs) && matchJV(t.job||'', t.shop||''); }).reduce((s,t)=>s+(parseFloat(t.amount)||0),0);
 
   const monthKeys=[], monthLabels=[];
   for(let i=5;i>=0;i--){ const d=new Date(now.getFullYear(), now.getMonth()-i, 1); monthKeys.push(_monthKey(d)); monthLabels.push(_monthLabel(d)); }
@@ -5645,17 +5700,62 @@ function renderSummaryPage(){
   const topJobs = Object.entries(jobTotals).sort((a,b)=>b[1]-a[1]).slice(0,5);
   const maxJob = topJobs.length ? topJobs[0][1] : 0;
 
+  // ── รายการตัวเลือกสำหรับ dropdown JOB / Vendor (จากข้อมูลทั้งหมด) ──
+  const allJobs = new Set(), allVendors = new Set();
+  pomanArr.forEach(p=>{ if(p.job) allJobs.add(p.job); if(p.shop) allVendors.add(p.shop); });
+  concreteArr.forEach(c=>{ if(c.job) allJobs.add(c.job); if(c.shop) allVendors.add(c.shop); });
+  transferArr.forEach(t=>{ if(t.job) allJobs.add(t.job); if(t.shop) allVendors.add(t.shop); });
+  issueArr.forEach(is=>{ if(is.proj) allJobs.add(is.proj); if(is.contractor) allVendors.add(is.contractor); });
+  const jobOptions = Array.from(allJobs).sort((a,b)=>String(a).localeCompare(String(b),'th'));
+  const vendorOptions = Array.from(allVendors).sort((a,b)=>String(a).localeCompare(String(b),'th'));
+
   const wrap = document.getElementById('summaryContent');
   if(!wrap) return;
 
+  const activeFilterCount = (f.period!=='month'?1:0) + (f.job?1:0) + (f.vendor?1:0);
+  const selStyle = "padding:8px 10px;border:1px solid var(--border);border-radius:10px;font-size:12.5px;background:var(--surface);color:var(--text);font-family:'Sarabun',sans-serif;cursor:pointer";
+
   wrap.innerHTML = `
+    <div class="table-card" style="margin-bottom:14px">
+      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:14px 16px">
+        <span style="font-size:12.5px;font-weight:700;color:var(--text2);display:flex;align-items:center;gap:5px;white-space:nowrap">🔍 ตัวกรองข้อมูล${activeFilterCount?` <span style="background:var(--acc-bg);color:var(--acc);border-radius:99px;padding:1px 8px;font-size:11px">${activeFilterCount}</span>`:''}</span>
+
+        <select onchange="updateSummaryFilter('period', this.value)" style="${selStyle}">
+          <option value="month" ${f.period==='month'?'selected':''}>📅 เดือนนี้</option>
+          <option value="lastmonth" ${f.period==='lastmonth'?'selected':''}>📅 เดือนที่แล้ว</option>
+          <option value="3m" ${f.period==='3m'?'selected':''}>📅 3 เดือนล่าสุด</option>
+          <option value="all" ${f.period==='all'?'selected':''}>📅 ทั้งหมด</option>
+          <option value="custom" ${f.period==='custom'?'selected':''}>📅 กำหนดเอง...</option>
+        </select>
+
+        ${f.period==='custom' ? `
+        <span style="font-size:12px;color:var(--text3);font-weight:600">จาก</span>
+        <input type="date" value="${f.from||''}" onchange="updateSummaryFilter('from', this.value)" style="${selStyle}">
+        <span style="font-size:12px;color:var(--text3);font-weight:600">ถึง</span>
+        <input type="date" value="${f.to||''}" onchange="updateSummaryFilter('to', this.value)" style="${selStyle}">
+        ` : ''}
+
+        <select onchange="updateSummaryFilter('job', this.value)" style="${selStyle};max-width:190px">
+          <option value="">🏷️ ทุก JOB/โครงการ</option>
+          ${jobOptions.map(j=>`<option value="${esc(j)}" ${f.job===j?'selected':''}>${esc(j)}</option>`).join('')}
+        </select>
+
+        <select onchange="updateSummaryFilter('vendor', this.value)" style="${selStyle};max-width:190px">
+          <option value="">🏪 ทุกร้านค้า/Vendor</option>
+          ${vendorOptions.map(v=>`<option value="${esc(v)}" ${f.vendor===v?'selected':''}>${esc(v)}</option>`).join('')}
+        </select>
+
+        ${activeFilterCount? `<button onclick="resetSummaryFilters()" style="padding:8px 14px;border-radius:10px;border:1px solid var(--red-light);background:var(--red-bg);color:var(--red-text);cursor:pointer;font-size:12.5px;font-weight:600">✕ ล้างตัวกรอง</button>` : ''}
+      </div>
+    </div>
+
     <div class="bento">
       <div class="bento-card bento-hero">
         <div>
-          <div class="hero-label">ยอดจัดซื้อรวมเดือนนี้</div>
+          <div class="hero-label">ยอดจัดซื้อรวม${periodLabel}</div>
           <div class="hero-val">฿${_fmtBaht(curSpend)}</div>
-          <div class="hero-sub">${totalActivityMonth} รายการ • เทียบเดือนที่แล้ว
-            <span style="color:${pctUp?'#7DCCA0':'#F0AAAA'};font-weight:700">${pctUp?'▲':'▼'} ${Math.abs(pctChange).toFixed(1)}%</span>
+          <div class="hero-sub">${totalActivityMonth} รายการ${canCompare?` • เทียบช่วงก่อนหน้า
+            <span style="color:${pctUp?'#7DCCA0':'#F0AAAA'};font-weight:700">${pctUp?'▲':'▼'} ${Math.abs(pctChange).toFixed(1)}%</span>`:''}
           </div>
         </div>
         <div class="hero-bar"><div class="hero-bar-fill" style="width:${Math.min(100,Math.max(6,(curSpend/(Math.max(curSpend,lastSpend)||1))*100))}%"></div></div>
@@ -5675,8 +5775,8 @@ function renderSummaryPage(){
           <div class="stat-icon bg-green c-green">🏗️</div>
           <span class="stat-pct pct-green">${concreteCountMonth} รายการ</span>
         </div>
-        <div class="stat-label">คอนกรีตเดือนนี้</div>
-        <div class="stat-val c-green">฿${_fmtCompactBaht((_concreteCache||[]).filter(c=>{const dt=_parseAnyDateToLocal(c.date);return dt&&_monthKey(dt)===curKey;}).reduce((s,c)=>s+(parseFloat(c.totalPrice)||0),0))}</div>
+        <div class="stat-label">คอนกรีต${periodLabel}</div>
+        <div class="stat-val c-green">฿${_fmtCompactBaht(concreteMonthTotal)}</div>
       </div>
 
       <div class="bento-card bento-stat strip-amber">
@@ -5684,8 +5784,8 @@ function renderSummaryPage(){
           <div class="stat-icon bg-amber c-amber">🔄</div>
           <span class="stat-pct pct-amber">${transferCountMonth} รายการ</span>
         </div>
-        <div class="stat-label">โอนเงินเดือนนี้</div>
-        <div class="stat-val c-amber">฿${_fmtCompactBaht((_transfersCache||[]).filter(t=>{const dt=_parseAnyDateToLocal(t.date);return dt&&_monthKey(dt)===curKey;}).reduce((s,t)=>s+(parseFloat(t.amount)||0),0))}</div>
+        <div class="stat-label">โอนเงิน${periodLabel}</div>
+        <div class="stat-val c-amber">฿${_fmtCompactBaht(transferMonthTotal)}</div>
       </div>
 
       <div class="bento-card bento-stat strip-red">
@@ -5693,7 +5793,7 @@ function renderSummaryPage(){
           <div class="stat-icon bg-red c-red">📄</div>
           <span class="stat-pct pct-red">${issueCountMonth} รายการ</span>
         </div>
-        <div class="stat-label">ใบออกเดือนนี้</div>
+        <div class="stat-label">ใบออก${periodLabel}</div>
         <div class="stat-val c-red">${issueCountMonth}</div>
       </div>
     </div>
@@ -5704,18 +5804,18 @@ function renderSummaryPage(){
         <div style="padding:16px;height:260px"><canvas id="chartTrend"></canvas></div>
       </div>
       <div class="table-card">
-        <div class="table-header"><span class="table-header-title">📋 สถานะ PO ทั้งหมด</span></div>
+        <div class="table-header"><span class="table-header-title">📋 สถานะ PO ${(f.job||f.vendor)?'(ตามตัวกรอง)':'ทั้งหมด'}</span></div>
         <div style="padding:16px;height:260px;display:flex;align-items:center;justify-content:center"><canvas id="chartStatus"></canvas></div>
       </div>
     </div>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px" id="summaryBottomRow">
       <div class="table-card">
-        <div class="table-header"><span class="table-header-title">🏪 ร้านค้า/Vendor ที่ซื้อมากสุด (Top 5)</span></div>
+        <div class="table-header"><span class="table-header-title">🏪 ร้านค้า/Vendor ที่ซื้อมากสุด (Top 5 · ${periodLabel})</span></div>
         <div style="padding:16px;height:260px">${topShops.length?'<canvas id="chartVendor"></canvas>':'<div class="no-data-small">ยังไม่มีข้อมูล</div>'}</div>
       </div>
       <div class="table-card">
-        <div class="table-header"><span class="table-header-title">🏷️ JOB / โครงการ ที่ใช้จ่ายมากสุด (Top 5)</span></div>
+        <div class="table-header"><span class="table-header-title">🏷️ JOB / โครงการ ที่ใช้จ่ายมากสุด (Top 5 · ${periodLabel})</span></div>
         <div style="padding:16px">
           ${topJobs.length ? topJobs.map(([job,val])=>`
             <div style="margin-bottom:12px">
