@@ -5,7 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>9202 — Management</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+// สำรอง: ถ้าโหลด Chart.js จาก cdnjs ไม่สำเร็จ (เช่นโดนบล็อกบางเครือข่าย) ให้ลองโหลดจาก jsDelivr แทน
+window.addEventListener('DOMContentLoaded', function(){
+  if(typeof Chart === 'undefined'){
+    var s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js';
+    document.head.appendChild(s);
+  }
+});
+</script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, setDoc, doc, getDoc, query, orderBy, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -5727,8 +5737,19 @@ function renderSummaryPage(){
   _drawSummaryCharts(monthLabels, monthValues, statusCount, statusLabel, topShops);
 }
 
-function _drawSummaryCharts(monthLabels, monthValues, statusCount, statusLabel, topShops){
-  if(typeof Chart === 'undefined') return;
+function _drawSummaryCharts(monthLabels, monthValues, statusCount, statusLabel, topShops, _retry){
+  _retry = _retry||0;
+  if(typeof Chart === 'undefined'){
+    if(_retry < 10){
+      setTimeout(()=>_drawSummaryCharts(monthLabels, monthValues, statusCount, statusLabel, topShops, _retry+1), 300);
+    } else {
+      ['chartTrend','chartStatus','chartVendor'].forEach(id=>{
+        const el = document.getElementById(id);
+        if(el && el.parentElement) el.parentElement.innerHTML = '<div class="no-data-small">⚠️ โหลดกราฟไม่สำเร็จ (เช็คอินเทอร์เน็ต/ตัวบล็อกโฆษณา แล้วรีเฟรชหน้า)</div>';
+      });
+    }
+    return;
+  }
   if(_chartTrend){ _chartTrend.destroy(); _chartTrend=null; }
   if(_chartStatus){ _chartStatus.destroy(); _chartStatus=null; }
   if(_chartVendor){ _chartVendor.destroy(); _chartVendor=null; }
