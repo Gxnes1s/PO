@@ -7,7 +7,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, setDoc, doc, getDoc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, setDoc, doc, getDoc, query, orderBy, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -27,7 +27,7 @@ const auth = getAuth(app);
 window._db = db;
 window._auth = auth;
 window._authLib = { signInWithEmailAndPassword, signOut, onAuthStateChanged };
-window._fsLib = { collection, getDocs, addDoc, updateDoc, deleteDoc, setDoc, doc, getDoc, query, orderBy, onSnapshot };
+window._fsLib = { collection, getDocs, addDoc, updateDoc, deleteDoc, setDoc, doc, getDoc, query, orderBy, where, onSnapshot };
 window._firebaseReady = true; console.log('Firebase Ready');
 window.dispatchEvent(new Event('firebase-ready'));
 </script>
@@ -2648,8 +2648,8 @@ input[type="date"]{font-family:'Inter','Sarabun',sans-serif !important;border-ra
       <div class="lo-card-sub">ใส่ข้อมูลบัญชีของคุณเพื่อดำเนินการต่อ</div>
 
       <div class="lo-field">
-        <label class="lo-label" for="loginEmail">อีเมล</label>
-        <input class="lo-input" id="loginEmail" type="email" placeholder="your@email.com"
+        <label class="lo-label" for="loginEmail">อีเมล หรือ รหัสพนักงาน</label>
+        <input class="lo-input" id="loginEmail" type="text" placeholder="your@email.com หรือ รหัสพนักงาน"
           onkeydown="if(event.key==='Enter')document.getElementById('loginPassword').focus()">
       </div>
 
@@ -5530,21 +5530,53 @@ function renderConcreteTable(){
 }
 
 /* ─── AUTH ─── */
-function doLogin(){
-  const email = document.getElementById('loginEmail').value.trim();
+function _fsEmployeesCol(){ return window._fsLib.collection(window._db, 'employees'); }
+
+// รับรหัสพนักงาน แล้วคืนอีเมลที่ผูกไว้ (เก็บ mapping ไว้ใน Firestore collection "employees"
+// โดยแต่ละ document มีฟิลด์ code (รหัสพนักงาน) และ email (อีเมลที่ใช้สมัคร Firebase Auth))
+async function _resolveEmployeeEmail(code){
+  const { query, where, getDocs } = window._fsLib;
+  const q = query(_fsEmployeesCol(), where('code', '==', code));
+  const snap = await getDocs(q);
+  if(snap.empty) return null;
+  const data = snap.docs[0].data();
+  return data.email || null;
+}
+
+async function doLogin(){
+  const identifier = document.getElementById('loginEmail').value.trim();
   const pass  = document.getElementById('loginPassword').value;
   const btn   = document.getElementById('loginBtn');
   const btnText = document.getElementById('loginBtnText');
-  if(!email||!pass){ showLoginError('กรุณากรอกอีเมลและรหัสผ่าน'); shakeCard(); return; }
+  if(!identifier||!pass){ showLoginError('กรุณากรอกอีเมล/รหัสพนักงาน และรหัสผ่าน'); shakeCard(); return; }
   btnText.innerHTML='<span class="lo-spin"></span> กำลังเข้าสู่ระบบ...';
   btn.disabled=true;
   hideLoginError();
+
+  let email = identifier;
+  try{
+    if(!identifier.includes('@')){
+      // ไม่มี @ ถือว่ากรอกมาเป็นรหัสพนักงาน — ค้นหาอีเมลที่ผูกไว้
+      const resolvedEmail = await _resolveEmployeeEmail(identifier);
+      if(!resolvedEmail){
+        btnText.textContent='เข้าสู่ระบบ'; btn.disabled=false;
+        showLoginError('ไม่พบรหัสพนักงานนี้ในระบบ'); shakeCard();
+        return;
+      }
+      email = resolvedEmail;
+    }
+  }catch(e){
+    btnText.textContent='เข้าสู่ระบบ'; btn.disabled=false;
+    showLoginError('เกิดข้อผิดพลาดในการตรวจสอบรหัสพนักงาน: '+e.message); shakeCard();
+    return;
+  }
+
   const { signInWithEmailAndPassword } = window._authLib;
   signInWithEmailAndPassword(window._auth, email, pass)
     .catch(e=>{
       btnText.textContent='เข้าสู่ระบบ'; btn.disabled=false;
       const msg = {
-        'auth/invalid-credential':'อีเมลหรือรหัสผ่านไม่ถูกต้อง',
+        'auth/invalid-credential':'อีเมล/รหัสพนักงาน หรือรหัสผ่านไม่ถูกต้อง',
         'auth/user-not-found':'ไม่พบบัญชีนี้',
         'auth/wrong-password':'รหัสผ่านไม่ถูกต้อง',
         'auth/invalid-email':'รูปแบบอีเมลไม่ถูกต้อง',
