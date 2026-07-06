@@ -7673,7 +7673,7 @@ window.handleIssueFile = handleIssueFile;
   .topbar{
     position:sticky !important; top:0; z-index:250;
     display:flex !important;
-    flex-wrap:nowrap !important;
+    flex-wrap:wrap !important;
     align-items:center !important;
     gap:8px !important;
     padding:10px 12px !important;
@@ -7697,15 +7697,30 @@ window.handleIssueFile = handleIssueFile;
     flex-shrink:0;
   }
   .topbar-time{display:none !important}
-  #globalFbStatus{
-    display:none !important; /* ซ่อนสถานะเชื่อมต่อบนจอเล็ก ไม่ให้รก */
-  }
   #topbarUser{display:none !important}
   .btn-topbar{
     padding:7px 10px !important;
     font-size:11.5px !important;
     border-radius:10px !important;
     white-space:nowrap;
+  }
+
+  /* ── แถบสถานะเชื่อมต่อ: ดึงออกมาเป็นแถวของตัวเองใต้หัวข้อ+ปุ่มออกจากระบบ ── */
+  .topbar-right{display:contents !important}
+  .topbar-title{order:1}
+  #logoutBtn{order:2 !important; margin-left:auto !important}
+  #globalFbStatus{
+    display:flex !important;
+    order:3 !important;
+    flex:1 1 100% !important;
+    width:100% !important;
+    box-sizing:border-box !important;
+    justify-content:center !important;
+    align-items:center !important;
+    margin-top:2px !important;
+    font-size:11.5px !important;
+    padding:6px 10px !important;
+    border-radius:99px !important;
   }
 
   /* ── การ์ดตัวกรองข้อมูล: เรียงเป็นแถวตั้ง เต็มความกว้าง ── */
