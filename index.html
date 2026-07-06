@@ -5530,28 +5530,11 @@ function renderConcreteTable(){
 }
 
 /* ─── AUTH ─── */
-function _fsEmployeesCol(){ return window._fsLib.collection(window._db, 'employees'); }
-
-// รับรหัสพนักงาน แล้วคืนอีเมลที่ผูกไว้ (เก็บ mapping ไว้ใน Firestore collection "employees"
-// โดยแต่ละ document มีฟิลด์ code (รหัสพนักงาน) และ email (อีเมลที่ใช้สมัคร Firebase Auth))
-async function _resolveEmployeeEmail(code){
-  const { query, where, getDocs } = window._fsLib;
-  const q = query(_fsEmployeesCol(), where('code', '==', code));
-  const snap = await getDocs(q);
-  if(snap.empty) return null;
-  const data = snap.docs[0].data();
-  return data.email || null;
-}
-
-// ทางกลับ: จากอีเมลที่ login อยู่ หารหัสพนักงานที่ผูกไว้ เพื่อโชว์แทนอีเมลบน topbar
-async function _resolveEmployeeCode(email){
-  const { query, where, getDocs } = window._fsLib;
-  const q = query(_fsEmployeesCol(), where('email', '==', email));
-  const snap = await getDocs(q);
-  if(snap.empty) return null;
-  const data = snap.docs[0].data();
-  return data.code || null;
-}
+// รหัสพนักงาน <-> อีเมล แปลงกันไปมาด้วยสูตรตายตัว ไม่ต้องพึ่ง Firestore เลย
+// เช่น รหัสพนักงาน "0001" จะกลายเป็นอีเมล "0001@emp.local" ตอนสมัครใน Firebase Auth
+const EMP_EMAIL_SUFFIX = '@emp.local';
+function _codeToEmail(code){ return code + EMP_EMAIL_SUFFIX; }
+function _emailToCode(email){ return email && email.endsWith(EMP_EMAIL_SUFFIX) ? email.slice(0, -EMP_EMAIL_SUFFIX.length) : null; }
 
 async function doLogin(){
   const code = document.getElementById('loginEmail').value.trim();
@@ -5563,29 +5546,16 @@ async function doLogin(){
   btn.disabled=true;
   hideLoginError();
 
-  let email;
-  try{
-    email = await _resolveEmployeeEmail(code);
-    if(!email){
-      btnText.textContent='เข้าสู่ระบบ'; btn.disabled=false;
-      showLoginError('ไม่พบรหัสพนักงานนี้ในระบบ'); shakeCard();
-      return;
-    }
-  }catch(e){
-    btnText.textContent='เข้าสู่ระบบ'; btn.disabled=false;
-    showLoginError('เกิดข้อผิดพลาดในการตรวจสอบรหัสพนักงาน: '+e.message); shakeCard();
-    return;
-  }
-
+  const email = _codeToEmail(code);
   const { signInWithEmailAndPassword } = window._authLib;
   signInWithEmailAndPassword(window._auth, email, pass)
     .catch(e=>{
       btnText.textContent='เข้าสู่ระบบ'; btn.disabled=false;
       const msg = {
         'auth/invalid-credential':'รหัสพนักงานหรือรหัสผ่านไม่ถูกต้อง',
-        'auth/user-not-found':'ไม่พบบัญชีนี้',
+        'auth/user-not-found':'ไม่พบรหัสพนักงานนี้ในระบบ',
         'auth/wrong-password':'รหัสผ่านไม่ถูกต้อง',
-        'auth/invalid-email':'ข้อมูลอีเมลที่ผูกกับรหัสพนักงานนี้ไม่ถูกต้อง กรุณาติดต่อผู้ดูแลระบบ',
+        'auth/invalid-email':'รหัสพนักงานมีอักขระที่ไม่รองรับ กรุณาติดต่อผู้ดูแลระบบ',
         'auth/too-many-requests':'พยายามเข้าสู่ระบบมากเกินไป กรุณารอสักครู่',
       }[e.code]||'เกิดข้อผิดพลาด: '+e.message;
       showLoginError(msg); shakeCard();
@@ -5628,10 +5598,8 @@ window.addEventListener('load',()=>{
         document.getElementById('loginOverlay').style.display='none';
         const emailEl = document.getElementById('topbarUser');
         if(emailEl){
-          emailEl.textContent='...';
-          _resolveEmployeeCode(user.email)
-            .then(code=>{ if(emailEl) emailEl.textContent = code ? ('รหัสพนักงาน '+code) : user.email; })
-            .catch(()=>{ if(emailEl) emailEl.textContent = user.email; });
+          const code = _emailToCode(user.email);
+          emailEl.textContent = code ? ('รหัสพนักงาน '+code) : user.email;
         }
         initApp();
       } else {
