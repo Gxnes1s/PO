@@ -5561,11 +5561,9 @@ const TH_MONTHS_SHORT = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.
 function _monthKey(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
 function _monthLabel(d){ return TH_MONTHS_SHORT[d.getMonth()]+' '+String((d.getFullYear()+543)%100).padStart(2,'0'); }
 function _fmtBaht(n){ return Math.round(n||0).toLocaleString('th-TH'); }
+// รูปแบบเดียวกับหน้าอื่น ๆ ทั้งหมด (PO/คอนกรีต/โอนเงิน/ใบออก): คอมมาคั่นหลักพัน + ทศนิยม 2 ตำแหน่ง เสมอ ไม่มีการย่อหน่วย (k / ล.)
 function _fmtCompactBaht(n){
-  n = n||0;
-  if(Math.abs(n)>=1000000) return (n/1000000).toLocaleString('th-TH',{maximumFractionDigits:2})+'ล.';
-  if(Math.abs(n)>=1000) return (n/1000).toLocaleString('th-TH',{maximumFractionDigits:1})+'k';
-  return _fmtBaht(n);
+  return (n||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
 }
 
 let _summarySubsStarted = false;
@@ -5766,7 +5764,7 @@ function _drawSummaryCharts(monthLabels, monthValues, statusCount, statusLabel, 
         responsive:true, maintainAspectRatio:false,
         plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:c=>' ฿'+_fmtBaht(c.parsed.y) } } },
         scales:{
-          y:{ beginAtZero:true, ticks:{ callback:v=>_fmtCompactBaht(v), font:{family:'Sarabun'} }, grid:{color:'rgba(20,34,81,.06)'} },
+          y:{ beginAtZero:true, ticks:{ callback:v=>_fmtBaht(v), font:{family:'Sarabun'} }, grid:{color:'rgba(20,34,81,.06)'} },
           x:{ ticks:{ font:{family:'Sarabun'} }, grid:{display:false} }
         }
       }
@@ -5799,7 +5797,7 @@ function _drawSummaryCharts(monthLabels, monthValues, statusCount, statusLabel, 
         indexAxis:'y', responsive:true, maintainAspectRatio:false,
         plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:c=>' ฿'+_fmtBaht(c.parsed.x) } } },
         scales:{
-          x:{ beginAtZero:true, ticks:{ callback:v=>_fmtCompactBaht(v), font:{family:'Sarabun'} }, grid:{color:'rgba(20,34,81,.06)'} },
+          x:{ beginAtZero:true, ticks:{ callback:v=>_fmtBaht(v), font:{family:'Sarabun'} }, grid:{color:'rgba(20,34,81,.06)'} },
           y:{ ticks:{ font:{family:'Sarabun', size:11.5} }, grid:{display:false} }
         }
       }
