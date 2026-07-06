@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>9202 — Management</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, setDoc, doc, getDoc, query, orderBy, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -2777,7 +2778,10 @@ function togglePw(btn){
   </div>
 
   <div class="sidebar-nav">
-    <button class="nav-item active" data-page="concrete" onclick="openPage('concrete')">
+    <button class="nav-item active" data-page="summary" onclick="openPage('summary')">
+      <span class="nav-icon">📊</span><span>แดชบอร์ด</span>
+    </button>
+    <button class="nav-item" data-page="concrete" onclick="openPage('concrete')">
       <span class="nav-icon">🏗️</span><span>คอนกรีต</span>
     </button>
     <button class="nav-item" data-page="transfers" onclick="openPage('transfers')">
@@ -2813,6 +2817,16 @@ function togglePw(btn){
   </div>
 
   <div class="content">
+
+    <!-- ── SUMMARY DASHBOARD PAGE (จัดซื้อ) ── -->
+    <div class="page active" id="page-summary">
+      <div class="page-head">
+        <div class="page-head-title">แดชบอร์ด</div>
+        <div class="page-head-sub">สรุปภาพรวมงานจัดซื้อทุกระบบ แบบเรียลไทม์</div>
+      </div>
+      <div id="summaryContent"><div class="no-data-small">⏳ กำลังโหลดข้อมูล...</div></div>
+    </div>
+    <!-- /summary dashboard -->
 
     <!-- ── DASHBOARD PAGE ── -->
     <div class="page" id="page-dashboard">
@@ -3861,7 +3875,7 @@ function openPage(page){
   const nav=document.querySelector(`.sidebar [data-page="${page}"]`);
   if(nav) nav.classList.add('active');
   setTextSafe('topbarBreadcrumb', '/ '+{
-    concrete:'คอนกรีต', transfers:'รายการโอน', issue:'ใบออก', po:'PO', settings:'ตั้งค่า'
+    summary:'แดชบอร์ด', concrete:'คอนกรีต', transfers:'รายการโอน', issue:'ใบออก', po:'PO', settings:'ตั้งค่า'
   }[page]||page);
   // scroll to top on mobile
   window.scrollTo({top:0,behavior:'smooth'});
@@ -3869,6 +3883,7 @@ function openPage(page){
 }
 
 function refreshPageContent(page){
+  if(page==='summary'){ renderSummaryPage(); return; }
   if(page==='transfers'){ renderTransferPage(); return; }
   if(page==='concrete'){ renderConcretePage(); return; }
   if(page==='issue'){ renderIssuePage(); return; }
@@ -4873,6 +4888,7 @@ function subscribeTransfers(){
       renderTransferSummary();
       renderTransferTable();
     }
+    _refreshSummaryIfActive();
   }, err => {
     console.warn('Firestore error:', err);
     setFbStatus('offline');
@@ -5073,6 +5089,7 @@ function subscribeConcretes(){
       renderConcreteSummary();
       renderConcreteTable();
     }
+    _refreshSummaryIfActive();
   }, err => {
     console.warn('Firestore concrete error:', err);
     setConcreteFbStatus('offline');
@@ -5529,6 +5546,246 @@ function renderConcreteTable(){
   }
 }
 
+/* ─── SUMMARY DASHBOARD (จัดซื้อ) ─── */
+const TH_MONTHS_SHORT = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+function _monthKey(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+function _monthLabel(d){ return TH_MONTHS_SHORT[d.getMonth()]+' '+String((d.getFullYear()+543)%100).padStart(2,'0'); }
+function _fmtBaht(n){ return Math.round(n||0).toLocaleString('th-TH'); }
+function _fmtCompactBaht(n){
+  n = n||0;
+  if(Math.abs(n)>=1000000) return (n/1000000).toLocaleString('th-TH',{maximumFractionDigits:2})+'ล.';
+  if(Math.abs(n)>=1000) return (n/1000).toLocaleString('th-TH',{maximumFractionDigits:1})+'k';
+  return _fmtBaht(n);
+}
+
+let _summarySubsStarted = false;
+function _ensureSummarySubscriptions(){
+  if(_summarySubsStarted) return;
+  _summarySubsStarted = true;
+  subscribeConcretes(); subscribeTransfers(); subscribePOMan(); subscribeIssues();
+}
+function _refreshSummaryIfActive(){
+  const el = document.getElementById('page-summary');
+  if(el && el.classList.contains('active')) renderSummaryPage();
+}
+
+function _collectSpendRecords(){
+  const recs = [];
+  (_pomanCache||[]).forEach(p=>{
+    const dt = _parseAnyDateToLocal(p.date);
+    if(dt) recs.push({dt, amount: parseFloat(p.price)||0, shop:(p.shop||'').trim(), job:(p.job||'').trim()});
+  });
+  (_concreteCache||[]).forEach(c=>{
+    const dt = _parseAnyDateToLocal(c.date);
+    if(dt) recs.push({dt, amount: parseFloat(c.totalPrice)||0, shop:(c.shop||'').trim(), job:(c.job||'').trim()});
+  });
+  (_transfersCache||[]).forEach(t=>{
+    const dt = _parseAnyDateToLocal(t.date);
+    if(dt) recs.push({dt, amount: parseFloat(t.amount)||0, shop:(t.shop||'').trim(), job:(t.job||'').trim()});
+  });
+  return recs;
+}
+
+let _chartTrend=null, _chartStatus=null, _chartVendor=null;
+
+function renderSummaryPage(){
+  _ensureSummarySubscriptions();
+
+  const pomanArr = _pomanCache||[];
+  const concreteArr = _concreteCache||[];
+  const transferArr = _transfersCache||[];
+  const issueArr = _issueCache||[];
+  const recs = _collectSpendRecords();
+
+  const now = new Date();
+  const curKey = _monthKey(now);
+  const lastMonthDate = new Date(now.getFullYear(), now.getMonth()-1, 1);
+  const lastKey = _monthKey(lastMonthDate);
+
+  let curSpend=0, lastSpend=0;
+  const monthTotals = {}, shopTotals = {}, jobTotals = {};
+  recs.forEach(r=>{
+    const key = _monthKey(r.dt);
+    if(key===curKey) curSpend+=r.amount;
+    if(key===lastKey) lastSpend+=r.amount;
+    monthTotals[key] = (monthTotals[key]||0)+r.amount;
+    if(r.shop) shopTotals[r.shop]=(shopTotals[r.shop]||0)+r.amount;
+    if(r.job) jobTotals[r.job]=(jobTotals[r.job]||0)+r.amount;
+  });
+  const pctChange = lastSpend>0 ? ((curSpend-lastSpend)/lastSpend*100) : (curSpend>0?100:0);
+  const pctUp = pctChange>=0;
+
+  const countThisMonth = arr => arr.filter(x=>{ const dt=_parseAnyDateToLocal(x.date); return dt && _monthKey(dt)===curKey; }).length;
+  const poCountMonth = countThisMonth(pomanArr);
+  const concreteCountMonth = countThisMonth(concreteArr);
+  const transferCountMonth = countThisMonth(transferArr);
+  const issueCountMonth = countThisMonth(issueArr);
+  const totalActivityMonth = poCountMonth+concreteCountMonth+transferCountMonth+issueCountMonth;
+
+  const statusLabel = {open:'เปิด',received:'รับของแล้ว',closed:'ปิด',cancelled:'ยกเลิก'};
+  const statusCount = {open:0,received:0,closed:0,cancelled:0};
+  pomanArr.forEach(p=>{ const s=p.status||'open'; if(statusCount[s]===undefined) statusCount.open++; else statusCount[s]++; });
+  const openPOList = pomanArr.filter(p=>{ const s=p.status||'open'; return s==='open'||s==='received'; });
+  const openPOValue = openPOList.reduce((s,p)=>s+(parseFloat(p.price)||0),0);
+  const openPOCount = openPOList.length;
+
+  const monthKeys=[], monthLabels=[];
+  for(let i=5;i>=0;i--){ const d=new Date(now.getFullYear(), now.getMonth()-i, 1); monthKeys.push(_monthKey(d)); monthLabels.push(_monthLabel(d)); }
+  const monthValues = monthKeys.map(k=>monthTotals[k]||0);
+
+  const topShops = Object.entries(shopTotals).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const topJobs = Object.entries(jobTotals).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const maxJob = topJobs.length ? topJobs[0][1] : 0;
+
+  const wrap = document.getElementById('summaryContent');
+  if(!wrap) return;
+
+  wrap.innerHTML = `
+    <div class="bento">
+      <div class="bento-card bento-hero">
+        <div>
+          <div class="hero-label">ยอดจัดซื้อรวมเดือนนี้</div>
+          <div class="hero-val">฿${_fmtBaht(curSpend)}</div>
+          <div class="hero-sub">${totalActivityMonth} รายการ • เทียบเดือนที่แล้ว
+            <span style="color:${pctUp?'#7DCCA0':'#F0AAAA'};font-weight:700">${pctUp?'▲':'▼'} ${Math.abs(pctChange).toFixed(1)}%</span>
+          </div>
+        </div>
+        <div class="hero-bar"><div class="hero-bar-fill" style="width:${Math.min(100,Math.max(6,(curSpend/(Math.max(curSpend,lastSpend)||1))*100))}%"></div></div>
+      </div>
+
+      <div class="bento-card bento-stat strip-blue">
+        <div class="stat-top">
+          <div class="stat-icon bg-blue c-blue">📋</div>
+          <span class="stat-pct pct-blue">${openPOCount} รายการ</span>
+        </div>
+        <div class="stat-label">PO ที่ยังไม่ปิด</div>
+        <div class="stat-val c-blue">฿${_fmtCompactBaht(openPOValue)}</div>
+      </div>
+
+      <div class="bento-card bento-stat strip-green">
+        <div class="stat-top">
+          <div class="stat-icon bg-green c-green">🏗️</div>
+          <span class="stat-pct pct-green">${concreteCountMonth} รายการ</span>
+        </div>
+        <div class="stat-label">คอนกรีตเดือนนี้</div>
+        <div class="stat-val c-green">฿${_fmtCompactBaht((_concreteCache||[]).filter(c=>{const dt=_parseAnyDateToLocal(c.date);return dt&&_monthKey(dt)===curKey;}).reduce((s,c)=>s+(parseFloat(c.totalPrice)||0),0))}</div>
+      </div>
+
+      <div class="bento-card bento-stat strip-amber">
+        <div class="stat-top">
+          <div class="stat-icon bg-amber c-amber">🔄</div>
+          <span class="stat-pct pct-amber">${transferCountMonth} รายการ</span>
+        </div>
+        <div class="stat-label">โอนเงินเดือนนี้</div>
+        <div class="stat-val c-amber">฿${_fmtCompactBaht((_transfersCache||[]).filter(t=>{const dt=_parseAnyDateToLocal(t.date);return dt&&_monthKey(dt)===curKey;}).reduce((s,t)=>s+(parseFloat(t.amount)||0),0))}</div>
+      </div>
+
+      <div class="bento-card bento-stat strip-red">
+        <div class="stat-top">
+          <div class="stat-icon bg-red c-red">📄</div>
+          <span class="stat-pct pct-red">${issueCountMonth} รายการ</span>
+        </div>
+        <div class="stat-label">ใบออกเดือนนี้</div>
+        <div class="stat-val c-red">${issueCountMonth}</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:14px;margin-bottom:14px" id="summaryChartRow">
+      <div class="table-card">
+        <div class="table-header"><span class="table-header-title">📈 ยอดจัดซื้อย้อนหลัง 6 เดือน</span></div>
+        <div style="padding:16px;height:260px"><canvas id="chartTrend"></canvas></div>
+      </div>
+      <div class="table-card">
+        <div class="table-header"><span class="table-header-title">📋 สถานะ PO ทั้งหมด</span></div>
+        <div style="padding:16px;height:260px;display:flex;align-items:center;justify-content:center"><canvas id="chartStatus"></canvas></div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px" id="summaryBottomRow">
+      <div class="table-card">
+        <div class="table-header"><span class="table-header-title">🏪 ร้านค้า/Vendor ที่ซื้อมากสุด (Top 5)</span></div>
+        <div style="padding:16px;height:260px">${topShops.length?'<canvas id="chartVendor"></canvas>':'<div class="no-data-small">ยังไม่มีข้อมูล</div>'}</div>
+      </div>
+      <div class="table-card">
+        <div class="table-header"><span class="table-header-title">🏷️ JOB / โครงการ ที่ใช้จ่ายมากสุด (Top 5)</span></div>
+        <div style="padding:16px">
+          ${topJobs.length ? topJobs.map(([job,val])=>`
+            <div style="margin-bottom:12px">
+              <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px">
+                <span style="font-weight:600;color:var(--text)">${esc(job)}</span>
+                <span style="font-family:'IBM Plex Mono',monospace;color:var(--text3)">฿${_fmtBaht(val)}</span>
+              </div>
+              <div style="height:8px;background:var(--surface2);border-radius:99px;overflow:hidden">
+                <div style="height:100%;border-radius:99px;background:var(--gold-grad);width:${maxJob?Math.max(4,(val/maxJob*100)):0}%"></div>
+              </div>
+            </div>`).join('') : '<div class="no-data-small">ยังไม่มีข้อมูล</div>'}
+        </div>
+      </div>
+    </div>
+  `;
+
+  _drawSummaryCharts(monthLabels, monthValues, statusCount, statusLabel, topShops);
+}
+
+function _drawSummaryCharts(monthLabels, monthValues, statusCount, statusLabel, topShops){
+  if(typeof Chart === 'undefined') return;
+  if(_chartTrend){ _chartTrend.destroy(); _chartTrend=null; }
+  if(_chartStatus){ _chartStatus.destroy(); _chartStatus=null; }
+  if(_chartVendor){ _chartVendor.destroy(); _chartVendor=null; }
+
+  const trendEl = document.getElementById('chartTrend');
+  if(trendEl){
+    _chartTrend = new Chart(trendEl, {
+      type:'bar',
+      data:{ labels:monthLabels, datasets:[{
+        label:'ยอดจัดซื้อ (บาท)', data:monthValues,
+        backgroundColor:'rgba(26,52,128,.75)', borderRadius:6, maxBarThickness:38
+      }]},
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:c=>' ฿'+_fmtBaht(c.parsed.y) } } },
+        scales:{
+          y:{ beginAtZero:true, ticks:{ callback:v=>_fmtCompactBaht(v), font:{family:'Sarabun'} }, grid:{color:'rgba(20,34,81,.06)'} },
+          x:{ ticks:{ font:{family:'Sarabun'} }, grid:{display:false} }
+        }
+      }
+    });
+  }
+
+  const statusEl = document.getElementById('chartStatus');
+  if(statusEl){
+    const labels = ['เปิด','รับของแล้ว','ปิด','ยกเลิก'];
+    const data = [statusCount.open, statusCount.received, statusCount.closed, statusCount.cancelled];
+    _chartStatus = new Chart(statusEl, {
+      type:'doughnut',
+      data:{ labels, datasets:[{ data, backgroundColor:['#1A65B5','#C07F20','#0F5C32','#8C1F1F'], borderWidth:2, borderColor:'#fff' }]},
+      options:{
+        responsive:true, maintainAspectRatio:false, cutout:'62%',
+        plugins:{ legend:{ position:'bottom', labels:{ font:{family:'Sarabun', size:11.5}, padding:12 } } }
+      }
+    });
+  }
+
+  const vendorEl = document.getElementById('chartVendor');
+  if(vendorEl && topShops.length){
+    _chartVendor = new Chart(vendorEl, {
+      type:'bar',
+      data:{ labels:topShops.map(s=>s[0]), datasets:[{
+        label:'ยอดซื้อ (บาท)', data:topShops.map(s=>s[1]),
+        backgroundColor:'rgba(184,148,42,.8)', borderRadius:6, maxBarThickness:26
+      }]},
+      options:{
+        indexAxis:'y', responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:c=>' ฿'+_fmtBaht(c.parsed.x) } } },
+        scales:{
+          x:{ beginAtZero:true, ticks:{ callback:v=>_fmtCompactBaht(v), font:{family:'Sarabun'} }, grid:{color:'rgba(20,34,81,.06)'} },
+          y:{ ticks:{ font:{family:'Sarabun', size:11.5} }, grid:{display:false} }
+        }
+      }
+    });
+  }
+}
+
 /* ─── AUTH ─── */
 // รหัสพนักงาน <-> อีเมล แปลงกันไปมาด้วยสูตรตายตัว ไม่ต้องพึ่ง Firestore เลย
 // เช่น รหัสพนักงาน "0001" จะกลายเป็นอีเมล "0001@emp.local" ตอนสมัครใน Firebase Auth
@@ -5583,7 +5840,7 @@ async function doLogout(){
   await signOut(window._auth);
 }
 function initApp(){
-  openPage('concrete');
+  openPage('summary');
   renderSettings('general');
 }
 
@@ -5690,6 +5947,7 @@ function subscribeIssues(){
     if(document.getElementById('page-issue') && document.getElementById('page-issue').classList.contains('active')){
       renderIssueSummary(); renderIssueTable();
     }
+    _refreshSummaryIfActive();
   }, err => {
     console.warn('Firestore issue error:', err);
     setIssueFbStatus('offline');
@@ -6162,7 +6420,11 @@ function closeStoreSheet(){
 
 <!-- ── BOTTOM NAV ── -->
 <nav class="bottom-nav" id="bottomNav">
-  <button class="bnav-item active" data-page="concrete" onclick="openPage('concrete')">
+  <button class="bnav-item active" data-page="summary" onclick="openPage('summary')">
+    <span style="font-size:18px;line-height:1;display:block!important">📊</span>
+    <span style="font-size:10px;font-weight:700;display:block!important;visibility:visible!important;opacity:1!important">แดชบอร์ด</span>
+  </button>
+  <button class="bnav-item" data-page="concrete" onclick="openPage('concrete')">
     <span style="font-size:18px;line-height:1;display:block!important">🏗️</span>
     <span style="font-size:10px;font-weight:700;display:block!important;visibility:visible!important;opacity:1!important">คอนกรีต</span>
   </button>
@@ -6230,6 +6492,7 @@ function subscribePOMan(){
     if(document.getElementById('page-po')&&document.getElementById('page-po').classList.contains('active')){
       renderPOManSummary(); renderPOManTable();
     }
+    _refreshSummaryIfActive();
   }, err => {
     console.warn('Firestore poman error:', err);
     setPOManFbStatus('offline');
