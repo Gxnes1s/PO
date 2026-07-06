@@ -2648,8 +2648,8 @@ input[type="date"]{font-family:'Inter','Sarabun',sans-serif !important;border-ra
       <div class="lo-card-sub">ใส่ข้อมูลบัญชีของคุณเพื่อดำเนินการต่อ</div>
 
       <div class="lo-field">
-        <label class="lo-label" for="loginEmail">อีเมล หรือ รหัสพนักงาน</label>
-        <input class="lo-input" id="loginEmail" type="text" placeholder="your@email.com หรือ รหัสพนักงาน"
+        <label class="lo-label" for="loginEmail">รหัสพนักงาน</label>
+        <input class="lo-input" id="loginEmail" type="text" placeholder="กรอกรหัสพนักงาน"
           onkeydown="if(event.key==='Enter')document.getElementById('loginPassword').focus()">
       </div>
 
@@ -5543,27 +5543,33 @@ async function _resolveEmployeeEmail(code){
   return data.email || null;
 }
 
+// ทางกลับ: จากอีเมลที่ login อยู่ หารหัสพนักงานที่ผูกไว้ เพื่อโชว์แทนอีเมลบน topbar
+async function _resolveEmployeeCode(email){
+  const { query, where, getDocs } = window._fsLib;
+  const q = query(_fsEmployeesCol(), where('email', '==', email));
+  const snap = await getDocs(q);
+  if(snap.empty) return null;
+  const data = snap.docs[0].data();
+  return data.code || null;
+}
+
 async function doLogin(){
-  const identifier = document.getElementById('loginEmail').value.trim();
+  const code = document.getElementById('loginEmail').value.trim();
   const pass  = document.getElementById('loginPassword').value;
   const btn   = document.getElementById('loginBtn');
   const btnText = document.getElementById('loginBtnText');
-  if(!identifier||!pass){ showLoginError('กรุณากรอกอีเมล/รหัสพนักงาน และรหัสผ่าน'); shakeCard(); return; }
+  if(!code||!pass){ showLoginError('กรุณากรอกรหัสพนักงานและรหัสผ่าน'); shakeCard(); return; }
   btnText.innerHTML='<span class="lo-spin"></span> กำลังเข้าสู่ระบบ...';
   btn.disabled=true;
   hideLoginError();
 
-  let email = identifier;
+  let email;
   try{
-    if(!identifier.includes('@')){
-      // ไม่มี @ ถือว่ากรอกมาเป็นรหัสพนักงาน — ค้นหาอีเมลที่ผูกไว้
-      const resolvedEmail = await _resolveEmployeeEmail(identifier);
-      if(!resolvedEmail){
-        btnText.textContent='เข้าสู่ระบบ'; btn.disabled=false;
-        showLoginError('ไม่พบรหัสพนักงานนี้ในระบบ'); shakeCard();
-        return;
-      }
-      email = resolvedEmail;
+    email = await _resolveEmployeeEmail(code);
+    if(!email){
+      btnText.textContent='เข้าสู่ระบบ'; btn.disabled=false;
+      showLoginError('ไม่พบรหัสพนักงานนี้ในระบบ'); shakeCard();
+      return;
     }
   }catch(e){
     btnText.textContent='เข้าสู่ระบบ'; btn.disabled=false;
@@ -5576,10 +5582,10 @@ async function doLogin(){
     .catch(e=>{
       btnText.textContent='เข้าสู่ระบบ'; btn.disabled=false;
       const msg = {
-        'auth/invalid-credential':'อีเมล/รหัสพนักงาน หรือรหัสผ่านไม่ถูกต้อง',
+        'auth/invalid-credential':'รหัสพนักงานหรือรหัสผ่านไม่ถูกต้อง',
         'auth/user-not-found':'ไม่พบบัญชีนี้',
         'auth/wrong-password':'รหัสผ่านไม่ถูกต้อง',
-        'auth/invalid-email':'รูปแบบอีเมลไม่ถูกต้อง',
+        'auth/invalid-email':'ข้อมูลอีเมลที่ผูกกับรหัสพนักงานนี้ไม่ถูกต้อง กรุณาติดต่อผู้ดูแลระบบ',
         'auth/too-many-requests':'พยายามเข้าสู่ระบบมากเกินไป กรุณารอสักครู่',
       }[e.code]||'เกิดข้อผิดพลาด: '+e.message;
       showLoginError(msg); shakeCard();
@@ -5621,7 +5627,12 @@ window.addEventListener('load',()=>{
         // logged in — hide login screen, show app
         document.getElementById('loginOverlay').style.display='none';
         const emailEl = document.getElementById('topbarUser');
-        if(emailEl) emailEl.textContent=user.email;
+        if(emailEl){
+          emailEl.textContent='...';
+          _resolveEmployeeCode(user.email)
+            .then(code=>{ if(emailEl) emailEl.textContent = code ? ('รหัสพนักงาน '+code) : user.email; })
+            .catch(()=>{ if(emailEl) emailEl.textContent = user.email; });
+        }
         initApp();
       } else {
         // not logged in — show login screen, hide app content
