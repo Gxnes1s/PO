@@ -7646,5 +7646,137 @@ window.handleIssueFile = handleIssueFile;
   </div>
 </div>
 
+<style id="mobile-final-fix">
+/* ═══════════════════════════════════════════════════════════
+   MOBILE FINAL FIX — ทำให้แสดงผลบนมือถือสวยงาม ไม่ทับซ้อน
+   (วางท้ายสุดเพื่อชนะ CSS อื่นที่ขัดกันก่อนหน้านี้)
+═══════════════════════════════════════════════════════════ */
+@media (max-width: 640px){
+
+  html,body{overflow-x:hidden !important; width:100% !important}
+
+  /* ── แก้บั๊กหลัก: sidebar เคยถูกบังคับกว้าง 248px แม้จอมือถือ ── */
+  :root{--sidebar-w:0px !important}
+  .sidebar{display:none !important; width:0 !important}
+  .main-wrap{
+    margin-left:0 !important;
+    width:100% !important;
+    max-width:100vw !important;
+    overflow-x:hidden !important;
+  }
+  .content{
+    padding:.7rem .55rem 84px !important;
+    max-width:100% !important;
+  }
+
+  /* ── Topbar: จัดเรียงใหม่ให้ไม่ชนกัน ── */
+  .topbar{
+    position:sticky !important; top:0; z-index:250;
+    display:flex !important;
+    flex-wrap:nowrap !important;
+    align-items:center !important;
+    gap:8px !important;
+    padding:10px 12px !important;
+    height:auto !important;
+    min-height:auto !important;
+    border-radius:0 0 16px 16px;
+    box-shadow:0 4px 18px rgba(13,27,62,.08);
+  }
+  .topbar-title{
+    font-size:14px !important;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .topbar-breadcrumb{display:none !important}
+  .topbar-right{
+    margin-left:auto !important;
+    display:flex !important;
+    align-items:center !important;
+    gap:6px !important;
+    flex-shrink:0;
+  }
+  .topbar-time{display:none !important}
+  #globalFbStatus{
+    display:none !important; /* ซ่อนสถานะเชื่อมต่อบนจอเล็ก ไม่ให้รก */
+  }
+  #topbarUser{display:none !important}
+  .btn-topbar{
+    padding:7px 10px !important;
+    font-size:11.5px !important;
+    border-radius:10px !important;
+    white-space:nowrap;
+  }
+
+  /* ── การ์ดตัวกรองข้อมูล: เรียงเป็นแถวตั้ง เต็มความกว้าง ── */
+  #summaryContent .table-card:first-child{
+    border-radius:16px !important;
+  }
+  #summaryContent .table-card:first-child > div{
+    flex-direction:column !important;
+    align-items:stretch !important;
+    padding:14px !important;
+    gap:8px !important;
+  }
+  #summaryContent .table-card:first-child select,
+  #summaryContent .table-card:first-child input[type="date"]{
+    width:100% !important;
+    max-width:100% !important;
+    box-sizing:border-box !important;
+    padding:11px 12px !important;
+    font-size:13.5px !important;
+    border-radius:12px !important;
+  }
+  #summaryContent .table-card:first-child button{
+    width:100% !important;
+    box-sizing:border-box !important;
+    padding:11px !important;
+    border-radius:12px !important;
+  }
+  #summaryContent .table-card:first-child span[style*="white-space:nowrap"]{
+    white-space:normal !important;
+  }
+
+  /* ── Bento grid: การ์ดสรุปยอด จัดใหม่ให้อ่านง่ายสวยงาม ── */
+  .bento{
+    grid-template-columns:1fr 1fr !important;
+    gap:10px !important;
+    margin-bottom:1rem !important;
+  }
+  .bento-hero{
+    grid-column:1 / -1 !important;
+    border-radius:18px !important;
+    padding:1.3rem 1.3rem !important;
+  }
+  .bento-hero .hero-val{font-size:30px !important}
+  .bento-card,.bento-stat{
+    border-radius:16px !important;
+    padding:.9rem 1rem !important;
+  }
+  .bento-stat .stat-val{font-size:20px !important}
+  .bento-stat .stat-label{font-size:9.5px !important}
+  .bento-stat .stat-icon{width:28px !important; height:28px !important; font-size:13px !important}
+  .bento-stat .stat-pct{font-size:9.5px !important; padding:2px 6px !important}
+
+  /* ── Bottom nav: มือถือ ── */
+  .bottom-nav{
+    height:60px !important;
+    border-radius:18px 18px 0 0;
+    box-shadow:0 -6px 24px rgba(13,27,62,.18);
+  }
+  .bnav-icon{font-size:17px !important}
+  .bnav-label{font-size:9px !important}
+
+  /* ── Login overlay บนมือถือ ── */
+  .lo-right{padding:1.6rem 1.2rem !important}
+  .lo-card{border-radius:18px !important}
+}
+
+@media (max-width: 380px){
+  .bento{grid-template-columns:1fr 1fr !important}
+  .bento-hero .hero-val{font-size:26px !important}
+  .topbar-title{font-size:12.5px !important}
+}
+</style>
 </body>
 </html>
