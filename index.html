@@ -4,18 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>9202 — Management</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<script>
-// สำรอง: ถ้าโหลด Chart.js จาก cdnjs ไม่สำเร็จ (เช่นโดนบล็อกบางเครือข่าย) ให้ลองโหลดจาก jsDelivr แทน
-window.addEventListener('DOMContentLoaded', function(){
-  if(typeof Chart === 'undefined'){
-    var s = document.createElement('script');
-    s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js';
-    document.head.appendChild(s);
-  }
-});
-</script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, setDoc, doc, getDoc, query, orderBy, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -7750,6 +7738,28 @@ window.handleIssueFile = handleIssueFile;
   }
   #summaryContent .table-card:first-child span[style*="white-space:nowrap"]{
     white-space:normal !important;
+  }
+
+  /* ── แถวกราฟ (แนวโน้ม/สถานะ PO และ Vendor/JOB): เรียงเป็นคอลัมน์เดียวเต็มจอ ── */
+  #summaryChartRow,
+  #summaryBottomRow{
+    grid-template-columns:1fr !important;
+    gap:12px !important;
+  }
+  #summaryChartRow .table-card,
+  #summaryBottomRow .table-card{
+    border-radius:16px !important;
+  }
+  #summaryChartRow canvas,
+  #summaryBottomRow canvas{
+    max-width:100% !important;
+  }
+  .table-header{
+    padding:12px 14px !important;
+  }
+  .table-header-title{
+    font-size:12.5px !important;
+    line-height:1.35 !important;
   }
 
   /* ── Bento grid: การ์ดสรุปยอด จัดใหม่ให้อ่านง่ายสวยงาม ── */
