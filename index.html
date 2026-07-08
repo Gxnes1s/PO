@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>9202 — Management</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, setDoc, doc, getDoc, query, orderBy, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -2560,6 +2562,7 @@ input[type="date"]{font-family:'Inter','Sarabun',sans-serif !important;border-ra
   background-size:200% 100%;
   animation:goldShimmer 5s linear infinite;
 }
+.lo-card-handle{display:none}
 .lo-card{width:100%}
 .lo-card-title{font-size:22px;font-weight:700;color:var(--navy-900);letter-spacing:.02em;margin-bottom:.35rem;font-family:'Cinzel',serif}
 .lo-card-sub{font-size:13px;color:#8A98B8;margin-bottom:2rem}
@@ -2609,9 +2612,39 @@ input[type="date"]{font-family:'Inter','Sarabun',sans-serif !important;border-ra
 @keyframes lo-shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
 .lo-shake{animation:lo-shake .4s ease}
 @media(max-width:680px){
-  #loginOverlay{flex-direction:column}
-  .lo-left{display:none}
-  .lo-right{width:100%;flex:1;padding:2rem 1.5rem}
+  #loginOverlay{
+    flex-direction:column;
+    background:linear-gradient(160deg,#0D1B3E 0%,#142251 55%,#0D1B3E 100%);
+    overflow-y:auto;
+  }
+  .lo-left{
+    display:flex !important;
+    flex:0 0 auto;
+    min-height:0;
+    padding:max(2.2rem,env(safe-area-inset-top)) 1.6rem 3rem;
+    align-items:center;justify-content:center;
+    text-align:center;
+  }
+  .lo-left .lo-hero{width:100%}
+  .lo-brand{justify-content:center;margin-bottom:1rem}
+  .lo-hero-title{font-size:21px;margin-bottom:.5rem;line-height:1.35}
+  .lo-hero-sub{display:none}
+  .lo-pills{display:none}
+  .lo-right{
+    width:100%;flex:1;
+    padding:1.9rem 1.4rem calc(2rem + env(safe-area-inset-bottom));
+    border-radius:26px 26px 0 0;
+    margin-top:-22px;
+    box-shadow:0 -14px 34px rgba(13,27,62,.35);
+    position:relative;z-index:2;
+  }
+  .lo-right::before{border-radius:26px 26px 0 0;height:3px}
+  .lo-card-title{text-align:center;font-size:20px}
+  .lo-card-sub{text-align:center;margin-bottom:1.6rem}
+  .lo-card-handle{
+    display:block;width:38px;height:4px;border-radius:99px;
+    background:#DAE0F0;margin:0 auto 1.2rem;
+  }
 }
 </style>
 <div id="loginOverlay">
@@ -2642,6 +2675,7 @@ input[type="date"]{font-family:'Inter','Sarabun',sans-serif !important;border-ra
   </div>
   <!-- Right panel -->
   <div class="lo-right">
+    <div class="lo-card-handle"></div>
     <div class="lo-card">
       <div class="lo-card-title">เข้าสู่ระบบ</div>
       <div class="lo-card-sub">ใส่ข้อมูลบัญชีของคุณเพื่อดำเนินการต่อ</div>
@@ -7793,8 +7827,12 @@ window.handleIssueFile = handleIssueFile;
   .bnav-label{font-size:9px !important}
 
   /* ── Login overlay บนมือถือ ── */
-  .lo-right{padding:1.6rem 1.2rem !important}
+  .lo-right{padding:1.7rem 1.2rem calc(1.8rem + env(safe-area-inset-bottom)) !important}
   .lo-card{border-radius:18px !important}
+  .lo-brand-icon{width:42px !important;height:42px !important;font-size:19px !important}
+  .lo-brand-name{font-size:15px !important}
+  .lo-glow{width:380px !important;height:380px !important;top:-140px !important;left:-100px !important}
+  .lo-glow2{width:280px !important;height:280px !important}
 }
 
 @media (max-width: 380px){
