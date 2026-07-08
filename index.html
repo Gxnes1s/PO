@@ -5884,10 +5884,11 @@ function _drawSummaryCharts(monthLabels, monthValues, statusCount, statusLabel, 
       }]},
       options:{
         responsive:true, maintainAspectRatio:false,
+        layout:{ padding:{ right:10 } },
         plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:c=>' ฿'+_fmtBaht(c.parsed.y) } } },
         scales:{
-          y:{ beginAtZero:true, ticks:{ callback:v=>_fmtBaht(v), font:{family:'Sarabun'} }, grid:{color:'rgba(20,34,81,.06)'} },
-          x:{ ticks:{ font:{family:'Sarabun'} }, grid:{display:false} }
+          y:{ beginAtZero:true, ticks:{ callback:v=>_fmtCompactBaht(v), font:{family:'Sarabun'}, maxTicksLimit:5 }, grid:{color:'rgba(20,34,81,.06)'} },
+          x:{ ticks:{ font:{family:'Sarabun'}, maxRotation:0, autoSkipPadding:6 }, grid:{display:false} }
         }
       }
     });
@@ -5902,29 +5903,44 @@ function _drawSummaryCharts(monthLabels, monthValues, statusCount, statusLabel, 
       data:{ labels, datasets:[{ data, backgroundColor:['#1A65B5','#C07F20','#0F5C32','#8C1F1F'], borderWidth:2, borderColor:'#fff' }]},
       options:{
         responsive:true, maintainAspectRatio:false, cutout:'62%',
-        plugins:{ legend:{ position:'bottom', labels:{ font:{family:'Sarabun', size:11.5}, padding:12 } } }
+        plugins:{ legend:{ position:'bottom', labels:{ font:{family:'Sarabun', size:11.5}, padding:12, boxWidth:12 } } }
       }
     });
   }
 
   const vendorEl = document.getElementById('chartVendor');
   if(vendorEl && topShops.length){
+    const shortenLabel = s => s.length > 14 ? s.slice(0,13)+'…' : s;
     _chartVendor = new Chart(vendorEl, {
       type:'bar',
-      data:{ labels:topShops.map(s=>s[0]), datasets:[{
+      data:{ labels:topShops.map(s=>shortenLabel(s[0])), datasets:[{
         label:'ยอดซื้อ (บาท)', data:topShops.map(s=>s[1]),
         backgroundColor:'rgba(184,148,42,.8)', borderRadius:6, maxBarThickness:26
       }]},
       options:{
         indexAxis:'y', responsive:true, maintainAspectRatio:false,
-        plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:c=>' ฿'+_fmtBaht(c.parsed.x) } } },
+        layout:{ padding:{ right:14, left:2 } },
+        plugins:{
+          legend:{display:false},
+          tooltip:{ callbacks:{
+            title:items=>topShops[items[0].dataIndex][0],
+            label:c=>' ฿'+_fmtBaht(c.parsed.x)
+          } }
+        },
         scales:{
-          x:{ beginAtZero:true, ticks:{ callback:v=>_fmtBaht(v), font:{family:'Sarabun'} }, grid:{color:'rgba(20,34,81,.06)'} },
-          y:{ ticks:{ font:{family:'Sarabun', size:11.5} }, grid:{display:false} }
+          x:{ beginAtZero:true, ticks:{ callback:v=>_fmtCompactBaht(v), font:{family:'Sarabun'}, maxTicksLimit:4 }, grid:{color:'rgba(20,34,81,.06)'} },
+          y:{ ticks:{ font:{family:'Sarabun', size:11.5}, autoSkip:false }, grid:{display:false} }
         }
       }
     });
   }
+
+  // เผื่อ container วัดขนาดผิดตอนเพิ่งสร้าง DOM ใหม่ๆ ให้บังคับ resize อีกครั้งหลัง layout นิ่งแล้ว
+  requestAnimationFrame(()=>{
+    setTimeout(()=>{
+      [_chartTrend,_chartStatus,_chartVendor].forEach(c=>{ try{ c && c.resize(); }catch(e){} });
+    }, 60);
+  });
 }
 
 /* ─── AUTH ─── */
@@ -7779,14 +7795,24 @@ window.handleIssueFile = handleIssueFile;
   #summaryBottomRow{
     grid-template-columns:1fr !important;
     gap:12px !important;
+    min-width:0 !important;
   }
   #summaryChartRow .table-card,
   #summaryBottomRow .table-card{
     border-radius:16px !important;
+    min-width:0 !important;
+    max-width:100% !important;
+  }
+  #summaryChartRow .table-card > div,
+  #summaryBottomRow .table-card > div{
+    min-width:0 !important;
+    box-sizing:border-box !important;
   }
   #summaryChartRow canvas,
   #summaryBottomRow canvas{
     max-width:100% !important;
+    width:100% !important;
+    display:block !important;
   }
   .table-header{
     padding:12px 14px !important;
