@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>9202 — Management</title>
+<title>9202 — จัดซื้อและจัดจ้าง</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script type="module">
@@ -530,6 +530,10 @@ body{
   display:flex;align-items:center;gap:10px;
   background:linear-gradient(135deg,var(--navy-50) 0%,#fff 100%);
 }
+.drill-row{transition:background .15s}
+.drill-row:hover{background:var(--navy-50)}
+.drill-item-row{transition:background .12s}
+.drill-item-row:hover{background:var(--navy-50)}
 .table-header-title{font-size:13.5px;font-weight:700;color:var(--navy-900);font-family:'Cinzel',serif;letter-spacing:.02em}
 .table-count{font-size:11.5px;color:var(--text3);background:var(--surface2);padding:3px 10px;border-radius:99px;font-family:'IBM Plex Mono',monospace;font-weight:600;border:1px solid var(--border)}
 .table-scroll{overflow-x:auto;max-height:520px;overflow-y:auto}
@@ -2474,6 +2478,61 @@ tr.row-cancel td:first-child{border-left:3px solid var(--red) !important;padding
 .no-data{color:var(--text3) !important;font-family:'Inter','Sarabun',sans-serif !important}
 #globalFbStatus{font-family:'Inter',sans-serif !important;font-size:10.5px !important;border-radius:7px !important}
 input[type="date"]{font-family:'Inter','Sarabun',sans-serif !important;border-radius:9px !important}
+
+/* ════ DARK THEME ════ */
+html[data-ui-theme="dark"]{
+  --bg:#0F1420 !important;
+  --surface:#1A2033 !important;
+  --surface2:#222A40 !important;
+  --surface3:#262E46 !important;
+  --border:rgba(255,255,255,.1) !important;
+  --border-strong:rgba(255,255,255,.18) !important;
+  --text:#EDEFF7 !important;
+  --text2:#C3C9DE !important;
+  --text3:#8993B5 !important;
+
+  --navy-900:#EDEFF7 !important;
+  --navy-800:#DCE0F0 !important;
+  --navy-700:#C3C9DE !important;
+  --navy-50:#222A40 !important;
+  --navy-100:#262E46 !important;
+
+  --gold-50:#2A2A1E !important;
+  --gold-100:#3A371F !important;
+
+  --blue-bg:#1E2A4A !important;
+  --blue-light:#3A4A7A !important;
+  --blue-text:#B8C4F0 !important;
+
+  --green-bg:#173226 !important;
+  --green-light:#2E5A42 !important;
+  --green-text:#8FDBAE !important;
+
+  --amber-bg:#332A10 !important;
+  --amber-light:#5C4A1A !important;
+  --amber-text:#E8C870 !important;
+
+  --red-bg:#3A1A1A !important;
+  --red-light:#6A2E2E !important;
+  --red-text:#F0AAAA !important;
+
+  --gray-bg:#242C42 !important;
+  --gray-text:#A0A8C4 !important;
+
+  --glass:rgba(26,32,51,.7) !important;
+  --glass-border:rgba(255,255,255,.08) !important;
+}
+html[data-ui-theme="dark"] body{background:var(--bg) !important; color:var(--text) !important}
+html[data-ui-theme="dark"] .sidebar{box-shadow:0 0 24px rgba(0,0,0,.4) !important}
+html[data-ui-theme="dark"] .table-header{background:linear-gradient(135deg,var(--surface2) 0%,var(--surface) 100%) !important}
+html[data-ui-theme="dark"] .modal-head{background:linear-gradient(135deg,var(--surface2),var(--surface)) !important}
+html[data-ui-theme="dark"] .lo-right{background:var(--surface) !important}
+html[data-ui-theme="dark"] .lo-input{background:var(--surface2) !important;border-color:var(--border) !important;color:var(--text) !important}
+html[data-ui-theme="dark"] .lo-card-title{color:var(--text) !important}
+html[data-ui-theme="dark"] .lo-card-sub{color:var(--text3) !important}
+html[data-ui-theme="dark"] ::-webkit-scrollbar-track{background:var(--surface2) !important}
+html[data-ui-theme="dark"] ::-webkit-scrollbar-thumb{background:var(--border-strong) !important}
+html[data-ui-theme="dark"] img{filter:brightness(.92)}
 </style>
 </head>
 <body>
@@ -2659,7 +2718,7 @@ input[type="date"]{font-family:'Inter','Sarabun',sans-serif !important;border-ra
       <div class="lo-brand-icon">📊</div>
       <div>
         <div class="lo-brand-name">9202</div>
-        <div class="lo-brand-sub">Management System</div>
+        <div class="lo-brand-sub">จัดซื้อและจัดจ้าง</div>
       </div>
     </div>
     <div class="lo-hero">
@@ -2667,10 +2726,10 @@ input[type="date"]{font-family:'Inter','Sarabun',sans-serif !important;border-ra
       <div class="lo-hero-sub">ติดตามสถานะ PO แบบ Realtime เชื่อมข้อมูลทุกบริษัทพร้อมกัน วิเคราะห์และออกรายงานได้ทันที</div>
     </div>
     <div class="lo-pills">
-      <div class="lo-pill">📍 ส.เขมราฐ</div>
-      <div class="lo-pill">📍 ส.สิทธิโชค</div>
-      <div class="lo-pill">📍 ส.ทรานสปอต</div>
+      <div class="lo-pill">📋 ใบสั่งซื้อ (PO)</div>
       <div class="lo-pill">🔄 รายการโอน</div>
+      <div class="lo-pill">🏗️ คอนกรีต</div>
+      <div class="lo-pill">📄 ใบออก</div>
     </div>
   </div>
   <!-- Right panel -->
@@ -2805,7 +2864,7 @@ function togglePw(btn){
     <div class="brand-icon">📊</div>
     <div>
       <div class="brand-name">9202</div>
-      <div class="brand-sub">Management System</div>
+      <div class="brand-sub">จัดซื้อและจัดจ้าง</div>
     </div>
   </div>
 
@@ -2838,7 +2897,7 @@ function togglePw(btn){
 <!-- ── MAIN ── -->
 <div class="main-wrap">
   <div class="topbar">
-    <span class="topbar-title" id="topbarTitle">9202 Management</span>
+    <span class="topbar-title" id="topbarTitle">9202 จัดซื้อและจัดจ้าง</span>
     <span class="topbar-breadcrumb" id="topbarBreadcrumb"></span>
     <div class="topbar-right">
       <span id="globalFbStatus" style="font-size:11px;padding:3px 10px;border-radius:99px;background:var(--surface2);color:var(--text3);font-weight:600;display:inline-flex;align-items:center;gap:5px;transition:background .3s,color .3s">⏳ กำลังเชื่อมต่อ...</span>
@@ -3169,7 +3228,6 @@ function togglePw(btn){
           📤 อัพไฟล์
           <input type="file" id="concreteFileInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleConcreteFile(this.files[0]);this.value=''">
         </label>
-        <button class="btn btn-danger" onclick="clearAllConcrete()" style="font-size:13px;font-weight:600;padding:9px 16px;border-radius:10px">🗑 ลบทั้งหมด</button>
         <button class="btn" onclick="exportConcreteExcel()" style="display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;padding:9px 14px;border-radius:10px;border:1px solid var(--green-light);background:var(--green-bg);color:var(--green-text)">📥 Export Excel</button>
         <button class="btn-primary" onclick="openConcreteModal()">＋ เพิ่มคอนกรีต</button>
       </div>
@@ -3372,16 +3430,10 @@ function togglePw(btn){
     <!-- ── SETTINGS PAGE ── -->
     <div class="page" id="page-settings">
       <div class="page-head">
-        <div class="page-head-title">Settings</div>
-        <div class="page-head-sub">ตั้งค่าการแสดงผลและระบบ</div>
+        <div class="page-head-title">ตั้งค่า</div>
+        <div class="page-head-sub">ตั้งค่าการแสดงผล</div>
       </div>
-      <div class="settings-layout">
-        <div class="settings-nav" id="settingsNav">
-          <button class="settings-nav-item active" onclick="openSettingsTab('general',this)">ทั่วไป</button>
-          <button class="settings-nav-item" onclick="openSettingsTab('stores',this)">บริษัท</button>
-          <button class="settings-nav-item" onclick="openSettingsTab('columns',this)">Columns</button>
-          <button class="settings-nav-item" onclick="openSettingsTab('data',this)">ข้อมูล</button>
-        </div>
+      <div class="settings-layout" style="grid-template-columns:1fr;max-width:640px">
         <div class="settings-panel" id="settingsPanel">
           <div id="settingsContent"></div>
         </div>
@@ -3503,8 +3555,8 @@ function togglePw(btn){
         📤 อัพไฟล์
         <input type="file" id="issueFileInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleIssueFile(this.files[0]);this.value=''">
       </label>
+      <button class="btn" onclick="exportIssueExcel()" style="display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;padding:9px 14px;border-radius:10px;border:1px solid var(--green-light);background:var(--green-bg);color:var(--green-text)">📥 Export Excel</button>
       <button class="btn-primary" onclick="openIssueModal()">＋ เพิ่มใบออก</button>
-      <button onclick="exportIssueExcel()" style="display:inline-flex;align-items:center;gap:5px;padding:9px 14px;border-radius:10px;border:1px solid var(--green-light);background:var(--green-bg);color:var(--green-text);font-size:13px;font-weight:600;cursor:pointer;font-family:'Sarabun',sans-serif">📥 Export Excel</button>
     </div>
 
     <!-- Table -->
@@ -3671,6 +3723,7 @@ function togglePw(btn){
   <button class="issue-lightbox-close" onclick="closeIssueLightbox()">✕</button>
   <img id="issueLightboxImg" src="" alt="รูปแนบ">
 </div>
+
 
 <script>
 /* ─── CONFIG ─── */
@@ -4172,8 +4225,7 @@ function renderTable(){
   const cols=[...pCols,...rest].slice(0,10);
   document.getElementById('thead').innerHTML=
     cols.map(h=>`<th>${esc(h)}</th>`).join('')+'<th style="text-align:center">สถานะ</th><th style="text-align:center">จัดการ</th>';
-  const LIMIT=1000;
-  tbody.innerHTML=data.slice(0,LIMIT).map(row=>{
+  tbody.innerHTML=data.map(row=>{
     const st=statusOf(row),isC=st==='cancelled';
     const cells=cols.map(h=>{
       const v=row[h]??'-';
@@ -4186,8 +4238,6 @@ function renderTable(){
     }).join('');
     return `<tr class="${isC?'row-cancel':''}">${cells}<td style="text-align:center">${badgeHTML(st)}</td><td style="text-align:center"><div class="tr-actions"><button class="tr-btn tr-btn-edit" onclick="editPO(${s.rows.indexOf(row)})">✏️ แก้ไข</button><button class="tr-btn tr-btn-del" onclick="deletePO(${s.rows.indexOf(row)})">🗑 ลบ</button></div></td></tr>`;
   }).join('');
-  if(data.length>LIMIT)
-    tbody.innerHTML+=`<tr><td colspan="${cols.length+2}" style="text-align:center;color:var(--text3);font-size:12px;padding:12px;border-top:1px solid var(--border)">แสดง ${LIMIT.toLocaleString()} แถวแรก จากทั้งหมด ${data.length.toLocaleString()} — กรองเพื่อจำกัดผล</td></tr>`;
 }
 
 
@@ -4696,97 +4746,103 @@ function openAddVendorFromPO(name){
 }
 
 /* ─── SETTINGS ─── */
-function openSettingsTab(tab,btn){
-  currentSettingsTab=tab;
-  document.querySelectorAll('.settings-nav-item').forEach(b=>b.classList.remove('active'));
-  if(btn) btn.classList.add('active');
-  renderSettings(tab);
+function openSettingsTab(){ renderSettings(); }
+
+const UI_THEME_KEY = 'po_ui_theme';
+function getUIThemePref(){
+  try{ return localStorage.getItem(UI_THEME_KEY) || 'light'; }catch(e){ return 'light'; }
+}
+function _resolveTheme(pref){
+  if(pref==='system'){
+    return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+  }
+  return pref;
+}
+function applyUITheme(pref){
+  document.documentElement.setAttribute('data-ui-theme', _resolveTheme(pref));
+}
+function setUITheme(pref){
+  try{ localStorage.setItem(UI_THEME_KEY, pref); }catch(e){}
+  applyUITheme(pref);
+  renderSettings();
+}
+window.setUITheme = setUITheme;
+// apply saved theme immediately on load
+applyUITheme(getUIThemePref());
+// keep in sync if user changes OS-level light/dark while pref is 'system'
+if(window.matchMedia){
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', ()=>{
+    if(getUIThemePref()==='system') applyUITheme('system');
+  });
 }
 
-function renderSettings(tab){
-  const s=S(),t=ST();
-  const panels={
-    general:`
-      <div class="settings-section">
-        <div class="settings-section-title">บริษัทปัจจุบัน</div>
-        <div class="setting-row">
-          <div><div class="setting-label">ชื่อบริษัท</div></div>
-          <span class="setting-val">${t.name}</span>
-        </div>
-        <div class="setting-row">
-          <div><div class="setting-label">Storage Key</div></div>
-          <span class="setting-val">${t.sk}</span>
-        </div>
-        <div class="setting-row">
-          <div><div class="setting-label">จำนวน PO</div><div class="setting-desc">ข้อมูลในหน่วยความจำ</div></div>
-          <span class="setting-val">${s.rows.length.toLocaleString()}</span>
-        </div>
+function renderSettings(){
+  const pref = getUIThemePref();
+  const themeCard = (val,icon,label,desc) => `
+    <button onclick="setUITheme('${val}')" style="flex:1;min-width:130px;text-align:left;cursor:pointer;border-radius:14px;padding:16px;border:2px solid ${pref===val?'var(--acc)':'var(--border)'};background:${pref===val?'var(--acc-bg)':'var(--surface2)'};transition:.15s">
+      <div style="font-size:22px;margin-bottom:8px">${icon}</div>
+      <div style="font-weight:700;font-size:13.5px;color:var(--text);display:flex;align-items:center;gap:6px">${label} ${pref===val?'<span style="color:var(--acc);font-size:12px">✓ ใช้งานอยู่</span>':''}</div>
+      <div style="font-size:11.5px;color:var(--text3);margin-top:3px">${desc}</div>
+    </button>`;
+
+  const user = window._auth && window._auth.currentUser;
+  const userCode = user ? (_emailToCode(user.email) || user.email) : '—';
+  const autoBk = getAutoBackupSettings();
+  const lastAutoDate = getLastAutoBackupAt();
+  const lastAutoTxt = lastAutoDate ? lastAutoDate.toLocaleString('th-TH') : 'ยังไม่เคยสำรอง';
+
+  document.getElementById('settingsContent').innerHTML = `
+    <div class="settings-section">
+      <div class="settings-section-title">ธีมการแสดงผล</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
+        ${themeCard('light','☀️','จอสว่าง','พื้นหลังสีขาว เหมาะกับใช้งานกลางวัน')}
+        ${themeCard('dark','🌙','จอมืด','พื้นหลังสีเข้ม ถนอมสายตาตอนกลางคืน')}
+        ${themeCard('system','🖥️','ตามระบบ','ใช้ค่าตั้งต้นตามอุปกรณ์ของคุณ')}
       </div>
-      <div class="settings-section">
-        <div class="settings-section-title">Version</div>
-        <div class="setting-row">
-          <div><div class="setting-label">PO Dashboard</div><div class="setting-desc">รองรับ .xlsx / .xls / .csv</div></div>
-          <span class="setting-val">v2.0</span>
-        </div>
+    </div>
+    <div class="settings-section">
+      <div class="settings-section-title">บัญชีผู้ใช้</div>
+      <div class="setting-row">
+        <div><div class="setting-label">รหัสพนักงาน</div></div>
+        <span class="setting-val">${esc(userCode)}</span>
       </div>
-    `,
-    stores:`
-      <div class="settings-section">
-        <div class="settings-section-title">บริษัททั้งหมด</div>
-        ${STORES.map((st,i)=>{
-          const cnt=state[i].rows.length;
-          return `<div class="setting-row">
-            <div>
-              <div class="setting-label" style="display:flex;align-items:center;gap:8px">
-                <span style="width:10px;height:10px;border-radius:50%;background:${st.dot};display:inline-block"></span>
-                ${st.name}
-              </div>
-              <div class="setting-desc">Key: ${st.sk}</div>
-            </div>
-            <span class="setting-val">${cnt.toLocaleString()} PO</span>
-          </div>`;
-        }).join('')}
+      <div class="setting-row">
+        <div><div class="setting-label">ออกจากระบบ</div><div class="setting-desc">ออกจากระบบบัญชีนี้</div></div>
+        <button class="btn btn-sm btn-danger" onclick="doLogout()">⏏ ออกจากระบบ</button>
       </div>
-    `,
-    columns:`
-      <div class="settings-section">
-        <div class="settings-section-title">Column Mapping — ${t.name}</div>
-        ${Object.entries(s.colMap).map(([k,v])=>`
-          <div class="setting-row">
-            <div><div class="setting-label">${k.toUpperCase()}</div></div>
-            <span class="setting-val">${v||'—'}</span>
-          </div>
-        `).join('')}
+    </div>
+    <div class="settings-section">
+      <div class="settings-section-title">สำรองข้อมูล</div>
+      <div class="setting-row">
+        <div><div class="setting-label">สำรองข้อมูลทั้งหมด</div><div class="setting-desc">Export PO ทุกสาขา + รายการโอน + คอนกรีต + ใบออก + PO จัดซื้อจัดจ้าง เป็นไฟล์ Excel ไฟล์เดียว</div></div>
+        <button class="btn btn-sm btn-primary" onclick="exportFullBackup()">📦 สำรองข้อมูลตอนนี้</button>
       </div>
-      <div class="settings-section">
-        <div class="settings-section-title">Headers ที่พบ</div>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">
-          ${s.hdrs.map(h=>`<span class="upload-tag">${esc(h)}</span>`).join('')||'<span style="color:var(--text3);font-size:13px">ยังไม่มีข้อมูล</span>'}
-        </div>
+      <div class="setting-row">
+        <div><div class="setting-label">สำรองข้อมูลอัตโนมัติแบบตั้งเวลา</div><div class="setting-desc">ระบบจะ Export ไฟล์สำรองให้เองตามรอบเวลา โดยไม่ต้องกด (ใช้ได้เมื่อเปิดหน้าเว็บนี้ค้างไว้)</div></div>
+        <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0">
+          <input type="checkbox" id="autoBackupToggle" ${autoBk.enabled?'checked':''} onchange="setAutoBackupEnabled(this.checked)" style="opacity:0;width:0;height:0">
+          <span onclick="document.getElementById('autoBackupToggle').click()" style="position:absolute;cursor:pointer;inset:0;background:${autoBk.enabled?'var(--acc)':'var(--border-strong)'};border-radius:99px;transition:.15s"></span>
+          <span onclick="document.getElementById('autoBackupToggle').click()" style="position:absolute;cursor:pointer;height:18px;width:18px;left:${autoBk.enabled?'23px':'3px'};top:3px;background:#fff;border-radius:50%;transition:.15s;box-shadow:0 1px 3px rgba(0,0,0,.3)"></span>
+        </label>
       </div>
-    `,
-    data:`
-      <div class="settings-section">
-        <div class="settings-section-title">จัดการข้อมูล</div>
-        <div class="setting-row">
-          <div><div class="setting-label">ล้างข้อมูลบริษัทนี้</div><div class="setting-desc">ลบ ${s.rows.length.toLocaleString()} PO ของ ${t.name}</div></div>
-          <button class="btn btn-sm btn-danger" onclick="clearAll()">🗑 ล้างข้อมูล</button>
-        </div>
-        <div class="setting-row">
-          <div><div class="setting-label">เปลี่ยนไฟล์</div><div class="setting-desc">โหลดไฟล์ Excel ใหม่</div></div>
-          <button class="btn btn-sm" onclick="openPage('dashboard');resetAll()">⟳ เปลี่ยนไฟล์</button>
-        </div>
+      <div class="setting-row" style="${autoBk.enabled?'':'opacity:.5;pointer-events:none'}">
+        <div><div class="setting-label">ความถี่ในการสำรอง</div><div class="setting-desc">สำรองล่าสุดอัตโนมัติ: ${lastAutoTxt}</div></div>
+        <select class="form-input" style="width:auto;cursor:pointer" onchange="setAutoBackupInterval(this.value)">
+          <option value="24" ${autoBk.hours===24?'selected':''}>ทุกวัน</option>
+          <option value="72" ${autoBk.hours===72?'selected':''}>ทุก 3 วัน</option>
+          <option value="168" ${autoBk.hours===168?'selected':''}>ทุกสัปดาห์</option>
+        </select>
       </div>
-      <div class="settings-section">
-        <div class="settings-section-title">ล้างทุกบริษัท</div>
-        <div class="setting-row">
-          <div><div class="setting-label">ล้างข้อมูลทั้งหมด</div><div class="setting-desc">ลบข้อมูลทุกบริษัทออกจาก Local Storage</div></div>
-          <button class="btn btn-sm btn-danger" onclick="if(confirm('ยืนยันลบทุกบริษัท?')){STORES.forEach((_,i)=>{curStore=i;wipeStore();state[i].rows=[]});curStore=0;applyTheme();document.getElementById('mainSection').style.display='none';document.getElementById('uploadZone').style.display='block';renderSettings('data')}">🗑 ล้างทั้งหมด</button>
-        </div>
+      <div id="backupStatusMsg" style="display:none;margin-top:10px;padding:8px 12px;background:var(--green-bg);border:1px solid var(--green-light);border-radius:9px;font-size:12.5px;color:var(--green-text);font-weight:600"></div>
+    </div>
+    <div class="settings-section">
+      <div class="settings-section-title">เกี่ยวกับ</div>
+      <div class="setting-row">
+        <div><div class="setting-label">PO Dashboard</div><div class="setting-desc">ระบบจัดการงานจัดซื้อ</div></div>
+        <span class="setting-val">v2.0</span>
       </div>
-    `
-  };
-  document.getElementById('settingsContent').innerHTML=panels[tab]||'';
+    </div>
+  `;
 }
 
 /* ─── INFO ─── */
@@ -5542,10 +5598,7 @@ function renderConcreteTable(){
     return dt ? _isSameDay(dt, _today) : false;
   }
 
-  // render max 200 rows to keep DOM fast
-  const LIMIT = 200;
-  const show = filtered.length > LIMIT ? filtered.slice(0, LIMIT) : filtered;
-  tbody.innerHTML = show.map(c=>{
+  tbody.innerHTML = filtered.map(c=>{
     const fid = c._fid||c.id;
     const today = isToday(c.date);
     const isCancel = /ยกเลิก|cancel/i.test(c.note||'');
@@ -5573,9 +5626,6 @@ function renderConcreteTable(){
       </div></td>
     </tr>`;
   }).join('');
-  if(filtered.length > LIMIT){
-    tbody.insertAdjacentHTML('beforeend',`<tr><td colspan="11" style="text-align:center;padding:12px;color:var(--text3);font-size:13px">แสดง ${LIMIT} จาก ${filtered.length.toLocaleString()} รายการ — กรองด้วยช่องค้นหาเพื่อดูเพิ่ม</td></tr>`);
-  }
 }
 
 /* ─── SUMMARY DASHBOARD (จัดซื้อ) ─── */
@@ -5677,14 +5727,14 @@ function renderSummaryPage(){
   const matchJV = (job, vendor) => (!f.job || job===f.job) && (!f.vendor || vendor===f.vendor);
 
   let curSpend=0, lastSpend=0;
-  const monthTotals = {}, shopTotals = {}, jobTotals = {};
+  const monthTotals = {}, shopTotals = {}, jobTotals = {}, shopCounts = {};
   recs.forEach(r=>{
     if(!matchJV(r.job||'', r.shop||'')) return;
     const key = _monthKey(r.dt);
     monthTotals[key] = (monthTotals[key]||0)+r.amount; // เทรนด์ 6 เดือน: ยึดตามตัวกรอง JOB/Vendor แต่ไม่ยึดช่วงวันที่ เพื่อให้เห็นภาพรวมรายเดือนครบ
     if(inRange(r.dt, fromTs, toTs)){
       curSpend += r.amount;
-      if(r.shop) shopTotals[r.shop]=(shopTotals[r.shop]||0)+r.amount;
+      if(r.shop){ shopTotals[r.shop]=(shopTotals[r.shop]||0)+r.amount; shopCounts[r.shop]=(shopCounts[r.shop]||0)+1; }
       if(r.job) jobTotals[r.job]=(jobTotals[r.job]||0)+r.amount;
     }
     if(canCompare && inRange(r.dt, prevFromTs, prevToTs)) lastSpend+=r.amount;
@@ -5730,6 +5780,8 @@ function renderSummaryPage(){
   issueArr.forEach(is=>{ if(is.proj) allJobs.add(is.proj); if(is.contractor) allVendors.add(is.contractor); });
   const jobOptions = Array.from(allJobs).sort((a,b)=>String(a).localeCompare(String(b),'th'));
   const vendorOptions = Array.from(allVendors).sort((a,b)=>String(a).localeCompare(String(b),'th'));
+
+  window._summaryDrillCtx = { fromTs, toTs, periodLabel, jobFilter: f.job||'', vendorFilter: f.vendor||'' };
 
   const wrap = document.getElementById('summaryContent');
   if(!wrap) return;
@@ -5785,11 +5837,12 @@ function renderSummaryPage(){
 
       <div class="bento-card bento-stat strip-blue">
         <div class="stat-top">
-          <div class="stat-icon bg-blue c-blue">📋</div>
-          <span class="stat-pct pct-blue">${openPOCount} รายการ</span>
+          <div class="stat-icon bg-blue c-blue">🏆</div>
+          <span class="stat-pct pct-blue">${topShops.length ? (shopCounts[topShops[0][0]]||0)+' รายการ' : '—'}</span>
         </div>
-        <div class="stat-label">PO ที่ยังไม่ปิด</div>
-        <div class="stat-val c-blue">฿${_fmtCompactBaht(openPOValue)}</div>
+        <div class="stat-label">ร้านค้าอันดับ 1${periodLabel}</div>
+        <div class="stat-val c-blue" style="font-size:15px;line-height:1.3" title="${topShops.length?esc(topShops[0][0]):''}">${topShops.length ? esc(topShops[0][0]) : 'ไม่มีข้อมูล'}</div>
+        ${topShops.length ? `<div style="font-size:12px;color:var(--text3);margin-top:2px">฿${_fmtCompactBaht(topShops[0][1])}</div>` : ''}
       </div>
 
       <div class="bento-card bento-stat strip-green">
@@ -5833,16 +5886,22 @@ function renderSummaryPage(){
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px" id="summaryBottomRow">
       <div class="table-card">
-        <div class="table-header"><span class="table-header-title">🏪 ร้านค้า/Vendor ที่ซื้อมากสุด (Top 5 · ${periodLabel})</span></div>
-        <div style="padding:16px;height:260px">${topShops.length?'<canvas id="chartVendor"></canvas>':'<div class="no-data-small">ยังไม่มีข้อมูล</div>'}</div>
+        <div class="table-header" style="justify-content:space-between">
+          <span class="table-header-title">🏪 ร้านค้า/Vendor ที่ซื้อมากสุด (Top 5 · ${periodLabel})</span>
+          ${topShops.length?'<span style="font-size:11px;color:var(--text3)">คลิกแท่งกราฟดูรายการ 🔍</span>':''}
+        </div>
+        <div style="padding:16px;height:260px">${topShops.length?'<canvas id="chartVendor" style="cursor:pointer"></canvas>':'<div class="no-data-small">ยังไม่มีข้อมูล</div>'}</div>
       </div>
       <div class="table-card">
-        <div class="table-header"><span class="table-header-title">🏷️ JOB / โครงการ ที่ใช้จ่ายมากสุด (Top 5 · ${periodLabel})</span></div>
+        <div class="table-header" style="justify-content:space-between">
+          <span class="table-header-title">🏷️ JOB / โครงการ ที่ใช้จ่ายมากสุด (Top 5 · ${periodLabel})</span>
+          ${topJobs.length?'<span style="font-size:11px;color:var(--text3)">คลิกดูรายการ 🔍</span>':''}
+        </div>
         <div style="padding:16px">
           ${topJobs.length ? topJobs.map(([job,val])=>`
-            <div style="margin-bottom:12px">
+            <div class="drill-row" style="margin-bottom:12px;cursor:pointer;padding:4px;margin:-4px -4px 8px -4px;border-radius:8px" onclick="_openSummaryDrilldown('job','${btoa(encodeURIComponent(job))}')" title="คลิกดูรายการ">
               <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px">
-                <span style="font-weight:600;color:var(--text)">${esc(job)}</span>
+                <span style="font-weight:600;color:var(--text)">${esc(job)} <span style="opacity:.5;font-size:10.5px">🔍</span></span>
                 <span style="font-family:'IBM Plex Mono',monospace;color:var(--text3)">฿${_fmtBaht(val)}</span>
               </div>
               <div style="height:8px;background:var(--surface2);border-radius:99px;overflow:hidden">
@@ -5920,6 +5979,14 @@ function _drawSummaryCharts(monthLabels, monthValues, statusCount, statusLabel, 
       options:{
         indexAxis:'y', responsive:true, maintainAspectRatio:false,
         layout:{ padding:{ right:14, left:2 } },
+        onClick:(evt, elements)=>{
+          if(elements && elements.length){
+            const idx = elements[0].index;
+            const shopName = topShops[idx] && topShops[idx][0];
+            if(shopName) _openSummaryDrilldown('vendor', btoa(encodeURIComponent(shopName)));
+          }
+        },
+        onHover:(evt, elements)=>{ evt.native.target.style.cursor = elements.length ? 'pointer' : 'default'; },
         plugins:{
           legend:{display:false},
           tooltip:{ callbacks:{
@@ -5942,6 +6009,90 @@ function _drawSummaryCharts(monthLabels, monthValues, statusCount, statusLabel, 
     }, 60);
   });
 }
+
+// ── Drilldown: คลิก Vendor หรือ JOB เพื่อดูรายการซื้อทั้งหมด ──
+function _openSummaryDrilldown(type, encodedKey){
+  let key;
+  try{ key = decodeURIComponent(atob(encodedKey)); }catch(e){ key = encodedKey; }
+
+  const ctx = window._summaryDrillCtx || { fromTs:0, toTs:Infinity, periodLabel:'', jobFilter:'', vendorFilter:'' };
+  const inRange = dt => !!dt && dt.getTime()>=ctx.fromTs && dt.getTime()<=ctx.toTs;
+
+  const pomanArr = _pomanCache||[];
+  const concreteArr = _concreteCache||[];
+  const transferArr = _transfersCache||[];
+
+  const matches = (job, shop) => {
+    job = (job||'').trim(); shop = (shop||'').trim();
+    if(type==='vendor'){ if(shop!==key) return false; } else { if(job!==key) return false; }
+    if(ctx.jobFilter && job!==ctx.jobFilter) return false;
+    if(ctx.vendorFilter && shop!==ctx.vendorFilter) return false;
+    return true;
+  };
+
+  const items = [];
+  pomanArr.forEach(p=>{
+    const dt=_parseAnyDateToLocal(p.date);
+    if(dt && inRange(dt) && matches(p.job, p.shop)){
+      items.push({ dtObj:dt, dateStr:p.date, srcIcon:'📋', srcLabel:'PO', ref:p.po||p.pr||'—', detail:p.detail||'—', job:p.job||'—', shop:p.shop||'—', amount:parseFloat(p.price)||0, status:p.status||'open' });
+    }
+  });
+  concreteArr.forEach(c=>{
+    const dt=_parseAnyDateToLocal(c.date);
+    if(dt && inRange(dt) && matches(c.job, c.shop)){
+      items.push({ dtObj:dt, dateStr:c.date, srcIcon:'🏗️', srcLabel:'คอนกรีต', ref:c.po||c.pr||'—', detail:c.note||`เทคอนกรีต${c.vol?' '+c.vol+' คิว':''}`, job:c.job||'—', shop:c.shop||'—', amount:parseFloat(c.totalPrice)||0, status:'' });
+    }
+  });
+  transferArr.forEach(t=>{
+    const dt=_parseAnyDateToLocal(t.date);
+    if(dt && inRange(dt) && matches(t.job, t.shop)){
+      items.push({ dtObj:dt, dateStr:t.date, srcIcon:'💸', srcLabel:'โอนเงิน', ref:t.po||t.no||'—', detail:t.detail||'—', job:t.job||'—', shop:t.shop||'—', amount:parseFloat(t.amount)||0, status:'' });
+    }
+  });
+
+  items.sort((a,b)=>b.dtObj-a.dtObj);
+  const total = items.reduce((s,i)=>s+i.amount,0);
+
+  const titleEl = document.getElementById('drillModalTitle');
+  const bodyEl = document.getElementById('drillModalBody');
+  const totalEl = document.getElementById('drillModalTotal');
+  if(!titleEl||!bodyEl||!totalEl) return;
+
+  titleEl.textContent = (type==='vendor'?'🏪 ':'🏷️ ') + key + (ctx.periodLabel?' · '+ctx.periodLabel:'');
+  totalEl.textContent = `รวม ${items.length} รายการ · ฿${_fmtBaht(total)}`;
+
+  bodyEl.innerHTML = items.length ? `
+    <div style="display:flex;flex-direction:column;gap:2px">
+      ${items.map(i=>`
+        <div class="drill-item-row" style="display:flex;align-items:flex-start;gap:10px;padding:9px 8px;border-bottom:1px solid var(--border)">
+          <div style="font-size:16px;flex-shrink:0;margin-top:1px">${i.srcIcon}</div>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap">
+              <span style="font-size:12.5px;font-weight:600;color:var(--text)">${esc(i.detail)}</span>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:700;color:var(--navy-900);white-space:nowrap">฿${_fmtBaht(i.amount)}</span>
+            </div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px;display:flex;gap:8px;flex-wrap:wrap">
+              <span>${_fmtDateShort(i.dateStr)}</span>
+              <span>·</span>
+              <span>${esc(i.srcLabel)} ${esc(i.ref)}</span>
+              ${type==='vendor' ? `<span>· JOB: ${esc(i.job)}</span>` : `<span>· ร้าน: ${esc(i.shop)}</span>`}
+              ${i.status ? `<span>· ${esc(_statusLabel(i.status))}</span>` : ''}
+            </div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  ` : `<div class="no-data-small">ไม่พบรายการในช่วงเวลานี้</div>`;
+
+  document.getElementById('drillModal').classList.add('open');
+}
+window._openSummaryDrilldown = _openSummaryDrilldown;
+
+function _closeSummaryDrilldown(){
+  const el = document.getElementById('drillModal');
+  if(el) el.classList.remove('open');
+}
+window._closeSummaryDrilldown = _closeSummaryDrilldown;
 
 /* ─── AUTH ─── */
 // รหัสพนักงาน <-> อีเมล แปลงกันไปมาด้วยสูตรตายตัว ไม่ต้องพึ่ง Firestore เลย
@@ -6774,9 +6925,7 @@ function renderPOManTable(){
       return String(va).localeCompare(String(vb),'th')*dir;
     });
   }
-  const LIMIT = 200;
-  const show = arr.length > LIMIT ? arr.slice(0, LIMIT) : arr;
-  tbody.innerHTML = show.map(p=>{
+  tbody.innerHTML = arr.map(p=>{
     const fid = p._fid||p.id;
     const dt = _parseAnyDateToLocal(p.date);
     const todayRow = dt && _isSameDay(dt, _today);
@@ -6799,9 +6948,6 @@ function renderPOManTable(){
       </div></td>
     </tr>`;
   }).join('');
-  if(arr.length > LIMIT){
-    tbody.insertAdjacentHTML('beforeend',`<tr><td colspan="9" style="text-align:center;padding:12px;color:var(--text3);font-size:13px">แสดง ${LIMIT} จาก ${arr.length.toLocaleString()} รายการ — กรองด้วยช่องค้นหาเพื่อดูเพิ่ม</td></tr>`);
-  }
 }
 
 function openPOManModal(fid){
@@ -7017,9 +7163,8 @@ function _pomanPageHTML(){
         📤 อัพไฟล์
         <input type="file" id="pomanFileInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="handlePOManFile(this.files[0]);this.value=''">
       </label>
+      <button class="btn" onclick="exportPOManExcel()" style="display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;padding:9px 14px;border-radius:10px;border:1px solid var(--green-light);background:var(--green-bg);color:var(--green-text)">📥 Export Excel</button>
       <button class="btn-primary" onclick="openPOManModal()">＋ เพิ่ม PO</button>
-      <button onclick="exportPOManExcel()" style="padding:9px 14px;border-radius:10px;border:1px solid var(--green-light);background:var(--green-bg);color:var(--green-text);cursor:pointer;font-size:13px;font-weight:700;font-family:'Sarabun',sans-serif;flex-shrink:0;display:inline-flex;align-items:center;gap:5px">📥 Export Excel</button>
-      <button id="pomanDeleteAllBtn" onclick="deleteAllPOMan()" style="padding:9px 14px;border-radius:10px;border:1.5px solid var(--red-light);background:var(--red-bg);color:var(--red-text);cursor:pointer;font-size:13px;font-weight:700;font-family:'Sarabun',sans-serif;flex-shrink:0">🗑️ ลบทั้งหมด</button>
     </div>
 
     <!-- Table -->
@@ -7597,9 +7742,137 @@ function exportPOManExcel(){
     if(cell) cell.z = '#,##0.00';
   }
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'PO Management');
+  XLSX.utils.book_append_sheet(wb, ws, 'PO จัดซื้อจัดจ้าง');
   _xlsxDownload(wb, `POMan_${_today()}.xlsx`);
 }
+
+/* ─── สำรองข้อมูลอัตโนมัติ: Export ทั้งหมดเป็นไฟล์เดียว ─── */
+function exportFullBackup(opts){
+  const auto = !!(opts && opts.auto);
+  try{
+    const wb = XLSX.utils.book_new();
+    let sheetCount = 0;
+
+    // 1) PO แยกตามบริษัท/สาขา
+    STORES.forEach((store, idx)=>{
+      const s = state[idx];
+      if(!s || !s.rows || !s.rows.length) return;
+      const hdrs = s.hdrs && s.hdrs.length ? s.hdrs : Object.keys(s.rows[0]||{});
+      const headers = [...hdrs, 'Status'];
+      const rows = s.rows.map(row=>{
+        const r = hdrs.map(h=> row[h]??'');
+        r.push(row._status || row[s.colMap.status] || '');
+        return r;
+      });
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      ws['!cols'] = headers.map(()=>({wch:16}));
+      const sheetName = `PO_${store.name}`.replace(/[\\\/\?\*\[\]:]/g,'').slice(0,31);
+      XLSX.utils.book_append_sheet(wb, ws, sheetName);
+      sheetCount++;
+    });
+
+    // 2) รายการโอน
+    if(typeof _transfersCache!=='undefined' && _transfersCache.length){
+      const headers = ['วันที่','ใบโอน','PO','JOB','ยอดเงิน (บาท)','ร้านค้า','รายละเอียด'];
+      const rows = _transfersCache.map(t=>[t.date||'',t.no||'',t.po||'',t.job||'',parseFloat(t.amount)||0,t.shop||'',t.detail||'']);
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      ws['!cols'] = [{wch:12},{wch:16},{wch:14},{wch:12},{wch:16},{wch:22},{wch:30}];
+      XLSX.utils.book_append_sheet(wb, ws, 'รายการโอน');
+      sheetCount++;
+    }
+
+    // 3) คอนกรีต
+    if(typeof _concreteCache!=='undefined' && _concreteCache.length){
+      const headers = ['วันที่','ST','คิว (ม³)','PR','PO','ราคา/หน่วย','ราคา (บาท)','ร้าน','JOB','หมายเหตุ'];
+      const rows = _concreteCache.map(p=>[p.date||'',p.st||'',parseFloat(p.vol)||0,p.pr||'',p.po||'',parseFloat(p.unitPrice)||0,parseFloat(p.totalPrice)||0,p.shop||'',p.job||'',p.note||'']);
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      ws['!cols'] = [{wch:12},{wch:12},{wch:10},{wch:12},{wch:14},{wch:14},{wch:16},{wch:22},{wch:12},{wch:24}];
+      XLSX.utils.book_append_sheet(wb, ws, 'คอนกรีต');
+      sheetCount++;
+    }
+
+    // 4) ใบออก
+    if(typeof _issueCache!=='undefined' && _issueCache.length){
+      const typeLabel = t => t==='return'?'คืนสินค้า':(t==='receive'?'รับของ':'สั่งซื้อ');
+      const linesText = lines => (lines||[]).map(l=>`${l.name||''} x${l.qty||''} ${l.unit||''}`).join(', ');
+      const headers = ['วันที่','ประเภท','เล่มที่','เลขที่','รหัสโครงการ','รหัส ผรม.','ชื่อผู้รับเหมา','รายการสินค้า','หมายเหตุ'];
+      const rows = _issueCache.map(is=>[is.date||'',typeLabel(is.type),is.book||'',is.no||'',is.proj||'',is.contractorCode||'',is.contractor||'',linesText(is.lines),is.note||'']);
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      ws['!cols'] = [{wch:12},{wch:12},{wch:10},{wch:10},{wch:16},{wch:14},{wch:24},{wch:40},{wch:28}];
+      XLSX.utils.book_append_sheet(wb, ws, 'ใบออก');
+      sheetCount++;
+    }
+
+    // 5) PO จัดซื้อจัดจ้าง (PO Man)
+    if(typeof _pomanSorted!=='undefined' && _pomanSorted.length){
+      const statusLabel = {open:'เปิด',received:'รับของแล้ว',closed:'ปิด',cancelled:'ยกเลิก'};
+      const headers = ['ว.ด.ป','PR','PO','ราคา (บาท)','ร้าน / Vendor','รายละเอียด','JOB','สถานะ'];
+      const rows = _pomanSorted.map(p=>[p.date||'',p.pr||'',p.po||'',parseFloat(p.price)||0,p.shop||'',p.detail||'',p.job||'',statusLabel[p.status]||p.status||'เปิด']);
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      ws['!cols'] = [{wch:12},{wch:12},{wch:16},{wch:16},{wch:24},{wch:34},{wch:14},{wch:12}];
+      XLSX.utils.book_append_sheet(wb, ws, 'PO จัดซื้อจัดจ้าง');
+      sheetCount++;
+    }
+
+
+    if(!sheetCount){ if(!auto) alert('ไม่มีข้อมูลให้สำรอง'); return; }
+
+    const now = new Date();
+    const ts = now.toISOString().slice(0,19).replace(/[:T]/g,'-');
+    _xlsxDownload(wb, `สำรองข้อมูล_9202_${auto?'อัตโนมัติ_':''}${ts}.xlsx`);
+
+    try{ localStorage.setItem('autoBackup_lastAt', now.toISOString()); }catch(e){}
+
+    const badge = document.getElementById('backupStatusMsg');
+    if(badge){
+      badge.style.display='block';
+      badge.textContent = `✅ สำรองข้อมูล${auto?'อัตโนมัติ':''}สำเร็จ (${sheetCount} ชีท) — ${now.toLocaleString('th-TH')}`;
+      setTimeout(()=>{ badge.style.display='none'; }, 6000);
+    }
+    if(typeof renderSettings==='function' && currentPage==='settings'){ renderSettings(); }
+  }catch(err){
+    console.error('Backup error:', err);
+    if(!auto) alert('เกิดข้อผิดพลาดขณะสำรองข้อมูล: '+err.message);
+  }
+}
+window.exportFullBackup = exportFullBackup;
+
+/* ─── สำรองข้อมูลอัตโนมัติแบบตั้งเวลา ─── */
+const AUTO_BACKUP_KEYS = { enabled:'autoBackup_enabled', hours:'autoBackup_intervalHours', last:'autoBackup_lastAt' };
+function getAutoBackupSettings(){
+  let enabled = true, hours = 24;
+  try{
+    const e = localStorage.getItem(AUTO_BACKUP_KEYS.enabled);
+    enabled = e===null ? true : e==='1';
+    const h = parseFloat(localStorage.getItem(AUTO_BACKUP_KEYS.hours));
+    if(!isNaN(h) && h>0) hours = h;
+  }catch(e){}
+  return { enabled, hours };
+}
+function setAutoBackupEnabled(on){
+  try{ localStorage.setItem(AUTO_BACKUP_KEYS.enabled, on?'1':'0'); }catch(e){}
+  renderSettings();
+}
+function setAutoBackupInterval(hours){
+  try{ localStorage.setItem(AUTO_BACKUP_KEYS.hours, String(hours)); }catch(e){}
+  renderSettings();
+}
+function getLastAutoBackupAt(){
+  try{ const v = localStorage.getItem(AUTO_BACKUP_KEYS.last); return v ? new Date(v) : null; }catch(e){ return null; }
+}
+function checkAutoBackup(){
+  const { enabled, hours } = getAutoBackupSettings();
+  if(!enabled) return;
+  const last = getLastAutoBackupAt();
+  const dueMs = hours*60*60*1000;
+  if(last && (Date.now() - last.getTime()) < dueMs) return;
+  exportFullBackup({ auto:true });
+}
+window.setAutoBackupEnabled = setAutoBackupEnabled;
+window.setAutoBackupInterval = setAutoBackupInterval;
+// เช็คตอนโหลดแอป (หน่วงเล็กน้อยให้ข้อมูลโหลดเสร็จก่อน) และเช็คซ้ำทุกชั่วโมงระหว่างเปิดหน้าเว็บค้างไว้
+setTimeout(checkAutoBackup, 4000);
+setInterval(checkAutoBackup, 60*60*1000);
 
 window.deleteAllPOMan = deleteAllPOMan;
 window._pomanPageHTML = _pomanPageHTML;
@@ -7680,6 +7953,20 @@ window.handleIssueFile = handleIssueFile;
     <div class="modal-footer">
       <button class="btn" onclick="closePOManModal()">ยกเลิก</button>
       <button class="btn-primary" onclick="savePOMan()">💾 บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="drillModal">
+  <div class="modal" style="max-width:720px">
+    <div class="modal-head">
+      <span class="modal-title" id="drillModalTitle">รายการซื้อ</span>
+      <button class="modal-close" onclick="_closeSummaryDrilldown()">✕</button>
+    </div>
+    <div class="modal-body" id="drillModalBody" style="padding:1rem 1.2rem;max-height:60vh;overflow-y:auto"></div>
+    <div class="modal-footer" style="justify-content:space-between;align-items:center">
+      <span id="drillModalTotal" style="font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--navy-900)"></span>
+      <button class="btn" onclick="_closeSummaryDrilldown()">ปิด</button>
     </div>
   </div>
 </div>
